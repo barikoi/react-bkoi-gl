@@ -1,0 +1,6 @@
+{
+  "internal": true,
+  "main": "../dist/exports-bkoi-gl.cjs",
+  "module": "../dist/exports-bkoi-gl.js",
+  "types": "../dist/exports-bkoi-gl.d.ts"
+}

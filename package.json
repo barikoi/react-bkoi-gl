@@ -1,0 +1,78 @@
+{
+  "name": "react-bkoi-gl",
+  "version": "1.0.0",
+  "description": "React components for Barikoi GL JS",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "author": "barikoi",
+  "readme": "README.md",
+  "license": "MIT",
+  "homepage": "https://docs.barikoi.com/docs/maps-api",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    },
+    "./bkoi-gl": {
+      "types": "./dist/exports-bkoi-gl.d.ts",
+      "require": "./dist/exports-bkoi-gl.cjs",
+      "import": "./dist/exports-bkoi-gl.js"
+    },
+    "./styles": {
+      "import": "./dist/styles/react-bkoi-gl.css",
+      "default": "./dist/styles/react-bkoi-gl.css"
+    }
+  },
+  "files": [
+    "src",
+    "dist",
+    "bkoi-gl",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "build": "ocular-clean && ocular-build && node scripts/copy-css.js",
+    "lint": "ocular-lint",
+    "cover": "ocular-test cover",
+    "test": "yarn typecheck && ocular-test",
+    "test-fast": "yarn typecheck && ocular-test node",
+    "metrics": "ocular-metrics",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@maplibre/maplibre-gl-style-spec": "^19.2.1",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "bkoi-gl": ">=2.0.0",
+    "mapbox-gl": "^1.13.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.3.0",
+    "react-dom": ">=16.3.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.4.1",
+    "@commitlint/config-conventional": "^19.4.1",
+    "bkoi-gl": ">=2.0.0",
+    "@types/mapbox-gl": "^3.4.0",
+    "@types/react": "^16.0.0",
+    "husky": "^9.1.5",
+    "ocular-dev-tools": "2.0.0-alpha.15",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "typescript": "^4.0.0"
+  },
+  "keywords": [
+    "barikoi",
+    "bkoi-gl",
+    "react",
+    "react-bkoi-gl",
+    "react bkoi"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/barikoi/react-bkoi-gl.git"
+  }
+}
