@@ -6,9 +6,9 @@ import { resolve } from 'path';
 const copyCssFile = async () => {
   // Source path: where the CSS file is located
   const srcPath = resolve('node_modules/mapbox-gl/dist/mapbox-gl.css');
-  
+
   // Destination path: new directory and file name
-  const destPath = resolve('dist/styles/react-bkoi-gl.css');
+  const destPath = resolve('dist/styles/react-barikoi-gl.css');
 
   try {
     // Create the directory if it doesn't exist

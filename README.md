@@ -1,30 +1,30 @@
-<h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com/npm/npm-intro">Docs</a></h1>
+<h1 align="center">react-barikoi-gl | <a href="https://docs.barikoi.com/npm/npm-intro">Docs</a></h1>
 
 ## Description
 
-`react-bkoi-gl` is a suite of [React](http://facebook.github.io/react/) components designed to provide a API for [Barikoi Maps](https://docs.barikoi.com/docs/maps-api). More information in the online documentation.
+`react-barikoi-gl` is a suite of [React](http://facebook.github.io/react/) components designed to provide a API for [Barikoi Maps](https://docs.barikoi.com/docs/maps-api). More information in the online documentation.
 
 ## Installation
 
-Using `react-bkoi-gl` requires `react >= 16.3`.
+Using `react-barikoi-gl` requires `react >= 16.3`.
 
 To install the package via npm, run the following command:
 ```bash
-npm install react-bkoi-gl
+npm install react-barikoi-gl
 ```
 Or via yarn:
 ```bash
-yarn add react-bkoi-gl
+yarn add react-barikoi-gl
 ```
 
 ### Example
 
 ```js
 import { useRef } from 'react';
-import { Map, FullscreenControl, GeolocateControl, NavigationControl, ScaleControl } from 'react-bkoi-gl';
+import { Map, FullscreenControl, GeolocateControl, NavigationControl, ScaleControl } from 'react-barikoi-gl';
 
 // Import Styles
-import "react-bkoi-gl/styles"
+import "react-barikoi-gl/styles"
 
 const App = () => {
   const BARIKOI_API_KEY = 'YOUR_BARIKOI_API_KEY_HERE'

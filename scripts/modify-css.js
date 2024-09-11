@@ -39,13 +39,13 @@ const applyCustomStyles = async (cssFilePath) => {
         .split(';') // Split each property based on semicolons
         .map((property) => property.trim()) // Trim leading/trailing space
         .filter(Boolean) // Remove empty properties
-        .map((property) => 
+        .map((property) =>
           // Add semicolon if missing at the end of the property
           (property.endsWith('}') || property.endsWith(';') ? property : `${property};`))
         .join(' '); // Join back the properties with a space
     };
 
-     // Step 2: Iterate through each CSS selector and its properties to modify the file
+    // Step 2: Iterate through each CSS selector and its properties to modify the file
     for (const selector in changes) {
       const properties = changes[selector];
       const propertyString = Object.entries(properties)
@@ -79,9 +79,9 @@ const applyCustomStyles = async (cssFilePath) => {
 const copyCssFile = async () => {
   // Source path: where the CSS file is located
   const srcPath = resolve('node_modules/mapbox-gl/dist/mapbox-gl.css');
-  
+
   // Destination path: new directory and file name
-  const destPath = resolve('dist/styles/react-bkoi-gl.css');
+  const destPath = resolve('dist/styles/react-barikoi-gl.css');
 
   try {
     // Create the directory if it doesn't exist
