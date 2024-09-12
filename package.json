@@ -1,5 +1,5 @@
 {
-  "name": "react-barikoi-gl",
+  "name": "react-bkoi-gl",
   "version": "1.0.2",
   "description": "React components for Barikoi GL JS",
   "type": "module",
@@ -22,8 +22,8 @@
       "import": "./dist/exports-bkoi-gl.js"
     },
     "./styles": {
-      "import": "./dist/styles/react-barikoi-gl.css",
-      "default": "./dist/styles/react-barikoi-gl.css"
+      "import": "./dist/styles/react-bkoi-gl.css",
+      "default": "./dist/styles/react-bkoi-gl.css"
     }
   },
   "files": [
@@ -68,7 +68,7 @@
     "barikoi",
     "bkoi-gl",
     "react",
-    "react-barikoi-gl",
+    "react-bkoi-gl",
     "react bkoi"
   ],
   "repository": {

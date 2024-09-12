@@ -8,7 +8,7 @@ const copyCssFile = async () => {
   const srcPath = resolve('node_modules/mapbox-gl/dist/mapbox-gl.css');
 
   // Destination path: new directory and file name
-  const destPath = resolve('dist/styles/react-barikoi-gl.css');
+  const destPath = resolve('dist/styles/react-bkoi-gl.css');
 
   try {
     // Create the directory if it doesn't exist
