@@ -28,6 +28,9 @@ const applyCustomStyles = async (cssFilePath) => {
       '.mapboxgl-ctrl-attrib-inner a:hover': {
         'color': '#0066ff',
       },
+      // '.mapboxgl-ctrl-attrib-inner a:nth-child(2), .mapboxgl-ctrl-attrib-inner a:nth-child(3)': {
+      //   'display': 'none',
+      // },
     };
 
     // Function to add missing semicolons if needed
