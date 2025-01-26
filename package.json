@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "React components for Barikoi GL JS",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -34,7 +34,7 @@
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
-    "build": "ocular-clean && ocular-build && node scripts/copy-css.js",
+    "build": "ocular-clean && ocular-build && node scripts/modify-css.js",
     "lint": "ocular-lint",
     "cover": "ocular-test cover",
     "test": "yarn typecheck && ocular-test",
