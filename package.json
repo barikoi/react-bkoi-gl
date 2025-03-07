@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "React components for Barikoi GL JS",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -39,8 +39,7 @@
     "cover": "ocular-test cover",
     "test": "yarn typecheck && ocular-test",
     "test-fast": "yarn typecheck && ocular-test node",
-    "metrics": "ocular-metrics",
-    "prepare": "husky"
+    "metrics": "ocular-metrics"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^19.2.1",
@@ -55,10 +54,9 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.1",
     "@commitlint/config-conventional": "^19.4.1",
-    "bkoi-gl": ">=2.0.0",
     "@types/mapbox-gl": "^3.4.0",
     "@types/react": "^16.0.0",
-    "husky": "^9.1.5",
+    "bkoi-gl": ">=2.0.0",
     "ocular-dev-tools": "2.0.0-alpha.15",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
