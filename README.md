@@ -53,7 +53,6 @@ const App = () => {
         initialViewState={initialViewState}
         doubleClickZoom={false}
         dragRotate={false}
-        attributionControl={false}
       >
         <GeolocateControl position="top-right" />
         <FullscreenControl position="top-right" />
@@ -73,6 +72,27 @@ const containerStyles = {
 }
 
 export default App
+```
+
+## Map Features
+
+### Automatic Branding
+
+The Map component automatically includes the following branding elements by default:
+
+- **Barikoi Logo**: Displayed at the bottom-left corner of the map
+- **Barikoi Attribution**: Displayed at the bottom-right corner of the map showing "© Barikoi"
+
+If you need to disable these, you can use the following props:
+
+```jsx
+<Map
+  showBarikoiLogo={false}
+  showAttribution={false}
+  {...otherProps}
+>
+  {/* map children */}
+</Map>
 ```
 
 ## Get Barikoi API key

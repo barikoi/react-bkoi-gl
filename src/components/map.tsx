@@ -1,67 +1,60 @@
+/* eslint-disable react/no-unknown-property */
 import * as React from 'react';
 import {useState, useRef, useEffect, useContext, useMemo, useImperativeHandle} from 'react';
 
 import {MountedMapsContext} from './use-map';
-import Mapbox, {MapboxProps} from '../mapbox/mapbox';
-import createRef, {MapRef} from '../mapbox/create-ref';
+import Maplibre, {MaplibreProps} from '../maplibre/maplibre';
+import createRef, {MapRef} from '../maplibre/create-ref';
 
 import type {CSSProperties} from 'react';
 import useIsomorphicLayoutEffect from '../utils/use-isomorphic-layout-effect';
 import setGlobals, {GlobalSettings} from '../utils/set-globals';
-import type {MapLib, MapInstance, MapStyle, Callbacks} from '../types';
+import type {MapLib, MapOptions} from '../types/lib';
+import {LogoControl} from './logo-control';
+import {AttributionControl} from './attribution-control';
 
-export type MapContextValue<MapT extends MapInstance = MapInstance> = {
-  mapLib: MapLib<MapT>;
-  map: MapRef<MapT>;
+export type MapContextValue = {
+  mapLib: MapLib;
+  map: MapRef;
 };
 
 export const MapContext = React.createContext<MapContextValue>(null);
 
-type MapInitOptions<MapOptions> = Omit<
+type MapInitOptions = Omit<
   MapOptions,
   'style' | 'container' | 'bounds' | 'fitBoundsOptions' | 'center'
 >;
 
-export type MapProps<
-  MapOptions,
-  StyleT extends MapStyle,
-  CallbacksT extends Callbacks,
-  MapT extends MapInstance
-> = MapInitOptions<MapOptions> &
-  MapboxProps<StyleT, CallbacksT> &
+export type MapProps = MapInitOptions &
+  MaplibreProps &
   GlobalSettings & {
-    mapLib?: MapLib<MapT> | Promise<MapLib<MapT>>;
+    mapLib?: MapLib | Promise<MapLib>;
     reuseMaps?: boolean;
     /** Map container id */
     id?: string;
     /** Map container CSS style */
     style?: CSSProperties;
     children?: any;
+    /** Show Barikoi logo (default: true) */
+    showBarikoiLogo?: boolean;
+    /** Show Attribution (default: true) */
+    showAttribution?: boolean;
   };
 
-export default function Map<
-  MapOptions,
-  StyleT extends MapStyle,
-  CallbacksT extends Callbacks,
-  MapT extends MapInstance
->(
-  props: MapProps<MapOptions, StyleT, CallbacksT, MapT>,
-  ref: React.Ref<MapRef<MapT>>,
-  defaultLib: MapLib<MapT> | Promise<MapLib<MapT>>
-) {
+function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   const mountedMapsContext = useContext(MountedMapsContext);
-  const [mapInstance, setMapInstance] = useState<Mapbox<StyleT, CallbacksT, MapT>>(null);
+  const [mapInstance, setMapInstance] = useState<Maplibre>(null);
   const containerRef = useRef();
 
-  const {current: contextValue} = useRef<MapContextValue<MapT>>({mapLib: null, map: null});
+  const {current: contextValue} = useRef<MapContextValue>({mapLib: null, map: null});
 
   useEffect(() => {
     const mapLib = props.mapLib;
     let isMounted = true;
-    let mapbox: Mapbox<StyleT, CallbacksT, MapT>;
+    let maplibre: Maplibre;
 
-    Promise.resolve(mapLib || defaultLib)
-      .then((module: MapLib<MapT> | {default: MapLib<MapT>}) => {
+    Promise.resolve(mapLib || import('maplibre-gl'))
+      .then((module: MapLib | {default: MapLib}) => {
         if (!isMounted) {
           return;
         }
@@ -73,24 +66,22 @@ export default function Map<
           throw new Error('Invalid mapLib');
         }
 
-        // workerUrl & workerClass may change the result of supported()
-        // https://github.com/visgl/react-map-gl/discussions/2027
         setGlobals(mapboxgl, props);
-        if (!mapboxgl.supported || mapboxgl.supported(props)) {
-          if (props.reuseMaps) {
-            mapbox = Mapbox.reuse(props, containerRef.current);
-          }
-          if (!mapbox) {
-            mapbox = new Mapbox(mapboxgl.Map, props, containerRef.current);
-          }
-          contextValue.map = createRef(mapbox);
-          contextValue.mapLib = mapboxgl;
-
-          setMapInstance(mapbox);
-          mountedMapsContext?.onMapMount(contextValue.map, props.id);
-        } else {
-          throw new Error('Map is not supported by this browser');
+        if (props.reuseMaps) {
+          maplibre = Maplibre.reuse(props, containerRef.current);
         }
+        if (!maplibre) {
+          maplibre = new Maplibre(mapboxgl.Map, {
+            ...props,
+            // @ts-ignore
+            attributionControl: false
+          }, containerRef.current);
+        }
+        contextValue.map = createRef(maplibre);
+        contextValue.mapLib = mapboxgl;
+
+        setMapInstance(maplibre);
+        mountedMapsContext?.onMapMount(contextValue.map, props.id);
       })
       .catch(error => {
         const {onError} = props;
@@ -108,12 +99,12 @@ export default function Map<
 
     return () => {
       isMounted = false;
-      if (mapbox) {
+      if (maplibre) {
         mountedMapsContext?.onMapUnmount(props.id);
         if (props.reuseMaps) {
-          mapbox.recycle();
+          maplibre.recycle();
         } else {
-          mapbox.destroy();
+          maplibre.destroy();
         }
       }
     };
@@ -146,6 +137,9 @@ export default function Map<
       {mapInstance && (
         <MapContext.Provider value={contextValue}>
           <div mapboxgl-children="" style={CHILD_CONTAINER_STYLE}>
+            {/* Automatically include Barikoi Logo and Attribution controls */}
+            <LogoControl position="bottom-left" />
+            <AttributionControl position="bottom-right" />
             {props.children}
           </div>
         </MapContext.Provider>
@@ -153,3 +147,5 @@ export default function Map<
     </div>
   );
 }
+
+export const Map = React.forwardRef(_Map);

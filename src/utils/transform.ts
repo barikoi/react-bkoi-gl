@@ -1,41 +1,14 @@
-import type {MapboxProps} from '../mapbox/mapbox';
-import type {Transform, ViewState} from '../types';
+import type {MaplibreProps} from '../maplibre/maplibre';
+import type {ViewState} from '../types/common';
+import type {TransformLike} from '../types/internal';
 import {deepEqual} from './deep-equal';
-
-/**
- * Make a copy of a transform
- * @param tr
- */
-export function cloneTransform(tr: Transform): Transform {
-  const newTransform = tr.clone();
-  // Work around mapbox bug - this value is not assigned in clone(), only in resize()
-  newTransform.pixelsToGLUnits = tr.pixelsToGLUnits;
-  return newTransform;
-}
-
-/**
- * Copy projection from one transform to another. This only applies to mapbox-gl transforms
- * @param src the transform to copy projection settings from
- * @param dest to transform to copy projection settings to
- */
-export function syncProjection(src: Transform, dest: Transform): void {
-  if (!src.getProjection) {
-    return;
-  }
-  const srcProjection = src.getProjection();
-  const destProjection = dest.getProjection();
-
-  if (!deepEqual(srcProjection, destProjection)) {
-    dest.setProjection(srcProjection);
-  }
-}
 
 /**
  * Capture a transform's current state
  * @param transform
  * @returns descriptor of the view state
  */
-export function transformToViewState(tr: Transform): ViewState {
+export function transformToViewState(tr: TransformLike): ViewState {
   return {
     longitude: tr.center.lng,
     latitude: tr.center.lat,
@@ -48,39 +21,38 @@ export function transformToViewState(tr: Transform): ViewState {
 
 /* eslint-disable complexity */
 /**
- * Mutate a transform to match the given view state
- * @param transform
- * @param viewState
- * @returns true if the transform has changed
+ * Applies requested view state to a transform
+ * @returns an object containing detected changes
  */
-export function applyViewStateToTransform(tr: Transform, props: MapboxProps): boolean {
+export function applyViewStateToTransform(
+  /** An object that describes Maplibre's camera state */
+  tr: TransformLike,
+  /** Props from Map component */
+  props: MaplibreProps
+): Partial<TransformLike> {
   const v: Partial<ViewState> = props.viewState || props;
-  let changed = false;
+  const changes: Partial<TransformLike> = {};
 
-  if ('zoom' in v) {
-    const zoom = tr.zoom;
-    tr.zoom = v.zoom;
-    changed = changed || zoom !== tr.zoom;
+  if (
+    'longitude' in v &&
+    'latitude' in v &&
+    (v.longitude !== tr.center.lng || v.latitude !== tr.center.lat)
+  ) {
+    const LngLat = tr.center.constructor;
+    // @ts-expect-error we should not import LngLat class from maplibre-gl because we don't know the source of mapLib
+    changes.center = new LngLat(v.longitude, v.latitude);
   }
-  if ('bearing' in v) {
-    const bearing = tr.bearing;
-    tr.bearing = v.bearing;
-    changed = changed || bearing !== tr.bearing;
+  if ('zoom' in v && v.zoom !== tr.zoom) {
+    changes.zoom = v.zoom;
   }
-  if ('pitch' in v) {
-    const pitch = tr.pitch;
-    tr.pitch = v.pitch;
-    changed = changed || pitch !== tr.pitch;
+  if ('bearing' in v && v.bearing !== tr.bearing) {
+    changes.bearing = v.bearing;
   }
-  if (v.padding && !tr.isPaddingEqual(v.padding)) {
-    changed = true;
-    tr.padding = v.padding;
+  if ('pitch' in v && v.pitch !== tr.pitch) {
+    changes.pitch = v.pitch;
   }
-  if ('longitude' in v && 'latitude' in v) {
-    const center = tr.center;
-    // @ts-ignore
-    tr.center = new center.constructor(v.longitude, v.latitude);
-    changed = changed || center !== tr.center;
+  if (v.padding && tr.padding && !deepEqual(v.padding, tr.padding)) {
+    changes.padding = v.padding;
   }
-  return changed;
+  return changes;
 }

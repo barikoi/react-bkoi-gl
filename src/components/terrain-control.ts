@@ -3,17 +3,18 @@ import {useEffect, memo} from 'react';
 import {applyReactStyle} from '../utils/apply-react-style';
 import {useControl} from './use-control';
 
-import type {ControlPosition, NavigationControlOptions} from '../types/lib';
+import type {ControlPosition} from '../types/lib';
+import type {TerrainSpecification} from '../types/style-spec';
 
-export type NavigationControlProps = NavigationControlOptions & {
+export type TerrainControlProps = TerrainSpecification & {
   /** Placement of the control relative to the map. */
   position?: ControlPosition;
   /** CSS style override, applied to the control's container */
   style?: React.CSSProperties;
 };
 
-function _NavigationControl(props: NavigationControlProps) {
-  const ctrl = useControl(({mapLib}) => new mapLib.NavigationControl(props), {
+function _TerrainControl(props: TerrainControlProps) {
+  const ctrl = useControl(({mapLib}) => new mapLib.TerrainControl(props), {
     position: props.position
   });
 
@@ -24,4 +25,4 @@ function _NavigationControl(props: NavigationControlProps) {
   return null;
 }
 
-export const NavigationControl = memo(_NavigationControl);
+export const TerrainControl = memo(_TerrainControl);

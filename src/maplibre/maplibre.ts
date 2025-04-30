@@ -1,39 +1,36 @@
-import {
-  transformToViewState,
-  applyViewStateToTransform,
-  cloneTransform,
-  syncProjection
-} from '../utils/transform';
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import {transformToViewState, applyViewStateToTransform} from '../utils/transform';
 import {normalizeStyle} from '../utils/style-utils';
 import {deepEqual} from '../utils/deep-equal';
 
+import type {TransformLike} from '../types/internal';
 import type {
-  Transform,
   ViewState,
-  ViewStateChangeEvent,
   Point,
   PointLike,
   PaddingOptions,
-  MapStyle,
   ImmutableLike,
   LngLatBoundsLike,
-  Callbacks,
+  MapGeoJSONFeature
+} from '../types/common';
+import type {
+  StyleSpecification,
+  SkySpecification,
+  LightSpecification,
+  TerrainSpecification,
+  ProjectionSpecification
+} from '../types/style-spec';
+import type {MapInstance} from '../types/lib';
+import type {
+  MapCallbacks,
+  ViewStateChangeEvent,
   MapEvent,
   ErrorEvent,
-  MapMouseEvent,
-  MapGeoJSONFeature,
-  MapInstance,
-  MapInstanceInternal
-} from '../types';
+  MapMouseEvent
+} from '../types/events';
 
-export type MapboxProps<
-  StyleT extends MapStyle = MapStyle,
-  CallbacksT extends Callbacks = {}
-> = Partial<ViewState> &
-  CallbacksT & {
-    // Init options
-    mapboxAccessToken?: string;
-
+export type MaplibreProps = Partial<ViewState> &
+  MapCallbacks & {
     /** Camera options used when constructing the Map instance */
     initialViewState?: Partial<ViewState> & {
       /** The initial bounds of the map. If bounds is specified, it overrides longitude, latitude and zoom options. */
@@ -59,19 +56,22 @@ export type MapboxProps<
     // Styling
 
     /** Mapbox style */
-    mapStyle?: string | StyleT | ImmutableLike<StyleT>;
+    mapStyle?: string | StyleSpecification | ImmutableLike<StyleSpecification>;
     /** Enable diffing when the map style changes
      * @default true
      */
     styleDiffing?: boolean;
-    /** The fog property of the style. Must conform to the Fog Style Specification .
-     * If `undefined` is provided, removes the fog from the map. */
-    fog?: StyleT['fog'];
+    /** The projection property of the style. Must conform to the Projection Style Specification.
+     * @default 'mercator'
+     */
+    projection?: ProjectionSpecification | 'mercator' | 'globe';
     /** Light properties of the map. */
-    light?: StyleT['light'];
-    /** Terrain property of the style. Must conform to the Terrain Style Specification .
+    light?: LightSpecification;
+    /** Terrain property of the style. Must conform to the Terrain Style Specification.
      * If `undefined` is provided, removes terrain from the map. */
-    terrain?: StyleT['terrain'];
+    terrain?: TerrainSpecification;
+    /** Sky properties of the map. Must conform to the Sky Style Specification. */
+    sky?: SkySpecification;
 
     /** Default layers to query on pointer events */
     interactiveLayerIds?: string[];
@@ -79,7 +79,7 @@ export type MapboxProps<
     cursor?: string;
   };
 
-const DEFAULT_STYLE = {version: 8, sources: {}, layers: []} as MapStyle;
+const DEFAULT_STYLE = {version: 8, sources: {}, layers: []} as StyleSpecification;
 
 const pointerEvents = {
   mousedown: 'onMouseDown',
@@ -152,46 +152,29 @@ const handlerNames = [
 /**
  * A wrapper for mapbox-gl's Map class
  */
-export default class Mapbox<
-  StyleT extends MapStyle = MapStyle,
-  CallbacksT extends Callbacks = {},
-  MapT extends MapInstance = MapInstance
-> {
+export default class Maplibre {
   private _MapClass: {new (options: any): MapInstance};
   // mapboxgl.Map instance
-  private _map: MapInstanceInternal<MapT> = null;
+  private _map: MapInstance = null;
   // User-supplied props
-  props: MapboxProps<StyleT, CallbacksT>;
-
-  // Mapbox map is stateful.
-  // During method calls/user interactions, map.transform is mutated and
-  // deviate from user-supplied props.
-  // In order to control the map reactively, we shadow the transform
-  // with the one below, which reflects the view state resolved from
-  // both user-supplied props and the underlying state
-  private _renderTransform: Transform;
+  props: MaplibreProps;
 
   // Internal states
   private _internalUpdate: boolean = false;
-  private _inRender: boolean = false;
   private _hoveredFeatures: MapGeoJSONFeature[] = null;
-  private _deferredEvents: {
-    move: boolean;
-    zoom: boolean;
-    pitch: boolean;
-    rotate: boolean;
-  } = {
-    move: false,
-    zoom: false,
-    pitch: false,
-    rotate: false
-  };
+  private _propsedCameraUpdate: ViewState | null = null;
+  private _styleComponents: {
+    light?: LightSpecification;
+    sky?: SkySpecification;
+    projection?: ProjectionSpecification;
+    terrain?: TerrainSpecification | null;
+  } = {};
 
-  static savedMaps: Mapbox[] = [];
+  static savedMaps: Maplibre[] = [];
 
   constructor(
     MapClass: {new (options: any): MapInstance},
-    props: MapboxProps<StyleT, CallbacksT>,
+    props: MaplibreProps,
     container: HTMLDivElement
   ) {
     this._MapClass = MapClass;
@@ -199,26 +182,19 @@ export default class Mapbox<
     this._initialize(container);
   }
 
-  get map(): MapT {
+  get map(): MapInstance {
     return this._map;
   }
 
-  get transform(): Transform {
-    return this._renderTransform;
-  }
-
-  setProps(props: MapboxProps<StyleT, CallbacksT>) {
+  setProps(props: MaplibreProps) {
     const oldProps = this.props;
     this.props = props;
 
     const settingsChanged = this._updateSettings(props, oldProps);
-    if (settingsChanged) {
-      this._createShadowTransform(this._map);
-    }
     const sizeChanged = this._updateSize(props);
-    const viewStateChanged = this._updateViewState(props, true);
+    const viewStateChanged = this._updateViewState(props);
     this._updateStyle(props, oldProps);
-    this._updateStyleComponents(props, oldProps);
+    this._updateStyleComponents(props);
     this._updateHandlers(props, oldProps);
 
     // If 1) view state has changed to match props and
@@ -229,11 +205,8 @@ export default class Mapbox<
     }
   }
 
-  static reuse<StyleT extends MapStyle, CallbacksT extends Callbacks, MapT extends MapInstance>(
-    props: MapboxProps<StyleT, CallbacksT>,
-    container: HTMLDivElement
-  ): Mapbox<StyleT, CallbacksT, MapT> {
-    const that = Mapbox.savedMaps.pop() as Mapbox<StyleT, CallbacksT, MapT>;
+  static reuse(props: MaplibreProps, container: HTMLDivElement): Maplibre {
+    const that = Maplibre.savedMaps.pop();
     if (!that) {
       return null;
     }
@@ -269,7 +242,7 @@ export default class Mapbox<
       if (initialViewState.bounds) {
         map.fitBounds(initialViewState.bounds, {...initialViewState.fitBoundsOptions, duration: 0});
       } else {
-        that._updateViewState(initialViewState, false);
+        that._updateViewState(initialViewState);
       }
     }
 
@@ -277,7 +250,7 @@ export default class Mapbox<
     if (map.isStyleLoaded()) {
       map.fire('load');
     } else {
-      map.once('styledata', () => map.fire('load'));
+      map.once('style.load', () => map.fire('load'));
     }
 
     // Force reload
@@ -287,13 +260,12 @@ export default class Mapbox<
   }
 
   /* eslint-disable complexity,max-statements */
-  _initialize(container: HTMLDivElement) {
+  private _initialize(container: HTMLDivElement) {
     const {props} = this;
     const {mapStyle = DEFAULT_STYLE} = props;
     const mapOptions = {
       ...props,
       ...props.initialViewState,
-      accessToken: props.mapboxAccessToken || getAccessTokenFromEnv() || null,
       container,
       style: normalizeStyle(mapStyle)
     };
@@ -319,7 +291,7 @@ export default class Mapbox<
       };
     }
 
-    const map = new this._MapClass(mapOptions) as MapInstanceInternal<MapT>;
+    const map = new this._MapClass(mapOptions);
     // Props that are not part of constructor options
     if (viewState.padding) {
       map.setPadding(viewState.padding);
@@ -327,37 +299,24 @@ export default class Mapbox<
     if (props.cursor) {
       map.getCanvas().style.cursor = props.cursor;
     }
-    this._createShadowTransform(map);
-
-    // Hack
-    // Insert code into map's render cycle
-    const renderMap = map._render;
-    map._render = (arg: number) => {
-      this._inRender = true;
-      renderMap.call(map, arg);
-      this._inRender = false;
-    };
-    const runRenderTaskQueue = map._renderTaskQueue.run;
-    map._renderTaskQueue.run = (arg: number) => {
-      runRenderTaskQueue.call(map._renderTaskQueue, arg);
-      this._onBeforeRepaint();
-    };
-    map.on('render', () => this._onAfterRepaint());
-    // Insert code into map's event pipeline
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const fireEvent = map.fire;
-    map.fire = this._fireEvent.bind(this, fireEvent);
 
     // add listeners
-    map.on('resize', () => {
-      this._renderTransform.resize(map.transform.width, map.transform.height);
+    map.transformCameraUpdate = this._onCameraUpdate;
+    map.on('style.load', () => {
+      // Map style has changed, this would have wiped out all settings from props
+      this._styleComponents = {
+        light: map.getLight(),
+        sky: map.getSky(),
+        // @ts-ignore getProjection() does not exist in v4
+        projection: map.getProjection?.(),
+        terrain: map.getTerrain()
+      };
+      this._updateStyleComponents(this.props);
     });
-    map.on('styledata', () => {
-      this._updateStyleComponents(this.props, {});
-      // Projection can be set in stylesheet
-      syncProjection(map.transform, this._renderTransform);
+    map.on('sourcedata', () => {
+      // Some sources have loaded, we may need them to attach terrain
+      this._updateStyleComponents(this.props);
     });
-    map.on('sourcedata', () => this._updateStyleComponents(this.props, {}));
     for (const eventName in pointerEvents) {
       map.on(eventName, this._onPointerEvent);
     }
@@ -377,7 +336,7 @@ export default class Mapbox<
     const children = container.querySelector('[mapboxgl-children]');
     children?.remove();
 
-    Mapbox.savedMaps.push(this);
+    Maplibre.savedMaps.push(this);
   }
 
   destroy() {
@@ -392,7 +351,7 @@ export default class Mapbox<
     // map._render will throw error if style does not exist
     // https://github.com/mapbox/mapbox-gl-js/blob/fb9fc316da14e99ff4368f3e4faa3888fb43c513
     //   /src/ui/map.js#L1834
-    if (!this._inRender && map.style) {
+    if (map.style) {
       // cancel the scheduled update
       if (map._frame) {
         map._frame.cancel();
@@ -403,18 +362,11 @@ export default class Mapbox<
     }
   }
 
-  _createShadowTransform(map: any) {
-    const renderTransform = cloneTransform(map.transform);
-    map.painter.transform = renderTransform;
-
-    this._renderTransform = renderTransform;
-  }
-
   /* Trigger map resize if size is controlled
      @param {object} nextProps
      @returns {bool} true if size has changed
    */
-  _updateSize(nextProps: MapboxProps<StyleT>): boolean {
+  private _updateSize(nextProps: MaplibreProps): boolean {
     // Check if size is controlled
     const {viewState} = nextProps;
     if (viewState) {
@@ -433,46 +385,24 @@ export default class Mapbox<
      @param {bool} triggerEvents - should fire camera events
      @returns {bool} true if anything is changed
    */
-  _updateViewState(nextProps: MapboxProps<StyleT>, triggerEvents: boolean): boolean {
-    if (this._internalUpdate) {
-      return false;
-    }
+  private _updateViewState(nextProps: MaplibreProps): boolean {
     const map = this._map;
-
-    const tr = this._renderTransform;
-    // Take a snapshot of the transform before mutation
-    const {zoom, pitch, bearing} = tr;
+    const tr = map.transform;
     const isMoving = map.isMoving();
-
-    if (isMoving) {
-      // All movement of the camera is done relative to the sea level
-      tr.cameraElevationReference = 'sea';
-    }
-    const changed = applyViewStateToTransform(tr, {
-      ...transformToViewState(map.transform),
-      ...nextProps
-    });
-    if (isMoving) {
-      // Reset camera reference
-      tr.cameraElevationReference = 'ground';
-    }
-
-    if (changed && triggerEvents) {
-      const deferredEvents = this._deferredEvents;
-      // Delay DOM control updates to the next render cycle
-      deferredEvents.move = true;
-      deferredEvents.zoom ||= zoom !== tr.zoom;
-      deferredEvents.rotate ||= bearing !== tr.bearing;
-      deferredEvents.pitch ||= pitch !== tr.pitch;
-    }
 
     // Avoid manipulating the real transform when interaction/animation is ongoing
     // as it would interfere with Mapbox's handlers
     if (!isMoving) {
-      applyViewStateToTransform(map.transform, nextProps);
+      const changes: any = applyViewStateToTransform(tr, nextProps);
+      if (Object.keys(changes).length > 0) {
+        this._internalUpdate = true;
+        map.jumpTo(changes);
+        this._internalUpdate = false;
+        return true;
+      }
     }
 
-    return changed;
+    return false;
   }
 
   /* Update camera constraints and projection settings to match props
@@ -480,7 +410,7 @@ export default class Mapbox<
      @param {object} currProps
      @returns {bool} true if anything is changed
    */
-  _updateSettings(nextProps: MapboxProps<StyleT>, currProps: MapboxProps<StyleT>): boolean {
+  private _updateSettings(nextProps: MaplibreProps, currProps: MaplibreProps): boolean {
     const map = this._map;
     let changed = false;
     for (const propName of settingNames) {
@@ -493,12 +423,8 @@ export default class Mapbox<
     return changed;
   }
 
-  /* Update map style to match props
-     @param {object} nextProps
-     @param {object} currProps
-     @returns {bool} true if style is changed
-   */
-  _updateStyle(nextProps: MapboxProps<StyleT>, currProps: MapboxProps<StyleT>): boolean {
+  /* Update map style to match props */
+  private _updateStyle(nextProps: MaplibreProps, currProps: MaplibreProps): void {
     if (nextProps.cursor !== currProps.cursor) {
       this._map.getCanvas().style.cursor = nextProps.cursor || '';
     }
@@ -512,55 +438,52 @@ export default class Mapbox<
         options.localIdeographFontFamily = nextProps.localIdeographFontFamily;
       }
       this._map.setStyle(normalizeStyle(mapStyle), options);
-      return true;
     }
-    return false;
   }
 
-  /* Update fog, light and terrain to match props
-     @param {object} nextProps
-     @param {object} currProps
-     @returns {bool} true if anything is changed
+  /* Update fog, light, projection and terrain to match props
+   * These props are special because
+   * 1. They can not be applied right away. Certain conditions (style loaded, source loaded, etc.) must be met
+   * 2. They can be overwritten by mapStyle
    */
-  _updateStyleComponents(nextProps: MapboxProps<StyleT>, currProps: MapboxProps<StyleT>): boolean {
+  private _updateStyleComponents({light, projection, sky, terrain}: MaplibreProps): void {
     const map = this._map;
-    let changed = false;
-    if (map.isStyleLoaded()) {
-      if ('light' in nextProps && map.setLight && !deepEqual(nextProps.light, currProps.light)) {
-        changed = true;
-        map.setLight(nextProps.light);
-      }
-      if ('fog' in nextProps && map.setFog && !deepEqual(nextProps.fog, currProps.fog)) {
-        changed = true;
-        map.setFog(nextProps.fog);
+    const currProps = this._styleComponents;
+    // We can safely manipulate map style once it's loaded
+    if (map.style._loaded) {
+      if (light && !deepEqual(light, currProps.light)) {
+        currProps.light = light;
+        map.setLight(light);
       }
       if (
-        'terrain' in nextProps &&
-        map.setTerrain &&
-        !deepEqual(nextProps.terrain, currProps.terrain)
+        projection &&
+        !deepEqual(projection, currProps.projection) &&
+        projection !== currProps.projection?.type
       ) {
-        if (!nextProps.terrain || map.getSource(nextProps.terrain.source)) {
-          changed = true;
-          map.setTerrain(nextProps.terrain);
+        currProps.projection = typeof projection === 'string' ? {type: projection} : projection;
+        // @ts-ignore setProjection does not exist in v4
+        map.setProjection?.(currProps.projection);
+      }
+      if (sky && !deepEqual(sky, currProps.sky)) {
+        currProps.sky = sky;
+        map.setSky(sky);
+      }
+      if (terrain !== undefined && !deepEqual(terrain, currProps.terrain)) {
+        if (!terrain || map.getSource(terrain.source)) {
+          currProps.terrain = terrain;
+          map.setTerrain(terrain);
         }
       }
     }
-    return changed;
   }
 
-  /* Update interaction handlers to match props
-     @param {object} nextProps
-     @param {object} currProps
-     @returns {bool} true if anything is changed
-   */
-  _updateHandlers(nextProps: MapboxProps<StyleT>, currProps: MapboxProps<StyleT>): boolean {
+  /* Update interaction handlers to match props */
+  private _updateHandlers(nextProps: MaplibreProps, currProps: MaplibreProps): void {
     const map = this._map;
-    let changed = false;
     for (const propName of handlerNames) {
       const newValue = nextProps[propName] ?? true;
       const oldValue = currProps[propName] ?? true;
       if (!deepEqual(newValue, oldValue)) {
-        changed = true;
         if (newValue) {
           map[propName].enable(newValue);
         } else {
@@ -568,37 +491,52 @@ export default class Mapbox<
         }
       }
     }
-    return changed;
   }
 
-  _onEvent = (e: MapEvent<MapT>) => {
+  private _onEvent = (e: MapEvent) => {
     // @ts-ignore
     const cb = this.props[otherEvents[e.type]];
     if (cb) {
       cb(e);
     } else if (e.type === 'error') {
-      console.error((e as ErrorEvent<MapT>).error); // eslint-disable-line
+      console.error((e as ErrorEvent).error); // eslint-disable-line
     }
+  };
+
+  private _onCameraEvent = (e: ViewStateChangeEvent) => {
+    if (this._internalUpdate) {
+      return;
+    }
+    e.viewState = this._propsedCameraUpdate || transformToViewState(this._map.transform);
+    // @ts-ignore
+    const cb = this.props[cameraEvents[e.type]];
+    if (cb) {
+      cb(e);
+    }
+  };
+
+  private _onCameraUpdate = (tr: TransformLike) => {
+    if (this._internalUpdate) {
+      return tr;
+    }
+    this._propsedCameraUpdate = transformToViewState(tr);
+    return applyViewStateToTransform(tr, this.props) as any;
   };
 
   private _queryRenderedFeatures(point: Point) {
     const map = this._map;
-    const tr = map.transform;
     const {interactiveLayerIds = []} = this.props;
     try {
-      map.transform = this._renderTransform;
       return map.queryRenderedFeatures(point, {
         layers: interactiveLayerIds.filter(map.getLayer.bind(map))
       });
     } catch {
       // May fail if style is not loaded
       return [];
-    } finally {
-      map.transform = tr;
     }
   }
 
-  _updateHover(e: MapMouseEvent<MapT>) {
+  private _updateHover(e: MapMouseEvent) {
     const {props} = this;
     const shouldTrackHoveredFeatures =
       props.interactiveLayerIds && (props.onMouseMove || props.onMouseEnter || props.onMouseLeave);
@@ -624,7 +562,7 @@ export default class Mapbox<
     }
   }
 
-  _onPointerEvent = (e: MapMouseEvent<MapT> | MapMouseEvent<MapT>) => {
+  private _onPointerEvent = (e: MapMouseEvent) => {
     if (e.type === 'mousemove' || e.type === 'mouseout') {
       this._updateHover(e);
     }
@@ -639,104 +577,4 @@ export default class Mapbox<
       delete e.features;
     }
   };
-
-  _onCameraEvent = (e: ViewStateChangeEvent<MapT>) => {
-    if (!this._internalUpdate) {
-      // @ts-ignore
-      const cb = this.props[cameraEvents[e.type]];
-      if (cb) {
-        cb(e);
-      }
-    }
-    if (e.type in this._deferredEvents) {
-      this._deferredEvents[e.type] = false;
-    }
-  };
-
-  _fireEvent(baseFire: Function, event: string | MapEvent<MapT>, properties?: object) {
-    const map = this._map;
-    const tr = map.transform;
-
-    const eventType = typeof event === 'string' ? event : event.type;
-    if (eventType === 'move') {
-      this._updateViewState(this.props, false);
-    }
-    if (eventType in cameraEvents) {
-      if (typeof event === 'object') {
-        (event as unknown as ViewStateChangeEvent<MapT>).viewState = transformToViewState(tr);
-      }
-      if (this._map.isMoving()) {
-        // Replace map.transform with ours during the callbacks
-        map.transform = this._renderTransform;
-        baseFire.call(map, event, properties);
-        map.transform = tr;
-
-        return map;
-      }
-    }
-    baseFire.call(map, event, properties);
-
-    return map;
-  }
-
-  // All camera manipulations are complete, ready to repaint
-  _onBeforeRepaint() {
-    const map = this._map;
-
-    // If there are camera changes driven by props, invoke camera events so that DOM controls are synced
-    this._internalUpdate = true;
-    for (const eventType in this._deferredEvents) {
-      if (this._deferredEvents[eventType]) {
-        map.fire(eventType);
-      }
-    }
-    this._internalUpdate = false;
-
-    const tr = this._map.transform;
-    // Make sure camera matches the current props
-    map.transform = this._renderTransform;
-
-    this._onAfterRepaint = () => {
-      // Mapbox transitions between non-mercator projection and mercator during render time
-      // Copy it back to the other
-      syncProjection(this._renderTransform, tr);
-      // Restores camera state before render/load events are fired
-      map.transform = tr;
-    };
-  }
-
-  _onAfterRepaint: () => void;
-}
-
-/**
- * Access token can be provided via one of:
- *   mapboxAccessToken prop
- *   access_token query parameter
- *   MapboxAccessToken environment variable
- *   REACT_APP_MAPBOX_ACCESS_TOKEN environment variable
- * @returns access token
- */
-function getAccessTokenFromEnv(): string {
-  let accessToken = null;
-
-  /* global location, process */
-  if (typeof location !== 'undefined') {
-    const match = /access_token=([^&\/]*)/.exec(location.search);
-    accessToken = match && match[1];
-  }
-
-  // Note: This depends on bundler plugins (e.g. webpack) importing environment correctly
-  try {
-    accessToken = accessToken || process.env.MapboxAccessToken;
-  } catch {
-    // ignore
-  }
-
-  try {
-    accessToken = accessToken || process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
-  } catch {
-    // ignore
-  }
-
-  return accessToken;
 }

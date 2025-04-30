@@ -1,2 +1,2 @@
-export * from './exports-mapbox';
-export {default as default} from './exports-mapbox';
+export * from './exports-maplibre-gl';
+export {default as default} from './exports-maplibre-gl';
