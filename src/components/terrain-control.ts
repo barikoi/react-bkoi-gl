@@ -1,10 +1,10 @@
-import * as React from 'react';
-import {useEffect, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import { useEffect, memo } from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
-import type {ControlPosition} from '../types/lib';
-import type {TerrainSpecification} from '../types/style-spec';
+import type { ControlPosition } from "../types/lib";
+import type { TerrainSpecification } from "../types/style-spec";
 
 export type TerrainControlProps = TerrainSpecification & {
   /** Placement of the control relative to the map. */
@@ -14,8 +14,8 @@ export type TerrainControlProps = TerrainSpecification & {
 };
 
 function _TerrainControl(props: TerrainControlProps) {
-  const ctrl = useControl(({mapLib}) => new mapLib.TerrainControl(props), {
-    position: props.position
+  const ctrl = useControl(({ mapLib }) => new mapLib.TerrainControl(props), {
+    position: props.position,
   });
 
   useEffect(() => {
@@ -25,4 +25,5 @@ function _TerrainControl(props: TerrainControlProps) {
   return null;
 }
 
-export const TerrainControl = memo(_TerrainControl);
+export const TerrainControl: React.FC<TerrainControlProps> =
+  memo(_TerrainControl);

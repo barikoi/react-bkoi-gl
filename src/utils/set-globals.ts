@@ -4,7 +4,7 @@ export type GlobalSettings = {
    */
   maxParallelImageRequests?: number;
   /** The map's RTL text plugin. Necessary for supporting the Arabic and Hebrew languages, which are written right-to-left.  */
-  RTLTextPlugin?: string | {pluginUrl: string; lazy?: boolean};
+  RTLTextPlugin?: string | { pluginUrl: string; lazy?: boolean };
   /** The number of web workers instantiated on a page with maplibre-gl maps.
    * @default 2
    */
@@ -16,14 +16,17 @@ export type GlobalSettings = {
 };
 
 export default function setGlobals(mapLib: any, props: GlobalSettings) {
-  const {RTLTextPlugin, maxParallelImageRequests, workerCount, workerUrl} = props;
+  const { RTLTextPlugin, maxParallelImageRequests, workerCount, workerUrl } =
+    props;
   if (
     RTLTextPlugin &&
     mapLib.getRTLTextPluginStatus &&
-    mapLib.getRTLTextPluginStatus() === 'unavailable'
+    mapLib.getRTLTextPluginStatus() === "unavailable"
   ) {
-    const {pluginUrl, lazy = true} =
-      typeof RTLTextPlugin === 'string' ? {pluginUrl: RTLTextPlugin} : RTLTextPlugin;
+    const { pluginUrl, lazy = true } =
+      typeof RTLTextPlugin === "string"
+        ? { pluginUrl: RTLTextPlugin }
+        : RTLTextPlugin;
 
     mapLib.setRTLTextPlugin(
       pluginUrl,
@@ -33,7 +36,7 @@ export default function setGlobals(mapLib: any, props: GlobalSettings) {
           console.error(error);
         }
       },
-      lazy
+      lazy,
     );
   }
   if (maxParallelImageRequests !== undefined) {

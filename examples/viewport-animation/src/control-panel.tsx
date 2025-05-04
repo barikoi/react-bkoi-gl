@@ -1,6 +1,6 @@
-import * as React from 'react';
+import * as React from "react";
 
-import CITIES from '../../.data/cities.json';
+import CITIES from "../../.data/cities.json";
 
 function ControlPanel(props) {
   return (
@@ -17,18 +17,20 @@ function ControlPanel(props) {
       </div>
       <hr />
 
-      {CITIES.filter(city => city.state === 'California').map((city, index) => (
-        <div key={`btn-${index}`} className="input">
-          <input
-            type="radio"
-            name="city"
-            id={`city-${index}`}
-            defaultChecked={city.city === 'San Francisco'}
-            onClick={() => props.onSelectCity(city)}
-          />
-          <label htmlFor={`city-${index}`}>{city.city}</label>
-        </div>
-      ))}
+      {CITIES.filter((city) => city.state === "California").map(
+        (city, index) => (
+          <div key={`btn-${index}`} className="input">
+            <input
+              type="radio"
+              name="city"
+              id={`city-${index}`}
+              defaultChecked={city.city === "San Francisco"}
+              onClick={() => props.onSelectCity(city)}
+            />
+            <label htmlFor={`city-${index}`}>{city.city}</label>
+          </div>
+        ),
+      )}
     </div>
   );
 }

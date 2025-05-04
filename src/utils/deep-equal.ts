@@ -1,4 +1,4 @@
-import type {PointLike} from '../types/common';
+import type { PointLike } from "../types/common";
 
 /**
  * Compare two points
@@ -41,7 +41,7 @@ export function deepEqual(a: any, b: any): boolean {
   } else if (Array.isArray(b)) {
     return false;
   }
-  if (typeof a === 'object' && typeof b === 'object') {
+  if (typeof a === "object" && typeof b === "object") {
     const aKeys = Object.keys(a);
     const bKeys = Object.keys(b);
     if (aKeys.length !== bKeys.length) {

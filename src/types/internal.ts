@@ -1,5 +1,5 @@
 // Internal types
-import type {LngLat, PaddingOptions} from 'maplibre-gl';
+import type { LngLat, PaddingOptions } from "maplibre-gl";
 
 /**
  * maplibre's Transform interface / CameraUpdateTransformFunction argument
@@ -22,5 +22,5 @@ export type {
   RasterTileSource as RasterSourceImplementation,
   RasterDEMTileSource as RasterDemSourceImplementation,
   VideoSource as VideoSourceImplementation,
-  Source as AnySourceImplementation
-} from 'maplibre-gl';
+  Source as AnySourceImplementation,
+} from "maplibre-gl";

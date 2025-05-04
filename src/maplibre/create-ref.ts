@@ -1,28 +1,28 @@
-import type {MapInstance} from '../types/lib';
-import type Maplibre from './maplibre';
+import type { Map as MapInstance } from "../types/lib";
+import type Maplibre from "./maplibre";
 
 /** These methods may break the react binding if called directly */
 const skipMethods = [
-  'setMaxBounds',
-  'setMinZoom',
-  'setMaxZoom',
-  'setMinPitch',
-  'setMaxPitch',
-  'setRenderWorldCopies',
-  'setProjection',
-  'setStyle',
-  'addSource',
-  'removeSource',
-  'addLayer',
-  'removeLayer',
-  'setLayerZoomRange',
-  'setFilter',
-  'setPaintProperty',
-  'setLayoutProperty',
-  'setLight',
-  'setTerrain',
-  'setFog',
-  'remove'
+  "setMaxBounds",
+  "setMinZoom",
+  "setMaxZoom",
+  "setMinPitch",
+  "setMaxPitch",
+  "setRenderWorldCopies",
+  "setProjection",
+  "setStyle",
+  "addSource",
+  "removeSource",
+  "addLayer",
+  "removeLayer",
+  "setLayerZoomRange",
+  "setFilter",
+  "setPaintProperty",
+  "setLayoutProperty",
+  "setLight",
+  "setTerrain",
+  "setFog",
+  "remove",
 ] as const;
 
 export type MapRef = {
@@ -36,7 +36,7 @@ export default function createRef(mapInstance: Maplibre): MapRef | null {
 
   const map = mapInstance.map;
   const result: any = {
-    getMap: () => map
+    getMap: () => map,
   };
 
   for (const key of getMethodNames(map)) {
@@ -56,10 +56,10 @@ function getMethodNames(obj: Object) {
   while (proto) {
     for (const key of Object.getOwnPropertyNames(proto)) {
       if (
-        key[0] !== '_' &&
-        typeof obj[key] === 'function' &&
-        key !== 'fire' &&
-        key !== 'setEventedParent'
+        key[0] !== "_" &&
+        typeof obj[key] === "function" &&
+        key !== "fire" &&
+        key !== "setEventedParent"
       ) {
         result.add(key);
       }

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 function formatTime(time) {
   const date = new Date(time);
@@ -6,12 +6,19 @@ function formatTime(time) {
 }
 
 function ControlPanel(props) {
-  const {startTime, endTime, onChangeTime, allDays, onChangeAllDays, selectedTime} = props;
+  const {
+    startTime,
+    endTime,
+    onChangeTime,
+    allDays,
+    onChangeAllDays,
+    selectedTime,
+  } = props;
   const day = 24 * 60 * 60 * 1000;
   const days = Math.round((endTime - startTime) / day);
   const selectedDay = Math.round((selectedTime - startTime) / day);
 
-  const onSelectDay = evt => {
+  const onSelectDay = (evt) => {
     const daysToAdd = evt.target.value;
     // add selected days to start time to calculate new time
     const newTime = startTime + daysToAdd * day;
@@ -33,10 +40,10 @@ function ControlPanel(props) {
           type="checkbox"
           name="allday"
           checked={allDays}
-          onChange={evt => onChangeAllDays(evt.target.checked)}
+          onChange={(evt) => onChangeAllDays(evt.target.checked)}
         />
       </div>
-      <div className={`input ${allDays ? 'disabled' : ''}`}>
+      <div className={`input ${allDays ? "disabled" : ""}`}>
         <label>Each Day: {formatTime(selectedTime)}</label>
         <input
           type="range"
@@ -50,7 +57,7 @@ function ControlPanel(props) {
       </div>
       <hr />
       <p>
-        Data source:{' '}
+        Data source:{" "}
         <a href="https://docs.mapbox.com/mapbox-gl-js/assets/earthquakes.geojson">
           earthquakes.geojson
         </a>

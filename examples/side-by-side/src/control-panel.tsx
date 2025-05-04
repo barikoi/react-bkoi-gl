@@ -1,14 +1,17 @@
-import * as React from 'react';
-import {useCallback} from 'react';
+import * as React from "react";
+import { useCallback } from "react";
 
-export type Mode = 'side-by-side' | 'split-screen';
+export type Mode = "side-by-side" | "split-screen";
 
-function ControlPanel(props: {mode: Mode; onModeChange: (newMode: Mode) => void}) {
+function ControlPanel(props: {
+  mode: Mode;
+  onModeChange: (newMode: Mode) => void;
+}) {
   const onModeChange = useCallback(
-    evt => {
+    (evt) => {
       props.onModeChange(evt.target.value as Mode);
     },
-    [props.onModeChange]
+    [props.onModeChange],
   );
 
   return (

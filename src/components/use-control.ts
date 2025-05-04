@@ -1,7 +1,7 @@
-import {useContext, useMemo, useEffect} from 'react';
-import type {IControl, ControlPosition} from '../types/lib';
-import {MapContext} from './map';
-import type {MapContextValue} from './map';
+import { useContext, useMemo, useEffect } from "react";
+import type { IControl, ControlPosition } from "../types/lib";
+import { MapContext } from "./map";
+import type { MapContextValue } from "./map";
 
 type ControlOptions = {
   position?: ControlPosition;
@@ -9,37 +9,43 @@ type ControlOptions = {
 
 export function useControl<T extends IControl>(
   onCreate: (context: MapContextValue) => T,
-  opts?: ControlOptions
+  opts?: ControlOptions,
 ): T;
 
 export function useControl<T extends IControl>(
   onCreate: (context: MapContextValue) => T,
   onRemove: (context: MapContextValue) => void,
-  opts?: ControlOptions
+  opts?: ControlOptions,
 ): T;
 
 export function useControl<T extends IControl>(
   onCreate: (context: MapContextValue) => T,
   onAdd: (context: MapContextValue) => void,
   onRemove: (context: MapContextValue) => void,
-  opts?: ControlOptions
+  opts?: ControlOptions,
 ): T;
 
 export function useControl<T extends IControl>(
   onCreate: (context: MapContextValue) => T,
   arg1?: ((context: MapContextValue) => void) | ControlOptions,
   arg2?: ((context: MapContextValue) => void) | ControlOptions,
-  arg3?: ControlOptions
+  arg3?: ControlOptions,
 ): T {
   const context = useContext(MapContext);
   const ctrl = useMemo(() => onCreate(context), []);
 
   useEffect(() => {
     const opts = (arg3 || arg2 || arg1) as ControlOptions;
-    const onAdd = typeof arg1 === 'function' && typeof arg2 === 'function' ? arg1 : null;
-    const onRemove = typeof arg2 === 'function' ? arg2 : typeof arg1 === 'function' ? arg1 : null;
+    const onAdd =
+      typeof arg1 === "function" && typeof arg2 === "function" ? arg1 : null;
+    const onRemove =
+      typeof arg2 === "function"
+        ? arg2
+        : typeof arg1 === "function"
+        ? arg1
+        : null;
 
-    const {map} = context;
+    const { map } = context;
     if (!map.hasControl(ctrl)) {
       map.addControl(ctrl, opts?.position);
       if (onAdd) {

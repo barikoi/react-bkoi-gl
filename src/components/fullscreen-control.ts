@@ -1,12 +1,15 @@
 /* global document */
-import * as React from 'react';
-import {useEffect, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import { useEffect, memo } from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
-import type {ControlPosition, FullscreenControlOptions} from '../types/lib';
+import type { ControlPosition, FullscreenControlOptions } from "../types/lib";
 
-export type FullscreenControlProps = Omit<FullscreenControlOptions, 'container'> & {
+export type FullscreenControlProps = Omit<
+  FullscreenControlOptions,
+  "container"
+> & {
   /** Id of the DOM element which should be made full screen. By default, the map container
    * element will be made full screen. */
   containerId?: string;
@@ -18,11 +21,12 @@ export type FullscreenControlProps = Omit<FullscreenControlOptions, 'container'>
 
 function _FullscreenControl(props: FullscreenControlProps) {
   const ctrl = useControl(
-    ({mapLib}) =>
+    ({ mapLib }) =>
       new mapLib.FullscreenControl({
-        container: props.containerId && document.getElementById(props.containerId)
+        container:
+          props.containerId && document.getElementById(props.containerId),
       }),
-    {position: props.position}
+    { position: props.position },
   );
 
   useEffect(() => {
@@ -32,4 +36,5 @@ function _FullscreenControl(props: FullscreenControlProps) {
   return null;
 }
 
-export const FullscreenControl = memo(_FullscreenControl);
+export const FullscreenControl: React.FC<FullscreenControlProps> =
+  memo(_FullscreenControl);

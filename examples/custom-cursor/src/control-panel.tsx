@@ -1,12 +1,12 @@
-import * as React from 'react';
-import {useState, useEffect} from 'react';
+import * as React from "react";
+import { useState, useEffect } from "react";
 
 // Layer id patterns by category
 const layerSelector = {
   parks: /park/,
   buildings: /building/,
   roads: /bridge|road|tunnel/,
-  labels: /label|place|poi/
+  labels: /label|place|poi/,
 };
 
 function getLayerFilter(categories, layerId) {
@@ -18,11 +18,15 @@ function getLayerFilter(categories, layerId) {
   return false;
 }
 
-function Checkbox({name, value, onChange}) {
+function Checkbox({ name, value, onChange }) {
   return (
     <div key={name} className="input">
       <label>{name}</label>
-      <input type="checkbox" checked={value} onChange={evt => onChange(name, evt.target.checked)} />
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(evt) => onChange(name, evt.target.checked)}
+      />
     </div>
   );
 }
@@ -32,16 +36,16 @@ function StyleControls(props) {
     parks: true,
     buildings: true,
     roads: true,
-    labels: true
+    labels: true,
   });
 
   useEffect(() => {
-    const filter = layerId => getLayerFilter(categories, layerId);
+    const filter = (layerId) => getLayerFilter(categories, layerId);
     props.onChange(filter);
   }, [categories]);
 
   const toggleLayer = (name, on) => {
-    setCategories({...categories, [name]: on});
+    setCategories({ ...categories, [name]: on });
   };
 
   return (
@@ -58,8 +62,13 @@ function StyleControls(props) {
       </div>
       <hr />
       <p>Clickable layers</p>
-      {Object.keys(layerSelector).map(name => (
-        <Checkbox key={name} name={name} value={categories[name]} onChange={toggleLayer} />
+      {Object.keys(layerSelector).map((name) => (
+        <Checkbox
+          key={name}
+          name={name}
+          value={categories[name]}
+          onChange={toggleLayer}
+        />
       ))}
     </div>
   );

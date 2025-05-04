@@ -1,21 +1,21 @@
-import * as React from 'react';
-import {useState, useMemo} from 'react';
-import {createRoot} from 'react-dom/client';
+import * as React from "react";
+import { useState, useMemo } from "react";
+import { createRoot } from "react-dom/client";
 import Map, {
   Marker,
   Popup,
   NavigationControl,
   FullscreenControl,
   ScaleControl,
-  GeolocateControl
-} from 'react-map-gl';
+  GeolocateControl,
+} from "react-map-gl";
 
-import ControlPanel from './control-panel';
-import Pin from './pin';
+import ControlPanel from "./control-panel";
+import Pin from "./pin";
 
-import CITIES from '../../.data/cities.json';
+import CITIES from "../../.data/cities.json";
 
-const TOKEN = ''; // Set your mapbox token here
+const TOKEN = ""; // Set your mapbox token here
 
 export default function App() {
   const [popupInfo, setPopupInfo] = useState(null);
@@ -28,7 +28,7 @@ export default function App() {
           longitude={city.longitude}
           latitude={city.latitude}
           anchor="bottom"
-          onClick={e => {
+          onClick={(e) => {
             // If we let the click event propagates to the map, it will immediately close the popup
             // with `closeOnClick: true`
             e.originalEvent.stopPropagation();
@@ -38,7 +38,7 @@ export default function App() {
           <Pin />
         </Marker>
       )),
-    []
+    [],
   );
 
   return (
@@ -49,7 +49,7 @@ export default function App() {
           longitude: -100,
           zoom: 3.5,
           bearing: 0,
-          pitch: 0
+          pitch: 0,
         }}
         mapStyle="mapbox://styles/mapbox/dark-v9"
         mapboxAccessToken={TOKEN}
@@ -69,7 +69,7 @@ export default function App() {
             onClose={() => setPopupInfo(null)}
           >
             <div>
-              {popupInfo.city}, {popupInfo.state} |{' '}
+              {popupInfo.city}, {popupInfo.state} |{" "}
               <a
                 target="_new"
                 href={`http://en.wikipedia.org/w/index.php?title=Special:Search&search=${popupInfo.city}, ${popupInfo.state}`}

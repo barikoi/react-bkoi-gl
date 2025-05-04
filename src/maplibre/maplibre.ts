@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import {transformToViewState, applyViewStateToTransform} from '../utils/transform';
-import {normalizeStyle} from '../utils/style-utils';
-import {deepEqual} from '../utils/deep-equal';
+import {
+  transformToViewState,
+  applyViewStateToTransform,
+} from "../utils/transform";
+import { normalizeStyle } from "../utils/style-utils";
+import { deepEqual } from "../utils/deep-equal";
 
-import type {TransformLike} from '../types/internal';
+import type { TransformLike } from "../types/internal";
 import type {
   ViewState,
   Point,
@@ -11,23 +14,23 @@ import type {
   PaddingOptions,
   ImmutableLike,
   LngLatBoundsLike,
-  MapGeoJSONFeature
-} from '../types/common';
+  MapGeoJSONFeature,
+} from "../types/common";
 import type {
   StyleSpecification,
   SkySpecification,
   LightSpecification,
   TerrainSpecification,
-  ProjectionSpecification
-} from '../types/style-spec';
-import type {MapInstance} from '../types/lib';
+  ProjectionSpecification,
+} from "../types/style-spec";
+import type { Map as MapInstance } from "../types/lib";
 import type {
   MapCallbacks,
   ViewStateChangeEvent,
   MapEvent,
   ErrorEvent,
-  MapMouseEvent
-} from '../types/events';
+  MapMouseEvent,
+} from "../types/events";
 
 export type MaplibreProps = Partial<ViewState> &
   MapCallbacks & {
@@ -64,7 +67,7 @@ export type MaplibreProps = Partial<ViewState> &
     /** The projection property of the style. Must conform to the Projection Style Specification.
      * @default 'mercator'
      */
-    projection?: ProjectionSpecification | 'mercator' | 'globe';
+    projection?: ProjectionSpecification | "mercator" | "globe";
     /** Light properties of the map. */
     light?: LightSpecification;
     /** Terrain property of the style. Must conform to the Terrain Style Specification.
@@ -79,81 +82,85 @@ export type MaplibreProps = Partial<ViewState> &
     cursor?: string;
   };
 
-const DEFAULT_STYLE = {version: 8, sources: {}, layers: []} as StyleSpecification;
+const DEFAULT_STYLE = {
+  version: 8,
+  sources: {},
+  layers: [],
+} as StyleSpecification;
 
 const pointerEvents = {
-  mousedown: 'onMouseDown',
-  mouseup: 'onMouseUp',
-  mouseover: 'onMouseOver',
-  mousemove: 'onMouseMove',
-  click: 'onClick',
-  dblclick: 'onDblClick',
-  mouseenter: 'onMouseEnter',
-  mouseleave: 'onMouseLeave',
-  mouseout: 'onMouseOut',
-  contextmenu: 'onContextMenu',
-  touchstart: 'onTouchStart',
-  touchend: 'onTouchEnd',
-  touchmove: 'onTouchMove',
-  touchcancel: 'onTouchCancel'
+  mousedown: "onMouseDown",
+  mouseup: "onMouseUp",
+  mouseover: "onMouseOver",
+  mousemove: "onMouseMove",
+  click: "onClick",
+  dblclick: "onDblClick",
+  mouseenter: "onMouseEnter",
+  mouseleave: "onMouseLeave",
+  mouseout: "onMouseOut",
+  contextmenu: "onContextMenu",
+  touchstart: "onTouchStart",
+  touchend: "onTouchEnd",
+  touchmove: "onTouchMove",
+  touchcancel: "onTouchCancel",
 };
 const cameraEvents = {
-  movestart: 'onMoveStart',
-  move: 'onMove',
-  moveend: 'onMoveEnd',
-  dragstart: 'onDragStart',
-  drag: 'onDrag',
-  dragend: 'onDragEnd',
-  zoomstart: 'onZoomStart',
-  zoom: 'onZoom',
-  zoomend: 'onZoomEnd',
-  rotatestart: 'onRotateStart',
-  rotate: 'onRotate',
-  rotateend: 'onRotateEnd',
-  pitchstart: 'onPitchStart',
-  pitch: 'onPitch',
-  pitchend: 'onPitchEnd'
+  movestart: "onMoveStart",
+  move: "onMove",
+  moveend: "onMoveEnd",
+  dragstart: "onDragStart",
+  drag: "onDrag",
+  dragend: "onDragEnd",
+  zoomstart: "onZoomStart",
+  zoom: "onZoom",
+  zoomend: "onZoomEnd",
+  rotatestart: "onRotateStart",
+  rotate: "onRotate",
+  rotateend: "onRotateEnd",
+  pitchstart: "onPitchStart",
+  pitch: "onPitch",
+  pitchend: "onPitchEnd",
 };
 const otherEvents = {
-  wheel: 'onWheel',
-  boxzoomstart: 'onBoxZoomStart',
-  boxzoomend: 'onBoxZoomEnd',
-  boxzoomcancel: 'onBoxZoomCancel',
-  resize: 'onResize',
-  load: 'onLoad',
-  render: 'onRender',
-  idle: 'onIdle',
-  remove: 'onRemove',
-  data: 'onData',
-  styledata: 'onStyleData',
-  sourcedata: 'onSourceData',
-  error: 'onError'
+  wheel: "onWheel",
+  boxzoomstart: "onBoxZoomStart",
+  boxzoomend: "onBoxZoomEnd",
+  boxzoomcancel: "onBoxZoomCancel",
+  resize: "onResize",
+  load: "onLoad",
+  render: "onRender",
+  idle: "onIdle",
+  remove: "onRemove",
+  data: "onData",
+  styledata: "onStyleData",
+  sourcedata: "onSourceData",
+  error: "onError",
 };
 const settingNames = [
-  'minZoom',
-  'maxZoom',
-  'minPitch',
-  'maxPitch',
-  'maxBounds',
-  'projection',
-  'renderWorldCopies'
+  "minZoom",
+  "maxZoom",
+  "minPitch",
+  "maxPitch",
+  "maxBounds",
+  "projection",
+  "renderWorldCopies",
 ];
 const handlerNames = [
-  'scrollZoom',
-  'boxZoom',
-  'dragRotate',
-  'dragPan',
-  'keyboard',
-  'doubleClickZoom',
-  'touchZoomRotate',
-  'touchPitch'
+  "scrollZoom",
+  "boxZoom",
+  "dragRotate",
+  "dragPan",
+  "keyboard",
+  "doubleClickZoom",
+  "touchZoomRotate",
+  "touchPitch",
 ];
 
 /**
  * A wrapper for mapbox-gl's Map class
  */
 export default class Maplibre {
-  private _MapClass: {new (options: any): MapInstance};
+  private _MapClass: { new (options: any): MapInstance };
   // mapboxgl.Map instance
   private _map: MapInstance = null;
   // User-supplied props
@@ -173,9 +180,9 @@ export default class Maplibre {
   static savedMaps: Maplibre[] = [];
 
   constructor(
-    MapClass: {new (options: any): MapInstance},
+    MapClass: { new (options: any): MapInstance },
     props: MaplibreProps,
-    container: HTMLDivElement
+    container: HTMLDivElement,
   ) {
     this._MapClass = MapClass;
     this.props = props;
@@ -200,7 +207,11 @@ export default class Maplibre {
     // If 1) view state has changed to match props and
     //    2) the props change is not triggered by map events,
     // it's driven by an external state change. Redraw immediately
-    if (settingsChanged || sizeChanged || (viewStateChanged && !this._map.isMoving())) {
+    if (
+      settingsChanged ||
+      sizeChanged ||
+      (viewStateChanged && !this._map.isMoving())
+    ) {
       this.redraw();
     }
   }
@@ -235,12 +246,15 @@ export default class Maplibre {
     }
 
     // Step 4: apply new props
-    that.setProps({...props, styleDiffing: false});
+    that.setProps({ ...props, styleDiffing: false });
     map.resize();
-    const {initialViewState} = props;
+    const { initialViewState } = props;
     if (initialViewState) {
       if (initialViewState.bounds) {
-        map.fitBounds(initialViewState.bounds, {...initialViewState.fitBoundsOptions, duration: 0});
+        map.fitBounds(initialViewState.bounds, {
+          ...initialViewState.fitBoundsOptions,
+          duration: 0,
+        });
       } else {
         that._updateViewState(initialViewState);
       }
@@ -248,9 +262,9 @@ export default class Maplibre {
 
     // Simulate load event
     if (map.isStyleLoaded()) {
-      map.fire('load');
+      map.fire("load");
     } else {
-      map.once('style.load', () => map.fire('load'));
+      map.once("style.load", () => map.fire("load"));
     }
 
     // Force reload
@@ -261,21 +275,22 @@ export default class Maplibre {
 
   /* eslint-disable complexity,max-statements */
   private _initialize(container: HTMLDivElement) {
-    const {props} = this;
-    const {mapStyle = DEFAULT_STYLE} = props;
+    const { props } = this;
+    const { mapStyle = DEFAULT_STYLE } = props;
     const mapOptions = {
       ...props,
       ...props.initialViewState,
       container,
-      style: normalizeStyle(mapStyle)
+      style: normalizeStyle(mapStyle),
     };
 
-    const viewState = mapOptions.initialViewState || mapOptions.viewState || mapOptions;
+    const viewState =
+      mapOptions.initialViewState || mapOptions.viewState || mapOptions;
     Object.assign(mapOptions, {
       center: [viewState.longitude || 0, viewState.latitude || 0],
       zoom: viewState.zoom || 0,
       pitch: viewState.pitch || 0,
-      bearing: viewState.bearing || 0
+      bearing: viewState.bearing || 0,
     });
 
     if (props.gl) {
@@ -302,18 +317,18 @@ export default class Maplibre {
 
     // add listeners
     map.transformCameraUpdate = this._onCameraUpdate;
-    map.on('style.load', () => {
+    map.on("style.load", () => {
       // Map style has changed, this would have wiped out all settings from props
       this._styleComponents = {
         light: map.getLight(),
         sky: map.getSky(),
         // @ts-ignore getProjection() does not exist in v4
         projection: map.getProjection?.(),
-        terrain: map.getTerrain()
+        terrain: map.getTerrain(),
       };
       this._updateStyleComponents(this.props);
     });
-    map.on('sourcedata', () => {
+    map.on("sourcedata", () => {
       // Some sources have loaded, we may need them to attach terrain
       this._updateStyleComponents(this.props);
     });
@@ -333,7 +348,7 @@ export default class Maplibre {
   recycle() {
     // Clean up unnecessary elements before storing for reuse.
     const container = this.map.getContainer();
-    const children = container.querySelector('[mapboxgl-children]');
+    const children = container.querySelector("[mapboxgl-children]");
     children?.remove();
 
     Maplibre.savedMaps.push(this);
@@ -368,10 +383,13 @@ export default class Maplibre {
    */
   private _updateSize(nextProps: MaplibreProps): boolean {
     // Check if size is controlled
-    const {viewState} = nextProps;
+    const { viewState } = nextProps;
     if (viewState) {
       const map = this._map;
-      if (viewState.width !== map.transform.width || viewState.height !== map.transform.height) {
+      if (
+        viewState.width !== map.transform.width ||
+        viewState.height !== map.transform.height
+      ) {
         map.resize();
         return true;
       }
@@ -410,13 +428,20 @@ export default class Maplibre {
      @param {object} currProps
      @returns {bool} true if anything is changed
    */
-  private _updateSettings(nextProps: MaplibreProps, currProps: MaplibreProps): boolean {
+  private _updateSettings(
+    nextProps: MaplibreProps,
+    currProps: MaplibreProps,
+  ): boolean {
     const map = this._map;
     let changed = false;
     for (const propName of settingNames) {
-      if (propName in nextProps && !deepEqual(nextProps[propName], currProps[propName])) {
+      if (
+        propName in nextProps &&
+        !deepEqual(nextProps[propName], currProps[propName])
+      ) {
         changed = true;
-        const setter = map[`set${propName[0].toUpperCase()}${propName.slice(1)}`];
+        const setter =
+          map[`set${propName[0].toUpperCase()}${propName.slice(1)}`];
         setter?.call(map, nextProps[propName]);
       }
     }
@@ -424,16 +449,19 @@ export default class Maplibre {
   }
 
   /* Update map style to match props */
-  private _updateStyle(nextProps: MaplibreProps, currProps: MaplibreProps): void {
+  private _updateStyle(
+    nextProps: MaplibreProps,
+    currProps: MaplibreProps,
+  ): void {
     if (nextProps.cursor !== currProps.cursor) {
-      this._map.getCanvas().style.cursor = nextProps.cursor || '';
+      this._map.getCanvas().style.cursor = nextProps.cursor || "";
     }
     if (nextProps.mapStyle !== currProps.mapStyle) {
-      const {mapStyle = DEFAULT_STYLE, styleDiffing = true} = nextProps;
+      const { mapStyle = DEFAULT_STYLE, styleDiffing = true } = nextProps;
       const options: any = {
-        diff: styleDiffing
+        diff: styleDiffing,
       };
-      if ('localIdeographFontFamily' in nextProps) {
+      if ("localIdeographFontFamily" in nextProps) {
         // @ts-ignore Mapbox specific prop
         options.localIdeographFontFamily = nextProps.localIdeographFontFamily;
       }
@@ -446,7 +474,12 @@ export default class Maplibre {
    * 1. They can not be applied right away. Certain conditions (style loaded, source loaded, etc.) must be met
    * 2. They can be overwritten by mapStyle
    */
-  private _updateStyleComponents({light, projection, sky, terrain}: MaplibreProps): void {
+  private _updateStyleComponents({
+    light,
+    projection,
+    sky,
+    terrain,
+  }: MaplibreProps): void {
     const map = this._map;
     const currProps = this._styleComponents;
     // We can safely manipulate map style once it's loaded
@@ -460,7 +493,8 @@ export default class Maplibre {
         !deepEqual(projection, currProps.projection) &&
         projection !== currProps.projection?.type
       ) {
-        currProps.projection = typeof projection === 'string' ? {type: projection} : projection;
+        currProps.projection =
+          typeof projection === "string" ? { type: projection } : projection;
         // @ts-ignore setProjection does not exist in v4
         map.setProjection?.(currProps.projection);
       }
@@ -478,7 +512,10 @@ export default class Maplibre {
   }
 
   /* Update interaction handlers to match props */
-  private _updateHandlers(nextProps: MaplibreProps, currProps: MaplibreProps): void {
+  private _updateHandlers(
+    nextProps: MaplibreProps,
+    currProps: MaplibreProps,
+  ): void {
     const map = this._map;
     for (const propName of handlerNames) {
       const newValue = nextProps[propName] ?? true;
@@ -498,7 +535,7 @@ export default class Maplibre {
     const cb = this.props[otherEvents[e.type]];
     if (cb) {
       cb(e);
-    } else if (e.type === 'error') {
+    } else if (e.type === "error") {
       console.error((e as ErrorEvent).error); // eslint-disable-line
     }
   };
@@ -507,7 +544,8 @@ export default class Maplibre {
     if (this._internalUpdate) {
       return;
     }
-    e.viewState = this._propsedCameraUpdate || transformToViewState(this._map.transform);
+    e.viewState =
+      this._propsedCameraUpdate || transformToViewState(this._map.transform);
     // @ts-ignore
     const cb = this.props[cameraEvents[e.type]];
     if (cb) {
@@ -525,10 +563,10 @@ export default class Maplibre {
 
   private _queryRenderedFeatures(point: Point) {
     const map = this._map;
-    const {interactiveLayerIds = []} = this.props;
+    const { interactiveLayerIds = [] } = this.props;
     try {
       return map.queryRenderedFeatures(point, {
-        layers: interactiveLayerIds.filter(map.getLayer.bind(map))
+        layers: interactiveLayerIds.filter(map.getLayer.bind(map)),
       });
     } catch {
       // May fail if style is not loaded
@@ -537,9 +575,10 @@ export default class Maplibre {
   }
 
   private _updateHover(e: MapMouseEvent) {
-    const {props} = this;
+    const { props } = this;
     const shouldTrackHoveredFeatures =
-      props.interactiveLayerIds && (props.onMouseMove || props.onMouseEnter || props.onMouseLeave);
+      props.interactiveLayerIds &&
+      (props.onMouseMove || props.onMouseEnter || props.onMouseLeave);
 
     if (shouldTrackHoveredFeatures) {
       const eventType = e.type;
@@ -548,12 +587,12 @@ export default class Maplibre {
       const isHovering = features.length > 0;
 
       if (!isHovering && wasHovering) {
-        e.type = 'mouseleave';
+        e.type = "mouseleave";
         this._onPointerEvent(e);
       }
       this._hoveredFeatures = features;
       if (isHovering && !wasHovering) {
-        e.type = 'mouseenter';
+        e.type = "mouseenter";
         this._onPointerEvent(e);
       }
       e.type = eventType;
@@ -563,15 +602,20 @@ export default class Maplibre {
   }
 
   private _onPointerEvent = (e: MapMouseEvent) => {
-    if (e.type === 'mousemove' || e.type === 'mouseout') {
+    if (e.type === "mousemove" || e.type === "mouseout") {
       this._updateHover(e);
     }
 
     // @ts-ignore
     const cb = this.props[pointerEvents[e.type]];
     if (cb) {
-      if (this.props.interactiveLayerIds && e.type !== 'mouseover' && e.type !== 'mouseout') {
-        e.features = this._hoveredFeatures || this._queryRenderedFeatures(e.point);
+      if (
+        this.props.interactiveLayerIds &&
+        e.type !== "mouseover" &&
+        e.type !== "mouseout"
+      ) {
+        e.features =
+          this._hoveredFeatures || this._queryRenderedFeatures(e.point);
       }
       cb(e);
       delete e.features;

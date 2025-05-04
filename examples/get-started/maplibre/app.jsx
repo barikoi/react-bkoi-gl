@@ -1,9 +1,9 @@
 /* global document */
-import * as React from 'react';
-import {createRoot} from 'react-dom/client';
-import Map, {Marker} from 'react-map-gl/maplibre';
+import * as React from "react";
+import { createRoot } from "react-dom/client";
+import Map, { Marker } from "react-map-gl/maplibre";
 
-import 'maplibre-gl/dist/maplibre-gl.css';
+import "maplibre-gl/dist/maplibre-gl.css";
 
 function Root() {
   return (
@@ -11,9 +11,9 @@ function Root() {
       initialViewState={{
         latitude: 37.8,
         longitude: -122.4,
-        zoom: 14
+        zoom: 14,
       }}
-      style={{width: 800, height: 600}}
+      style={{ width: 800, height: 600 }}
       mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
     >
       <Marker longitude={-122.4} latitude={37.8} color="red" />
@@ -21,5 +21,7 @@ function Root() {
   );
 }
 
-const root = createRoot(document.body.appendChild(document.createElement('div')));
+const root = createRoot(
+  document.body.appendChild(document.createElement("div")),
+);
 root.render(<Root />);

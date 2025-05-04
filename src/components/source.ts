@@ -1,16 +1,23 @@
-import * as React from 'react';
-import {useContext, useEffect, useMemo, useState, useRef, cloneElement} from 'react';
-import {MapContext} from './map';
-import assert from '../utils/assert';
-import {deepEqual} from '../utils/deep-equal';
+import * as React from "react";
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  cloneElement,
+} from "react";
+import { MapContext } from "./map";
+import assert from "../utils/assert";
+import { deepEqual } from "../utils/deep-equal";
 
 import type {
   GeoJSONSourceImplementation,
   ImageSourceImplementation,
-  AnySourceImplementation
-} from '../types/internal';
-import type {SourceSpecification} from '../types/style-spec';
-import type {MapInstance} from '../types/lib';
+  AnySourceImplementation,
+} from "../types/internal";
+import type { SourceSpecification } from "../types/style-spec";
+import type { Map as MapInstance } from "../types/lib";
 
 export type SourceProps = SourceSpecification & {
   id?: string;
@@ -22,7 +29,7 @@ let sourceCounter = 0;
 function createSource(map: MapInstance, id: string, props: SourceProps) {
   // @ts-ignore
   if (map.style && map.style._loaded) {
-    const options = {...props};
+    const options = { ...props };
     delete options.id;
     delete options.children;
     // @ts-ignore
@@ -33,15 +40,23 @@ function createSource(map: MapInstance, id: string, props: SourceProps) {
 }
 
 /* eslint-disable complexity */
-function updateSource(source: AnySourceImplementation, props: SourceProps, prevProps: SourceProps) {
-  assert(props.id === prevProps.id, 'source id changed');
-  assert(props.type === prevProps.type, 'source type changed');
+function updateSource(
+  source: AnySourceImplementation,
+  props: SourceProps,
+  prevProps: SourceProps,
+) {
+  assert(props.id === prevProps.id, "source id changed");
+  assert(props.type === prevProps.type, "source type changed");
 
-  let changedKey = '';
+  let changedKey = "";
   let changedKeyCount = 0;
 
   for (const key in props) {
-    if (key !== 'children' && key !== 'id' && !deepEqual(prevProps[key], props[key])) {
+    if (
+      key !== "children" &&
+      key !== "id" &&
+      !deepEqual(prevProps[key], props[key])
+    ) {
       changedKey = key;
       changedKeyCount++;
     }
@@ -53,24 +68,24 @@ function updateSource(source: AnySourceImplementation, props: SourceProps, prevP
 
   const type = props.type;
 
-  if (type === 'geojson') {
+  if (type === "geojson") {
     (source as GeoJSONSourceImplementation).setData(props.data);
-  } else if (type === 'image') {
+  } else if (type === "image") {
     (source as ImageSourceImplementation).updateImage({
       url: props.url,
-      coordinates: props.coordinates
+      coordinates: props.coordinates,
     });
   } else {
     switch (changedKey) {
-      case 'coordinates':
+      case "coordinates":
         // @ts-ignore
         source.setCoordinates?.(props.coordinates);
         break;
-      case 'url':
+      case "url":
         // @ts-ignore
         source.setUrl?.(props.url);
         break;
-      case 'tiles':
+      case "tiles":
         // @ts-ignore
         source.setTiles?.(props.tiles);
         break;
@@ -92,12 +107,13 @@ export function Source(props: SourceProps) {
   useEffect(() => {
     if (map) {
       /* global setTimeout */
-      const forceUpdate = () => setTimeout(() => setStyleLoaded(version => version + 1), 0);
-      map.on('styledata', forceUpdate);
+      const forceUpdate = () =>
+        setTimeout(() => setStyleLoaded((version) => version + 1), 0);
+      map.on("styledata", forceUpdate);
       forceUpdate();
 
       return () => {
-        map.off('styledata', forceUpdate);
+        map.off("styledata", forceUpdate);
         // @ts-ignore
         if (map.style && map.style._loaded && map.getSource(id)) {
           // Parent effects are destroyed before child ones, see
@@ -132,11 +148,11 @@ export function Source(props: SourceProps) {
     (source &&
       React.Children.map(
         props.children,
-        child =>
+        (child) =>
           child &&
           cloneElement(child, {
-            source: id
-          })
+            source: id,
+          }),
       )) ||
     null
   );

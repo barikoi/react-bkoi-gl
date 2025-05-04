@@ -1,7 +1,7 @@
 /** Compare two classNames string and return the difference */
 export function compareClassNames(
   prevClassName: string | undefined,
-  nextClassName: string | undefined
+  nextClassName: string | undefined,
 ): string[] | null {
   if (prevClassName === nextClassName) {
     return null;

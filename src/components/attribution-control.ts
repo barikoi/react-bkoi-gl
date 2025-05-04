@@ -1,11 +1,11 @@
 /* eslint-disable max-statements */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import * as React from 'react';
-import {useEffect, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import { useEffect, memo } from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
-import type {ControlPosition, AttributionControlOptions} from '../types/lib';
+import type { ControlPosition, AttributionControlOptions } from "../types/lib";
 
 export type AttributionControlProps = AttributionControlOptions & {
   /** Placement of the control relative to the map. */
@@ -15,7 +15,10 @@ export type AttributionControlProps = AttributionControlOptions & {
 };
 
 function _AttributionControl(props: AttributionControlProps) {
-  const ctrl = useControl(({mapLib}) => new mapLib.AttributionControl(props), { position: props.position });
+  const ctrl = useControl(
+    ({ mapLib }) => new mapLib.AttributionControl(props),
+    { position: props.position },
+  );
 
   useEffect(() => {
     applyReactStyle(ctrl._container, props.style);
@@ -37,17 +40,17 @@ function _AttributionControl(props: AttributionControlProps) {
     // const innerDiv = document.createElement('div');
     // innerDiv.className = 'maplibregl-ctrl-attrib-inner';
     // innerDiv.innerHTML = `
-    //   <a href="https://barikoi.com/" target="_blank">© Barikoi</a> | 
-    //   <a href="https://www.openmaptiles.org/" target="_blank">© OpenMapTiles</a> | 
+    //   <a href="https://barikoi.com/" target="_blank">© Barikoi</a> |
+    //   <a href="https://www.openmaptiles.org/" target="_blank">© OpenMapTiles</a> |
     //   <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>
     // `;
     // customAttribution.appendChild(innerDiv);
 
     // ctrl._container.appendChild(customAttribution);
-
   }, [props.style, ctrl._container]);
 
   return null;
 }
 
-export const AttributionControl = memo(_AttributionControl);
+export const AttributionControl: React.FC<AttributionControlProps> =
+  memo(_AttributionControl);

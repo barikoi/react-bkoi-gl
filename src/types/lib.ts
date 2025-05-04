@@ -18,33 +18,33 @@ import type {
   TerrainControl,
   TerrainSpecification,
   LogoControl,
-  LogoControlOptions
-} from 'maplibre-gl';
+  LogoControlOptions,
+} from "maplibre-gl";
 
 export type {
   ControlPosition,
   IControl,
-  Map as MapInstance,
+  Map,
   MapOptions,
-  Marker as MarkerInstance,
+  Marker,
   MarkerOptions,
-  Popup as PopupInstance,
+  Popup,
   PopupOptions,
-  AttributionControl as AttributionControlInstance,
+  AttributionControl,
   AttributionControlOptions,
-  FullscreenControl as FullscreenControlInstance,
+  FullscreenControl,
   FullscreenControlOptions,
-  GeolocateControl as GeolocateControlInstance,
+  GeolocateControl,
   GeolocateControlOptions,
-  NavigationControl as NavigationControlInstance,
+  NavigationControl,
   NavigationControlOptions,
-  ScaleControl as ScaleControlInstance,
+  ScaleControl,
   ScaleControlOptions,
-  TerrainControl as TerrainControlInstance,
-  LogoControl as LogoControlInstance,
+  TerrainControl,
+  LogoControl,
   LogoControlOptions,
-  CustomLayerInterface
-} from 'maplibre-gl';
+  CustomLayerInterface,
+} from "maplibre-gl";
 
 /**
  * A user-facing type that represents the minimal intersection between Mapbox and Maplibre
@@ -54,23 +54,31 @@ export type {
 export interface MapLib {
   supported?: (options: any) => boolean;
 
-  Map: {new (options: MapOptions): Map};
+  Map: { new (options: MapOptions): Map };
 
-  Marker: {new (options: MarkerOptions): Marker};
+  Marker: { new (options: MarkerOptions): Marker };
 
-  Popup: {new (options: PopupOptions): Popup};
+  Popup: { new (options: PopupOptions): Popup };
 
-  AttributionControl: {new (options: AttributionControlOptions): AttributionControl};
+  AttributionControl: {
+    new (options: AttributionControlOptions): AttributionControl;
+  };
 
-  FullscreenControl: {new (options: FullscreenControlOptions): FullscreenControl};
+  FullscreenControl: {
+    new (options: FullscreenControlOptions): FullscreenControl;
+  };
 
-  GeolocateControl: {new (options: GeolocateControlOptions): GeolocateControl};
+  GeolocateControl: {
+    new (options: GeolocateControlOptions): GeolocateControl;
+  };
 
-  NavigationControl: {new (options: NavigationControlOptions): NavigationControl};
+  NavigationControl: {
+    new (options: NavigationControlOptions): NavigationControl;
+  };
 
-  ScaleControl: {new (options: ScaleControlOptions): ScaleControl};
+  ScaleControl: { new (options: ScaleControlOptions): ScaleControl };
 
-  TerrainControl: {new (options: TerrainSpecification): TerrainControl};
+  TerrainControl: { new (options: TerrainSpecification): TerrainControl };
 
-  LogoControl: {new (options: LogoControlOptions): LogoControl};
+  LogoControl: { new (options: LogoControlOptions): LogoControl };
 }

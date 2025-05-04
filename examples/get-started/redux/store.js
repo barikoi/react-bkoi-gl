@@ -1,9 +1,9 @@
-import {createStore} from 'redux';
+import { createStore } from "redux";
 
 function mapStateReducer(state, action) {
   switch (action.type) {
-    case 'setViewState':
-      return {...state, viewState: action.payload};
+    case "setViewState":
+      return { ...state, viewState: action.payload };
 
     default:
       return state;
@@ -11,12 +11,12 @@ function mapStateReducer(state, action) {
 }
 
 const defaultMapState = {
-  mapStyle: 'mapbox://styles/mapbox/streets-v11',
+  mapStyle: "mapbox://styles/mapbox/streets-v11",
   viewState: {
     latitude: 37.8,
     longitude: -122.4,
-    zoom: 14
-  }
+    zoom: 14,
+  },
 };
 
 export default createStore(mapStateReducer, defaultMapState);

@@ -1,29 +1,29 @@
-import {resolve} from 'path';
+import { resolve } from "path";
 
 export default {
   lint: {
-    paths: ['src', 'test', 'examples']
+    paths: ["src", "__tests__", "examples"],
   },
 
   typescript: {
-    project: 'tsconfig.build.json'
+    project: "tsconfig.build.json",
   },
 
   aliases: {
-    'react-map-gl/test': resolve('./test'),
-    'react-map-gl': resolve('./src')
+    "react-map-gl/__tests__": resolve("./__tests__"),
+    "react-map-gl": resolve("./src"),
   },
   nodeAliases: {
-    'react-dom': resolve('./test/src/utils/react-dom-mock.js')
+    "react-dom": resolve("./__tests__/src/utils/react-dom-mock.js"),
   },
 
   browserTest: {
-    server: {wait: 5000}
+    server: { wait: 5000 },
   },
 
   entry: {
-    test: 'test/node.js',
-    'test-browser': 'test/browser.js',
-    size: ['test/size/all.js', 'test/size/map.js']
+    test: "__tests__/node.js",
+    "test-browser": "__tests__/browser.js",
+    size: ["__tests__/size/all.js", "__tests__/size/map.js"],
   },
 };

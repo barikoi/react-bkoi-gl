@@ -1,11 +1,11 @@
-import * as React from 'react';
+import * as React from "react";
 
-import {useCallback, useState, useEffect} from 'react';
-import {useMap} from 'react-map-gl';
+import { useCallback, useState, useEffect } from "react";
+import { useMap } from "react-map-gl";
 
 export default function Controls() {
-  const {mymap} = useMap();
-  const [inputValue, setInputValue] = useState('');
+  const { mymap } = useMap();
+  const [inputValue, setInputValue] = useState("");
   const [hasError, setError] = useState(false);
 
   useEffect(() => {
@@ -14,28 +14,28 @@ export default function Controls() {
     }
 
     const onMove = () => {
-      const {lng, lat} = mymap.getCenter();
+      const { lng, lat } = mymap.getCenter();
       setInputValue(`${lng.toFixed(3)}, ${lat.toFixed(3)}`);
       setError(false);
     };
-    mymap.on('move', onMove);
+    mymap.on("move", onMove);
     onMove();
 
     return () => {
-      mymap.off('move', onMove);
+      mymap.off("move", onMove);
     };
   }, [mymap]);
 
-  const onChange = useCallback(evt => {
+  const onChange = useCallback((evt) => {
     setInputValue(evt.target.value);
   }, []);
 
   const onSubmit = useCallback(() => {
-    const [lng, lat] = inputValue.split(',').map(Number);
+    const [lng, lat] = inputValue.split(",").map(Number);
     if (Math.abs(lng) <= 180 && Math.abs(lat) <= 85) {
       mymap.easeTo({
         center: [lng, lat],
-        duration: 1000
+        duration: 1000,
       });
     } else {
       setError(true);
@@ -43,13 +43,13 @@ export default function Controls() {
   }, [mymap, inputValue]);
 
   return (
-    <div style={{padding: 12, fontFamily: 'sans-serif'}}>
+    <div style={{ padding: 12, fontFamily: "sans-serif" }}>
       <span>MAP CENTER: </span>
       <input
         type="text"
         value={inputValue}
         onChange={onChange}
-        style={{color: hasError ? 'red' : 'black'}}
+        style={{ color: hasError ? "red" : "black" }}
       />
       <button onClick={onSubmit}>GO</button>
     </div>

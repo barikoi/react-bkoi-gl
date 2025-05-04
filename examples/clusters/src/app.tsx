@@ -1,24 +1,30 @@
-import * as React from 'react';
-import {useRef} from 'react';
-import {createRoot} from 'react-dom/client';
-import {Map, Source, Layer} from 'react-map-gl';
+import * as React from "react";
+import { useRef } from "react";
+import { createRoot } from "react-dom/client";
+import { Map, Source, Layer } from "react-map-gl";
 
-import ControlPanel from './control-panel';
-import {clusterLayer, clusterCountLayer, unclusteredPointLayer} from './layers';
+import ControlPanel from "./control-panel";
+import {
+  clusterLayer,
+  clusterCountLayer,
+  unclusteredPointLayer,
+} from "./layers";
 
-import type {MapRef} from 'react-map-gl';
-import type {GeoJSONSource} from 'mapbox-gl';
+import type { MapRef } from "react-map-gl";
+import type { GeoJSONSource } from "mapbox-gl";
 
-const MAPBOX_TOKEN = ''; // Set your mapbox token here
+const MAPBOX_TOKEN = ""; // Set your mapbox token here
 
 export default function App() {
   const mapRef = useRef<MapRef>(null);
 
-  const onClick = event => {
+  const onClick = (event) => {
     const feature = event.features[0];
     const clusterId = feature.properties.cluster_id;
 
-    const mapboxSource = mapRef.current.getSource('earthquakes') as GeoJSONSource;
+    const mapboxSource = mapRef.current.getSource(
+      "earthquakes",
+    ) as GeoJSONSource;
 
     mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
       if (err) {
@@ -28,7 +34,7 @@ export default function App() {
       mapRef.current.easeTo({
         center: feature.geometry.coordinates,
         zoom,
-        duration: 500
+        duration: 500,
       });
     });
   };
@@ -39,7 +45,7 @@ export default function App() {
         initialViewState={{
           latitude: 40.67,
           longitude: -103.59,
-          zoom: 3
+          zoom: 3,
         }}
         mapStyle="mapbox://styles/mapbox/dark-v9"
         mapboxAccessToken={MAPBOX_TOKEN}

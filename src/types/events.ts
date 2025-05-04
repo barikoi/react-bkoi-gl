@@ -1,4 +1,4 @@
-import type {Point, LngLat, MapGeoJSONFeature, ViewState} from './common';
+import type { Point, LngLat, MapGeoJSONFeature, ViewState } from "./common";
 
 import type {
   Map,
@@ -13,8 +13,8 @@ import type {
   MapStyleDataEvent,
   MapSourceDataEvent,
   MapWheelEvent,
-  MapLibreZoomEvent as MapBoxZoomEvent
-} from 'maplibre-gl';
+  MapLibreZoomEvent as MapBoxZoomEvent,
+} from "maplibre-gl";
 
 export type {
   MapLibreEvent as MapEvent,
@@ -24,7 +24,7 @@ export type {
   MapStyleDataEvent,
   MapSourceDataEvent,
   MapWheelEvent,
-  MapBoxZoomEvent
+  MapBoxZoomEvent,
 };
 
 export type MapCallbacks = {
@@ -82,7 +82,7 @@ interface MapEvent<SourceT, OriginalEventT = undefined> {
 }
 
 export type ErrorEvent = MapEvent<Map> & {
-  type: 'error';
+  type: "error";
   error: Error;
 };
 
@@ -94,32 +94,35 @@ export type MapMouseEvent = _MapMouseEvent & {
 
 export type ViewStateChangeEvent =
   | (MapEvent<Map, MouseEvent | TouchEvent | WheelEvent | undefined> & {
-      type: 'movestart' | 'move' | 'moveend' | 'zoomstart' | 'zoom' | 'zoomend';
+      type: "movestart" | "move" | "moveend" | "zoomstart" | "zoom" | "zoomend";
       viewState: ViewState;
     })
   | (MapEvent<Map, MouseEvent | TouchEvent | undefined> & {
       type:
-        | 'rotatestart'
-        | 'rotate'
-        | 'rotateend'
-        | 'dragstart'
-        | 'drag'
-        | 'dragend'
-        | 'pitchstart'
-        | 'pitch'
-        | 'pitchend';
+        | "rotatestart"
+        | "rotate"
+        | "rotateend"
+        | "dragstart"
+        | "drag"
+        | "dragend"
+        | "pitchstart"
+        | "pitch"
+        | "pitchend";
       viewState: ViewState;
     });
 
 export type PopupEvent = {
-  type: 'open' | 'close';
+  type: "open" | "close";
   target: Popup;
 };
 
-export type MarkerEvent<OriginalEventT = undefined> = MapEvent<Marker, OriginalEventT>;
+export type MarkerEvent<OriginalEventT = undefined> = MapEvent<
+  Marker,
+  OriginalEventT
+>;
 
 export type MarkerDragEvent = MarkerEvent & {
-  type: 'dragstart' | 'drag' | 'dragend';
+  type: "dragstart" | "drag" | "dragend";
   lngLat: LngLat;
 };
 

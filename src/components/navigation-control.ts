@@ -1,9 +1,9 @@
-import * as React from 'react';
-import {useEffect, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import { useEffect, memo } from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
-import type {ControlPosition, NavigationControlOptions} from '../types/lib';
+import type { ControlPosition, NavigationControlOptions } from "../types/lib";
 
 export type NavigationControlProps = NavigationControlOptions & {
   /** Placement of the control relative to the map. */
@@ -13,8 +13,8 @@ export type NavigationControlProps = NavigationControlOptions & {
 };
 
 function _NavigationControl(props: NavigationControlProps) {
-  const ctrl = useControl(({mapLib}) => new mapLib.NavigationControl(props), {
-    position: props.position
+  const ctrl = useControl(({ mapLib }) => new mapLib.NavigationControl(props), {
+    position: props.position,
   });
 
   useEffect(() => {
@@ -24,4 +24,5 @@ function _NavigationControl(props: NavigationControlProps) {
   return null;
 }
 
-export const NavigationControl = memo(_NavigationControl);
+export const NavigationControl: React.FC<NavigationControlProps> =
+  memo(_NavigationControl);

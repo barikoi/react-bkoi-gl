@@ -1,4 +1,4 @@
-import type {PaddingOptions} from 'maplibre-gl';
+import type { PaddingOptions } from "maplibre-gl";
 
 export type {
   Point,
@@ -8,8 +8,8 @@ export type {
   LngLatBounds,
   LngLatBoundsLike,
   PaddingOptions,
-  MapGeoJSONFeature
-} from 'maplibre-gl';
+  MapGeoJSONFeature,
+} from "maplibre-gl";
 
 /* Public */
 

@@ -1,27 +1,30 @@
 /* global window */
-import * as React from 'react';
-import {useState, useEffect} from 'react';
-import {createRoot} from 'react-dom/client';
-import {Map, Source, Layer} from 'react-map-gl';
-import type {LayerProps} from 'react-map-gl';
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { Map, Source, Layer } from "react-map-gl";
+import type { LayerProps } from "react-map-gl";
 
-import ControlPanel from './control-panel';
+import ControlPanel from "./control-panel";
 
-const MAPBOX_TOKEN = ''; // Set your mapbox token here
+const MAPBOX_TOKEN = ""; // Set your mapbox token here
 
 const pointLayer: LayerProps = {
-  id: 'point',
-  type: 'circle',
+  id: "point",
+  type: "circle",
   paint: {
-    'circle-radius': 10,
-    'circle-color': '#007cbf'
-  }
+    "circle-radius": 10,
+    "circle-color": "#007cbf",
+  },
 };
 
-function pointOnCircle({center, angle, radius}) {
+function pointOnCircle({ center, angle, radius }) {
   return {
-    type: 'Point',
-    coordinates: [center[0] + Math.cos(angle) * radius, center[1] + Math.sin(angle) * radius]
+    type: "Point",
+    coordinates: [
+      center[0] + Math.cos(angle) * radius,
+      center[1] + Math.sin(angle) * radius,
+    ],
   };
 }
 
@@ -30,7 +33,13 @@ export default function App() {
 
   useEffect(() => {
     const animation = window.requestAnimationFrame(() =>
-      setPointData(pointOnCircle({center: [-100, 0], angle: Date.now() / 1000, radius: 20}))
+      setPointData(
+        pointOnCircle({
+          center: [-100, 0],
+          angle: Date.now() / 1000,
+          radius: 20,
+        }),
+      ),
     );
     return () => window.cancelAnimationFrame(animation);
   });
@@ -41,7 +50,7 @@ export default function App() {
         initialViewState={{
           latitude: 0,
           longitude: -100,
-          zoom: 3
+          zoom: 3,
         }}
         mapStyle="mapbox://styles/mapbox/light-v9"
         mapboxAccessToken={MAPBOX_TOKEN}

@@ -1,14 +1,24 @@
-import * as React from 'react';
-import {useImperativeHandle, useRef, useEffect, forwardRef, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import {
+  useImperativeHandle,
+  useRef,
+  useEffect,
+  forwardRef,
+  memo,
+} from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
 import type {
   ControlPosition,
-  GeolocateControlInstance,
-  GeolocateControlOptions
-} from '../types/lib';
-import type {GeolocateEvent, GeolocateResultEvent, GeolocateErrorEvent} from '../types/events';
+  GeolocateControl as GeolocateControlInstance,
+  GeolocateControlOptions,
+} from "../types/lib";
+import type {
+  GeolocateEvent,
+  GeolocateResultEvent,
+  GeolocateErrorEvent,
+} from "../types/events";
 
 export type GeolocateControlProps = GeolocateControlOptions & {
   /** Placement of the control relative to the map. */
@@ -29,11 +39,14 @@ export type GeolocateControlProps = GeolocateControlOptions & {
   onTrackUserLocationEnd?: (e: GeolocateEvent) => void;
 };
 
-function _GeolocateControl(props: GeolocateControlProps, ref: React.Ref<GeolocateControlInstance>) {
-  const thisRef = useRef({props});
+function _GeolocateControl(
+  props: GeolocateControlProps,
+  ref: React.Ref<GeolocateControlInstance>,
+) {
+  const thisRef = useRef({ props });
 
   const ctrl = useControl(
-    ({mapLib}) => {
+    ({ mapLib }) => {
       const gc = new mapLib.GeolocateControl(props);
 
       // Hack: fix GeolocateControl reuse
@@ -46,25 +59,25 @@ function _GeolocateControl(props: GeolocateControlProps, ref: React.Ref<Geolocat
         }
       };
 
-      gc.on('geolocate', e => {
+      gc.on("geolocate", (e) => {
         thisRef.current.props.onGeolocate?.(e as GeolocateResultEvent);
       });
-      gc.on('error', e => {
+      gc.on("error", (e) => {
         thisRef.current.props.onError?.(e as GeolocateErrorEvent);
       });
-      gc.on('outofmaxbounds', e => {
+      gc.on("outofmaxbounds", (e) => {
         thisRef.current.props.onOutOfMaxBounds?.(e as GeolocateResultEvent);
       });
-      gc.on('trackuserlocationstart', e => {
+      gc.on("trackuserlocationstart", (e) => {
         thisRef.current.props.onTrackUserLocationStart?.(e as GeolocateEvent);
       });
-      gc.on('trackuserlocationend', e => {
+      gc.on("trackuserlocationend", (e) => {
         thisRef.current.props.onTrackUserLocationEnd?.(e as GeolocateEvent);
       });
 
       return gc;
     },
-    {position: props.position}
+    { position: props.position },
   );
 
   thisRef.current.props = props;
@@ -78,4 +91,6 @@ function _GeolocateControl(props: GeolocateControlProps, ref: React.Ref<Geolocat
   return null;
 }
 
-export const GeolocateControl = memo(forwardRef(_GeolocateControl));
+export const GeolocateControl: React.FC<GeolocateControlProps> = memo(
+  forwardRef(_GeolocateControl),
+);

@@ -1,15 +1,15 @@
-import * as React from 'react';
-import {useRef} from 'react';
-import {createRoot} from 'react-dom/client';
-import Map from 'react-map-gl';
-import bbox from '@turf/bbox';
+import * as React from "react";
+import { useRef } from "react";
+import { createRoot } from "react-dom/client";
+import Map from "react-map-gl";
+import bbox from "@turf/bbox";
 
-import ControlPanel from './control-panel';
-import MAP_STYLE from './map-style';
+import ControlPanel from "./control-panel";
+import MAP_STYLE from "./map-style";
 
-import type {MapboxStyle, MapRef, MapLayerMouseEvent} from 'react-map-gl';
+import type { MapboxStyle, MapRef, MapLayerMouseEvent } from "react-map-gl";
 
-const TOKEN = ''; // Set your mapbox token here
+const TOKEN = ""; // Set your mapbox token here
 
 export default function App() {
   const mapRef = useRef<MapRef>();
@@ -23,9 +23,9 @@ export default function App() {
       mapRef.current.fitBounds(
         [
           [minLng, minLat],
-          [maxLng, maxLat]
+          [maxLng, maxLat],
         ],
-        {padding: 40, duration: 1000}
+        { padding: 40, duration: 1000 },
       );
     }
   };
@@ -37,10 +37,10 @@ export default function App() {
         initialViewState={{
           latitude: 37.78,
           longitude: -122.4,
-          zoom: 11
+          zoom: 11,
         }}
         mapStyle={MAP_STYLE as MapboxStyle}
-        interactiveLayerIds={['sf-neighborhoods-fill']}
+        interactiveLayerIds={["sf-neighborhoods-fill"]}
         onClick={onClick}
         mapboxAccessToken={TOKEN}
       />

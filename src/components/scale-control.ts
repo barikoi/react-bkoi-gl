@@ -1,9 +1,9 @@
-import * as React from 'react';
-import {useEffect, useRef, memo} from 'react';
-import {applyReactStyle} from '../utils/apply-react-style';
-import {useControl} from './use-control';
+import * as React from "react";
+import { useEffect, useRef, memo } from "react";
+import { applyReactStyle } from "../utils/apply-react-style";
+import { useControl } from "./use-control";
 
-import type {ControlPosition, ScaleControlOptions} from '../types/lib';
+import type { ControlPosition, ScaleControlOptions } from "../types/lib";
 
 export type ScaleControlProps = ScaleControlOptions & {
   // These props will be further constraint by OptionsT
@@ -17,15 +17,15 @@ export type ScaleControlProps = ScaleControlOptions & {
 };
 
 function _ScaleControl(props: ScaleControlProps) {
-  const ctrl = useControl(({mapLib}) => new mapLib.ScaleControl(props), {
-    position: props.position
+  const ctrl = useControl(({ mapLib }) => new mapLib.ScaleControl(props), {
+    position: props.position,
   });
   const propsRef = useRef<ScaleControlProps>(props);
 
   const prevProps = propsRef.current;
   propsRef.current = props;
 
-  const {style} = props;
+  const { style } = props;
 
   if (props.maxWidth !== undefined && props.maxWidth !== prevProps.maxWidth) {
     ctrl.options.maxWidth = props.maxWidth;
@@ -41,4 +41,4 @@ function _ScaleControl(props: ScaleControlProps) {
   return null;
 }
 
-export const ScaleControl = memo(_ScaleControl);
+export const ScaleControl: React.FC<ScaleControlProps> = memo(_ScaleControl);
