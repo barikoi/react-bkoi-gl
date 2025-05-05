@@ -14,8 +14,14 @@
     "baseUrl": "./",
   },
   "include": [
-    "examples/**/*",
     "src/**/*",
-    "test/**/*"
+    "__tests__/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "coverage",
+    "public",
   ]
 }

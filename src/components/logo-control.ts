@@ -28,7 +28,7 @@ function _LogoControl(props: LogoControlProps) {
     if (logoElement) {
       // Update the link attributes
       logoElement.href = "https://barikoi.com/";
-      logoElement.ariaLabel = "Barikoi logo";
+      logoElement.setAttribute("aria-label", "Barikoi logo");
       logoElement.target = "_blank";
       logoElement.rel = "noopener nofollow";
       logoElement.style.cursor = "pointer";

@@ -2,7 +2,7 @@ import { resolve } from "path";
 
 export default {
   lint: {
-    paths: ["src", "__tests__", "examples"],
+    paths: ["src", "__tests__"],
   },
 
   typescript: {

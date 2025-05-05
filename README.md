@@ -17,11 +17,119 @@ Or via yarn:
 yarn add react-bkoi-gl
 ```
 
-### Example
+## Components
 
-```js
+The package provides the following components:
+
+### Map
+The core component for rendering Barikoi maps.
+```jsx
+import { Map } from 'react-bkoi-gl';
+
+<Map
+  mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
+  initialViewState={{
+    longitude: 90.36402,
+    latitude: 23.823731,
+    zoom: 13
+  }}
+/>
+```
+
+### Marker
+Add markers to the map.
+```jsx
+import { Marker } from 'react-bkoi-gl';
+
+<Marker longitude={90.36402} latitude={23.823731} color="red" />
+```
+
+### NavigationControl
+Adds zoom and rotation controls to the map.
+```jsx
+import { NavigationControl } from 'react-bkoi-gl';
+
+<NavigationControl position="top-right" />
+```
+
+### GeolocateControl
+Control for locating the user on the map.
+```jsx
+import { GeolocateControl } from 'react-bkoi-gl';
+
+<GeolocateControl position="top-right" />
+```
+
+### FullscreenControl
+Adds a control to toggle the map between fullscreen and normal mode.
+```jsx
+import { FullscreenControl } from 'react-bkoi-gl';
+
+<FullscreenControl position="top-right" />
+```
+
+### ScaleControl
+Shows the scale of the current map view.
+```jsx
+import { ScaleControl } from 'react-bkoi-gl';
+
+<ScaleControl position="bottom-right" />
+```
+
+### Source and Layer
+Components for adding data sources and visualization layers to the map.
+```jsx
+import { Source, Layer } from 'react-bkoi-gl';
+
+<Source id="my-data" type="geojson" data={geojsonData}>
+  <Layer
+    id="my-layer"
+    type="circle"
+    paint={{
+      'circle-radius': 8,
+      'circle-color': '#007cbf'
+    }}
+  />
+</Source>
+```
+
+### Popup
+Displays information in a popup on the map.
+```jsx
+import { Popup } from 'react-bkoi-gl';
+
+<Popup
+  longitude={90.36402}
+  latitude={23.823731}
+  closeButton={true}
+  closeOnClick={true}
+>
+  <div>Information about this location</div>
+</Popup>
+```
+
+### TerrainControl
+Control for enabling 3D terrain visualization.
+```jsx
+import { TerrainControl } from 'react-bkoi-gl';
+
+<TerrainControl position="top-right" />
+```
+
+### LogoControl and AttributionControl
+Controls for displaying the Barikoi logo and attribution information.
+```jsx
+import { LogoControl, AttributionControl } from 'react-bkoi-gl';
+
+<LogoControl position="bottom-left" />
+<AttributionControl position="bottom-right" />
+```
+
+## Example
+
+```jsx
 import { useRef } from 'react';
-import { Map, FullscreenControl, GeolocateControl, NavigationControl, ScaleControl } from 'react-bkoi-gl';
+import { Map, Marker, FullscreenControl, GeolocateControl, NavigationControl, ScaleControl } from 'react-bkoi-gl';
 
 // Import Styles
 import "react-bkoi-gl/styles"
@@ -35,7 +143,7 @@ const App = () => {
     longitude: 90.36402,
     latitude: 23.823731,
     minZoom: 4,
-    maxZoom: 30,
+    maxZoom: 22,
     zoom: 13,
     bearing: 0,
     pitch: 0,
@@ -43,9 +151,7 @@ const App = () => {
   }
 
   return (
-    <div
-      ref={mapContainer} style={containerStyles}
-    >
+    <div ref={mapContainer} style={containerStyles} >
       <Map
         ref={mapRef}
         mapStyle={mapStyle}
@@ -54,6 +160,7 @@ const App = () => {
         doubleClickZoom={false}
         dragRotate={false}
       >
+        <Marker longitude={90.36402} latitude={23.823731} color="red" />
         <GeolocateControl position="top-right" />
         <FullscreenControl position="top-right" />
         <NavigationControl position="top-right" />
@@ -74,27 +181,6 @@ const containerStyles = {
 export default App
 ```
 
-## Map Features
-
-### Automatic Branding
-
-The Map component automatically includes the following branding elements by default:
-
-- **Barikoi Logo**: Displayed at the bottom-left corner of the map
-- **Barikoi Attribution**: Displayed at the bottom-right corner of the map showing "© Barikoi"
-
-If you need to disable these, you can use the following props:
-
-```jsx
-<Map
-  showBarikoiLogo={false}
-  showAttribution={false}
-  {...otherProps}
->
-  {/* map children */}
-</Map>
-```
-
 ## Get Barikoi API key
 
 To access Barikoi's API services, you need to:
@@ -103,6 +189,20 @@ To access Barikoi's API services, you need to:
 3. Claim your API key.
 
 Once registered, you'll be able to access the full suite of Barikoi API services. If you exceed the free usage limits, you'll need to subscribe to a paid plan.
+
+## Testing
+
+To run tests:
+```bash
+npm test
+```
+
+To generate a test coverage report:
+```bash
+npm run coverage
+```
+
+The coverage report will be available in the `coverage/` directory.
 
 ## Learning Resources
 * [Barikoi API Documentation](https://docs.barikoi.com/docs/maps-api)

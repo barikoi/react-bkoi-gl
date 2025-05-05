@@ -1,6 +1,11 @@
-const {getBabelConfig} = require('ocular-dev-tools/configuration');
-
-module.exports = getBabelConfig({
-  react: true,
-  overrides: {}
-});
+module.exports = {
+  presets: [
+    ['@babel/preset-env', { targets: { node: 'current' } }],
+    '@babel/preset-typescript',
+    '@babel/preset-react'
+  ],
+  plugins: [
+    '@babel/plugin-transform-modules-commonjs',
+    ['@babel/plugin-transform-runtime', { regenerator: true }]
+  ]
+};
