@@ -2,7 +2,12 @@ export default {
   testEnvironment: "jsdom",
   collectCoverage: true,
   coverageDirectory: "coverage",
-  collectCoverageFrom: ["src/**/*.{js,jsx,ts,tsx}", "!src/**/*.test.{js,jsx,ts,tsx}"],
+  collectCoverageFrom: [
+    "src/**/*.{js,jsx,ts,tsx}",
+    "!src/**/index.{js,ts}",
+    "!src/types/**/*.{ts,tsx}",
+    "!src/exports-maplibre-gl.ts",
+  ],
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "/__tests__/",
@@ -20,13 +25,9 @@ export default {
     "^react-bkoi-gl/test(.*)$": "<rootDir>/__tests__$1",
     "^react-bkoi-gl(.*)$": "<rootDir>/src$1",
     "\\.(css|less)$": "identity-obj-proxy",
-    "^@vis.gl/react-maplibre$": "<rootDir>/__tests__/mocks/react-maplibre.js",
-    "^@vis.gl/react-maplibre/(.*)$": "<rootDir>/__tests__/mocks/$1.js",
-    "^maplibre-gl$": "<rootDir>/__tests__/mocks/maplibre-gl.js",
-    "^bkoi-gl$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
+    "^(maplibre-gl|bkoi-gl)$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
   },
   testMatch: [
-    "<rootDir>/__tests__/**/*.{spec,test}.{js,jsx,ts,tsx}",
     "<rootDir>/__tests__/**/*test*.{js,jsx,ts,tsx}"
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"], 
@@ -34,7 +35,7 @@ export default {
   testPathIgnorePatterns: [
     "/node_modules/"
   ],
-  testTimeout: 30000,
+  testTimeout: 10000,
   extensionsToTreatAsEsm: [".ts", ".tsx"],
   globals: {
     "ts-jest": {

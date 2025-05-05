@@ -4,10 +4,13 @@
     "jsx": "react",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "module": "ES2020",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "isolatedModules": true,
+    "skipLibCheck": true
   },
   "include":[
     "src/**/*"

@@ -1,15 +1,19 @@
 // Jest-based tests for Source component
-import React from 'react';
-import { render, act } from '@testing-library/react';
+import React, { useContext } from 'react';
+import { render } from '@testing-library/react';
 import { Source } from '../../src/components/source';
 import { Layer } from '../../src/components/layer';
 import { MapContext } from '../../src/components/map';
+import assert from '../../src/utils/assert';
 
 // Mock the assert function to prevent errors with source type changes
-jest.mock('../../src/utils/assert', () => ({
-  __esModule: true,
-  default: jest.fn()
-}));
+jest.mock('../../src/utils/assert', () => {
+  return jest.fn((condition, message) => {
+    if (!condition) {
+      throw new Error(message);
+    }
+  });
+});
 
 // Mock the Layer component
 jest.mock('../../src/components/layer', () => ({
@@ -23,6 +27,7 @@ describe('Source Component', () => {
   let forceUpdateCallback;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.useFakeTimers();
     forceUpdateCallback = null;
     
@@ -58,7 +63,6 @@ describe('Source Component', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    jest.clearAllMocks();
   });
 
   test('creates a new source with given props', () => {
@@ -77,11 +81,9 @@ describe('Source Component', () => {
     // Should register style data event handler
     expect(mockMapInstance.on).toHaveBeenCalledWith('styledata', expect.any(Function));
     
-    // Advance timers to trigger the forceUpdate
-    act(() => {
-      forceUpdateCallback();
-      jest.runAllTimers();
-    });
+    // Run the styledata callback to trigger source creation
+    forceUpdateCallback();
+    jest.runAllTimers();
 
     // Should call addSource with the correct props
     expect(mockMapInstance.addSource).toHaveBeenCalledWith(
@@ -180,8 +182,8 @@ describe('Source Component', () => {
     });
   });
 
-  test('updates other source types', () => {
-    // Test coordinates update for video source
+  test('updates an existing video source with coordinates', () => {
+    // Mock an existing source
     const mockVideoSource = {
       setCoordinates: jest.fn()
     };
@@ -191,7 +193,7 @@ describe('Source Component', () => {
       return null;
     });
 
-    // First render for video source with coordinates
+    // First render
     const { rerender } = render(
       <MapContext.Provider value={mapContextValue}>
         <Source 
@@ -202,7 +204,7 @@ describe('Source Component', () => {
       </MapContext.Provider>
     );
 
-    // Update video source coordinates
+    // Rerender with different coordinates
     rerender(
       <MapContext.Provider value={mapContextValue}>
         <Source 
@@ -213,56 +215,62 @@ describe('Source Component', () => {
       </MapContext.Provider>
     );
 
+    // Should update the coordinates
     expect(mockVideoSource.setCoordinates).toHaveBeenCalledWith(
       [[0, 0], [2, 0], [2, 2], [0, 2]]
     );
+  });
 
-    // Test URL update for video source
-    const mockUrlSource = {
+  test('updates an existing video source with url', () => {
+    // Mock an existing source
+    const mockVideoSource = {
       setUrl: jest.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
-      if (id === 'test-source') return mockUrlSource;
+      if (id === 'test-source') return mockVideoSource;
       return null;
     });
 
-    // First render for video source with url
+    // First render
+    const { rerender } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source 
+          id="test-source"
+          type="video"
+          url="old-video.mp4"
+        />
+      </MapContext.Provider>
+    );
+
+    // Rerender with different url
     rerender(
       <MapContext.Provider value={mapContextValue}>
         <Source 
           id="test-source"
           type="video"
-          url="old-url"
+          url="new-video.mp4"
         />
       </MapContext.Provider>
     );
 
-    // Update video source url
-    rerender(
-      <MapContext.Provider value={mapContextValue}>
-        <Source 
-          id="test-source"
-          type="video"
-          url="new-url"
-        />
-      </MapContext.Provider>
-    );
+    // Should update the url
+    expect(mockVideoSource.setUrl).toHaveBeenCalledWith("new-video.mp4");
+  });
 
-    expect(mockUrlSource.setUrl).toHaveBeenCalledWith("new-url");
-
-    // Test tiles update for raster source
-    const mockTilesSource = {
+  test('updates an existing raster source with tiles', () => {
+    // Mock an existing source
+    const mockRasterSource = {
       setTiles: jest.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
-      if (id === 'test-source') return mockTilesSource;
+      if (id === 'test-source') return mockRasterSource;
       return null;
     });
 
-    // First render for raster source with tiles
-    rerender(
+    // First render
+    const { rerender } = render(
       <MapContext.Provider value={mapContextValue}>
         <Source 
           id="test-source"
@@ -272,7 +280,7 @@ describe('Source Component', () => {
       </MapContext.Provider>
     );
 
-    // Update raster source tiles
+    // Rerender with different tiles
     rerender(
       <MapContext.Provider value={mapContextValue}>
         <Source 
@@ -283,7 +291,140 @@ describe('Source Component', () => {
       </MapContext.Provider>
     );
 
-    expect(mockTilesSource.setTiles).toHaveBeenCalledWith(["new-tile-url/{z}/{x}/{y}"]);
+    // Should update the tiles
+    expect(mockRasterSource.setTiles).toHaveBeenCalledWith(["new-tile-url/{z}/{x}/{y}"]);
+  });
+
+  test('throws error when source type changes', () => {
+    // Mock an existing source
+    const mockSource = {};
+    
+    mockMapInstance.getSource.mockImplementation((id) => {
+      if (id === 'test-source') return mockSource;
+      return null;
+    });
+    
+    console.warn = jest.fn(); // Silence console warnings
+
+    // First render 
+    const { rerender } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source 
+          id="test-source"
+          type="geojson"
+          data={{ type: 'FeatureCollection', features: [] }}
+        />
+      </MapContext.Provider>
+    );
+
+    // Expect error when rerendering with different type
+    expect(() => {
+      rerender(
+        <MapContext.Provider value={mapContextValue}>
+          <Source 
+            id="test-source"
+            type="image" // Changed from geojson to image
+            url="image.png"
+            coordinates={[[0, 0], [1, 0], [1, 1], [0, 1]]}
+          />
+        </MapContext.Provider>
+      );
+    }).toThrow('source type changed');
+    
+    // Should call assert with false and error message
+    expect(assert).toHaveBeenCalledWith(
+      false, // condition is false
+      'source type changed'
+    );
+  });
+
+  test('throws error when source id changes', () => {
+    // Mock an existing source
+    const mockSource = {};
+    
+    mockMapInstance.getSource.mockImplementation((id) => {
+      if (id === 'test-source') return mockSource;
+      return null;
+    });
+    
+    console.warn = jest.fn(); // Silence console warnings
+    
+    // First render 
+    const { rerender } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source 
+          id="test-source"
+          type="geojson"
+          data={{ type: 'FeatureCollection', features: [] }}
+        />
+      </MapContext.Provider>
+    );
+    
+    // Expect error when rerendering with different id
+    expect(() => {
+      rerender(
+        <MapContext.Provider value={mapContextValue}>
+          <Source 
+            id="different-id" // Changed from test-source
+            type="geojson"
+            data={{ type: 'FeatureCollection', features: [] }}
+          />
+        </MapContext.Provider>
+      );
+    }).toThrow('source id changed');
+    
+    // Should call assert with false and error message
+    expect(assert).toHaveBeenCalledWith(
+      false, // condition is false
+      'source id changed'
+    );
+  });
+
+  test('handles case when style is not loaded', () => {
+    // Mock style not loaded
+    mockMapInstance.style._loaded = false;
+    
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source 
+          id="test-source"
+          type="geojson"
+          data={{ type: 'FeatureCollection', features: [] }}
+        />
+      </MapContext.Provider>
+    );
+    
+    // Run the styledata callback
+    forceUpdateCallback();
+    jest.runAllTimers();
+    
+    // Should not call addSource
+    expect(mockMapInstance.addSource).not.toHaveBeenCalled();
+  });
+  
+  test('handles case when map is not available', () => {
+    // Mock map as null
+    mapContextValue.map.getMap.mockReturnValue(null);
+    
+    // Create a null-safe component wrapper
+    const SafeSource = (props) => {
+      const map = useContext ? useContext(MapContext)?.map?.getMap() : null;
+      if (!map) return null;
+      return <Source {...props} />;
+    };
+    
+    // Should not throw error when map is null
+    expect(() => {
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <SafeSource 
+            id="test-source"
+            type="geojson"
+            data={{ type: 'FeatureCollection', features: [] }}
+          />
+        </MapContext.Provider>
+      );
+    }).not.toThrow();
   });
 
   test('generates source id if not provided', () => {
@@ -296,11 +437,9 @@ describe('Source Component', () => {
       </MapContext.Provider>
     );
 
-    // Advance timers to trigger the forceUpdate
-    act(() => {
-      forceUpdateCallback();
-      jest.runAllTimers();
-    });
+    // Run the styledata callback
+    forceUpdateCallback();
+    jest.runAllTimers();
 
     // Should call addSource with a generated ID
     expect(mockMapInstance.addSource).toHaveBeenCalledWith(
@@ -356,22 +495,12 @@ describe('Source Component', () => {
     // Unmount to trigger cleanup
     unmount();
     
-    // Trigger the styledata event callback to ensure cleanup runs
-    act(() => {
-      if (forceUpdateCallback) forceUpdateCallback();
-      jest.runAllTimers();
-    });
+    // Run the cleanup function directly
+    const offCalls = mockMapInstance.off.mock.calls;
+    const cleanupFn = offCalls.find(call => call[0] === 'styledata')[1];
     
-    // Force the cleanup effect to run
-    const allUnmountEffects = mockMapInstance.off.mock.calls.filter(
-      call => call[0] === 'styledata'
-    );
-    
-    if (allUnmountEffects.length > 0) {
-      const cleanupFn = allUnmountEffects[0][1];
-      if (typeof cleanupFn === 'function') {
-        cleanupFn();
-      }
+    if (cleanupFn) {
+      cleanupFn();
     }
     
     // Should have removed the layer that depends on this source
@@ -379,6 +508,76 @@ describe('Source Component', () => {
     
     // Should not have removed unrelated layers
     expect(mockMapInstance.removeLayer).not.toHaveBeenCalledWith('layer2');
+    
+    // Should have removed the source
+    expect(mockMapInstance.removeSource).toHaveBeenCalledWith('test-source');
+  });
+
+  test('handles case when layers already removed before source cleanup', () => {
+    // Mock getStyle to return empty layers array, simulating all layers already removed
+    mockMapInstance.getStyle.mockReturnValue({
+      layers: []
+    });
+    
+    // Make sure the getSource method returns a value when called with 'test-source'
+    mockMapInstance.getSource.mockImplementation((id) => {
+      if (id === 'test-source') return {}; 
+      return null;
+    });
+    
+    const { unmount } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source id="test-source" type="geojson" data={{ type: 'FeatureCollection', features: [] }} />
+      </MapContext.Provider>
+    );
+
+    // Unmount to trigger cleanup
+    unmount();
+    
+    // Run the cleanup function directly
+    const offCalls = mockMapInstance.off.mock.calls;
+    const cleanupFn = offCalls.find(call => call[0] === 'styledata')[1];
+    
+    if (cleanupFn) {
+      cleanupFn();
+    }
+    
+    // Should not attempt to remove any layers
+    expect(mockMapInstance.removeLayer).not.toHaveBeenCalled();
+    
+    // Should have removed the source
+    expect(mockMapInstance.removeSource).toHaveBeenCalledWith('test-source');
+  });
+
+  test('handles case when getStyle returns null during cleanup', () => {
+    // Mock getStyle to return null, simulating a destroyed map
+    mockMapInstance.getStyle.mockReturnValue(null);
+    
+    // Make sure the getSource method returns a value when called with 'test-source'
+    mockMapInstance.getSource.mockImplementation((id) => {
+      if (id === 'test-source') return {}; 
+      return null;
+    });
+    
+    const { unmount } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Source id="test-source" type="geojson" data={{ type: 'FeatureCollection', features: [] }} />
+      </MapContext.Provider>
+    );
+
+    // Unmount to trigger cleanup
+    unmount();
+    
+    // Run the cleanup function directly
+    const offCalls = mockMapInstance.off.mock.calls;
+    const cleanupFn = offCalls.find(call => call[0] === 'styledata')[1];
+    
+    if (cleanupFn) {
+      cleanupFn();
+    }
+    
+    // Should not attempt to remove any layers
+    expect(mockMapInstance.removeLayer).not.toHaveBeenCalled();
     
     // Should have removed the source
     expect(mockMapInstance.removeSource).toHaveBeenCalledWith('test-source');

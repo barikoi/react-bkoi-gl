@@ -1,5 +1,5 @@
-// Mock for maplibre-gl
-export default {
+// Mock for maplibre-gl and bkoi-gl
+const mockImplementation = {
   Map: class Map {
     constructor() {
       this.on = () => {};
@@ -69,6 +69,8 @@ export default {
   ScaleControl: class ScaleControl {},
   AttributionControl: class AttributionControl {}
 };
+
+export default mockImplementation;
 
 // Mock URL methods needed by maplibre
 global.URL.createObjectURL = () => 'mock-url';
