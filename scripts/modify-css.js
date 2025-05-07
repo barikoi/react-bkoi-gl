@@ -112,6 +112,20 @@ const applyCustomStyles = async (cssFilePath) => {
   }
 };
 
+const createTypeDefinition = async () => {
+  const typesContent = `declare module 'react-bkoi-gl/styles' {
+  const styles: string;
+  export default styles;
+}`;
+
+  try {
+    await fs.writeFile(resolve('dist/styles/index.d.ts'), typesContent, 'utf8');
+    console.log('Type definition file created successfully');
+  } catch (error) {
+    console.error('Error creating type definition file:', error);
+  }
+};
+
 const copyCssFile = async () => {
   // Source path: where the CSS file is located
   const srcPath = resolve('node_modules/maplibre-gl/dist/maplibre-gl.css');
@@ -129,6 +143,9 @@ const copyCssFile = async () => {
 
     // Apply custom styles after copying
     await applyCustomStyles(destPath);
+    
+    // Create type definition file
+    await createTypeDefinition();
   } catch (error) {
     console.error('Error copying CSS file:', error);
   }

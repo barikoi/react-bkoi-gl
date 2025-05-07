@@ -1,9 +1,13 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "target": "es2020",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "module": "ES2020",
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist"
+    "sourceMap": true,
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["__tests__/**/*"]

@@ -2,16 +2,15 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "es2020",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "jsx": "react-jsx",
-    "noEmit": true,
+    "jsx": "react",
     "allowJs": true,
-    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "baseUrl": "./"
+    "noEmit": true,
+    "sourceMap": true,
+    "outDir": "./dist"
   },
   "include": [
     "src/**/*",
