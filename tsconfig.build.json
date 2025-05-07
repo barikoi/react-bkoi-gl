@@ -1,18 +1,10 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "jsx": "react",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "module": "ES2020",
     "declaration": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "isolatedModules": true,
-    "skipLibCheck": true
+    "emitDeclarationOnly": true,
+    "outDir": "dist"
   },
-  "include":[
-    "src/**/*"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["__tests__/**/*"]
 }

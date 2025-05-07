@@ -3,7 +3,7 @@
     "target": "es2020",
     "module": "es2020",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "jsx": "react",
+    "jsx": "react-jsx",
     "noEmit": true,
     "allowJs": true,
     "skipLibCheck": true,
@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "baseUrl": "./",
+    "baseUrl": "./"
   },
   "include": [
     "src/**/*",
@@ -22,6 +22,6 @@
     "build",
     "dist",
     "coverage",
-    "public",
+    "public"
   ]
 }
