@@ -11,9 +11,9 @@ export default defineConfig({
   treeshake: true,
   external: ['react', 'react-dom', 'bkoi-gl', 'maplibre-gl', '@maplibre/maplibre-gl-style-spec'],
   noExternal: [],
+  tsconfig: "tsconfig.json",
   esbuildOptions(options) {
     options.conditions = ['module'];
-    options.exports = 'named';
   },
   onSuccess: async () => {
     console.log('Processing CSS files...');
