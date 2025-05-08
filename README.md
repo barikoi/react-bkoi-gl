@@ -17,126 +17,29 @@ Or via yarn:
 yarn add react-bkoi-gl
 ```
 
-## Components
-
-The package provides the following components:
-
-### Map
-The core component for rendering Barikoi maps.
-```jsx
-import { Map } from 'react-bkoi-gl';
-
-<Map
-  mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
-  initialViewState={{
-    longitude: 90.36402,
-    latitude: 23.823731,
-    zoom: 13
-  }}
-/>
-```
-
-### Marker
-Add markers to the map.
-```jsx
-import { Marker } from 'react-bkoi-gl';
-
-<Marker longitude={90.36402} latitude={23.823731} color="red" />
-```
-
-### NavigationControl
-Adds zoom and rotation controls to the map.
-```jsx
-import { NavigationControl } from 'react-bkoi-gl';
-
-<NavigationControl position="top-right" />
-```
-
-### GeolocateControl
-Control for locating the user on the map.
-```jsx
-import { GeolocateControl } from 'react-bkoi-gl';
-
-<GeolocateControl position="top-right" />
-```
-
-### FullscreenControl
-Adds a control to toggle the map between fullscreen and normal mode.
-```jsx
-import { FullscreenControl } from 'react-bkoi-gl';
-
-<FullscreenControl position="top-right" />
-```
-
-### ScaleControl
-Shows the scale of the current map view.
-```jsx
-import { ScaleControl } from 'react-bkoi-gl';
-
-<ScaleControl position="bottom-right" />
-```
-
-### Source and Layer
-Components for adding data sources and visualization layers to the map.
-```jsx
-import { Source, Layer } from 'react-bkoi-gl';
-
-<Source id="my-data" type="geojson" data={geojsonData}>
-  <Layer
-    id="my-layer"
-    type="circle"
-    paint={{
-      'circle-radius': 8,
-      'circle-color': '#007cbf'
-    }}
-  />
-</Source>
-```
-
-### Popup
-Displays information in a popup on the map.
-```jsx
-import { Popup } from 'react-bkoi-gl';
-
-<Popup
-  longitude={90.36402}
-  latitude={23.823731}
-  closeButton={true}
-  closeOnClick={true}
->
-  <div>Information about this location</div>
-</Popup>
-```
-
-### TerrainControl
-Control for enabling 3D terrain visualization.
-```jsx
-import { TerrainControl } from 'react-bkoi-gl';
-
-<TerrainControl position="top-right" />
-```
-
-### LogoControl and AttributionControl
-Controls for displaying the Barikoi logo and attribution information.
-```jsx
-import { LogoControl, AttributionControl } from 'react-bkoi-gl';
-
-<LogoControl position="bottom-left" />
-<AttributionControl position="bottom-right" />
-```
-
 ## Example
 
+### JavaScript (`js`) Example
 ```jsx
 import { useRef } from 'react';
-import { Map, Marker, FullscreenControl, GeolocateControl, NavigationControl, ScaleControl } from 'react-bkoi-gl';
+import {
+  Map,
+  Marker,
+  Popup,
+  Layer,
+  Source,
+  NavigationControl,
+  FullscreenControl,
+  GeolocateControl,
+  ScaleControl,
+} from 'react-bkoi-gl';
 
 // Import Styles
-import "react-bkoi-gl/styles"
+import "react-bkoi-gl/styles";
 
 const App = () => {
-  const BARIKOI_API_KEY = 'YOUR_BARIKOI_API_KEY_HERE'
-  const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`
+  const BARIKOI_API_KEY = 'YOUR_BARIKOI_API_KEY_HERE';
+  const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`;
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const initialViewState = {
@@ -147,11 +50,11 @@ const App = () => {
     zoom: 13,
     bearing: 0,
     pitch: 0,
-    antialias: true
-  }
+    antialias: true,
+  };
 
   return (
-    <div ref={mapContainer} style={containerStyles} >
+    <div ref={mapContainer} style={containerStyles}>
       <Map
         ref={mapRef}
         mapStyle={mapStyle}
@@ -161,14 +64,37 @@ const App = () => {
         dragRotate={false}
       >
         <Marker longitude={90.36402} latitude={23.823731} color="red" />
-        <GeolocateControl position="top-right" />
-        <FullscreenControl position="top-right" />
+        <Popup longitude={90.36402} latitude={23.823731}>
+          <div>Hello, Barikoi!</div>
+        </Popup>
+        <Source
+          id="points"
+          type="geojson"
+          data={{
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'Point', coordinates: [90.36402, 23.823731] }
+              }
+            ]
+          }}
+        />
+        <Layer
+          id="points-layer"
+          type="circle"
+          source="points"
+          paint={{ 'circle-radius': 10, 'circle-color': '#ff0000' }}
+        />
         <NavigationControl position="top-right" />
+        <FullscreenControl position="top-right" />
+        <GeolocateControl position="top-right" />
         <ScaleControl position="bottom-right" />
       </Map>
     </div>
-  )
-}
+  );
+};
 
 // JSX Styles
 const containerStyles = {
@@ -176,10 +102,124 @@ const containerStyles = {
   height: "100vh",
   minHeight: "400px",
   overflow: "hidden",
+};
+
+export default App;
+```
+
+### TypeScript (`ts`) Example
+```tsx
+import { useRef } from 'react';
+import {
+  Map,
+  Marker,
+  Popup,
+  Layer,
+  Source,
+  NavigationControl,
+  FullscreenControl,
+  GeolocateControl,
+  ScaleControl,
+  MapRef
+} from 'react-bkoi-gl';
+
+// Import Styles
+import "react-bkoi-gl/styles";
+
+interface MapProps {
+  longitude: number;
+  latitude: number;
 }
 
-export default App
+const App: React.FC = () => {
+  const BARIKOI_API_KEY = 'YOUR_BARIKOI_API_KEY_HERE';
+  const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`;
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapRef>(null);
+  const initialViewState = {
+    longitude: 90.36402,
+    latitude: 23.823731,
+    minZoom: 4,
+    maxZoom: 22,
+    zoom: 13,
+    bearing: 0,
+    pitch: 0,
+    antialias: true,
+  };
+
+  return (
+    <div ref={mapContainer} style={containerStyles}>
+      <Map
+        ref={mapRef}
+        mapStyle={mapStyle}
+        style={{ width: "100%", height: "100%" }}
+        initialViewState={initialViewState}
+        doubleClickZoom={false}
+        dragRotate={false}
+      >
+        <Marker longitude={90.36402} latitude={23.823731} color="red" />
+        <Popup longitude={90.36402} latitude={23.823731}>
+          <div>Hello, Barikoi!</div>
+        </Popup>
+        <Source
+          id="points"
+          type="geojson"
+          data={{
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'Point', coordinates: [90.36402, 23.823731] }
+              }
+            ]
+          }}
+        />
+        <Layer
+          id="points-layer"
+          type="circle"
+          source="points"
+          paint={{ 'circle-radius': 10, 'circle-color': '#ff0000' }}
+        />
+        <NavigationControl position="top-right" />
+        <FullscreenControl position="top-right" />
+        <GeolocateControl position="top-right" />
+        <ScaleControl position="bottom-right" />
+      </Map>
+    </div>
+  );
+};
+
+// JSX Styles
+const containerStyles: React.CSSProperties = {
+  width: "100%",
+  height: "100vh",
+  minHeight: "400px",
+  overflow: "hidden",
+};
+
+export default App;
 ```
+
+## Components
+
+Here is a list of all available components in `react-bkoi-gl`:
+
+| Component           | Description                                                                 |
+|---------------------|-----------------------------------------------------------------------------|
+| `Map`               | The core component for rendering a Barikoi map. Must be the parent of all other components. |
+| `Marker`            | Displays a marker on the map at specified coordinates.                      |
+| `Popup`             | Displays a popup with custom content at specified coordinates.              |
+| `Layer`             | Adds a custom layer to the map.                                             |
+| `Source`            | Defines a data source for the map.                                          |
+| `NavigationControl` | Adds zoom and rotation controls.                                            |
+| `FullscreenControl` | Adds a button to toggle fullscreen mode.                                    |
+| `GeolocateControl`  | Centers the map on the user's location.                                     |
+| `ScaleControl`      | Displays a scale bar.                                                       |
+| `AttributionControl`| Displays map attribution information.                                       |
+| `TerrainControl`    | Adds terrain control to the map.                                            |
+| `useMap`            | Custom hook for managing the map instance.                                  |
+| `useControl`        | Custom hook for managing map controls.                                      |
 
 ## Get Barikoi API key
 
@@ -189,20 +229,6 @@ To access Barikoi's API services, you need to:
 3. Claim your API key.
 
 Once registered, you'll be able to access the full suite of Barikoi API services. If you exceed the free usage limits, you'll need to subscribe to a paid plan.
-
-## Testing
-
-To run tests:
-```bash
-npm test
-```
-
-To generate a test coverage report:
-```bash
-npm run coverage
-```
-
-The coverage report will be available in the `coverage/` directory.
 
 ## Learning Resources
 * [Barikoi API Documentation](https://docs.barikoi.com/docs/maps-api)

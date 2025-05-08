@@ -16,17 +16,18 @@ export default {
   coverageReporters: ["text", "lcov", "html"],
   transform: {
     "^.+\\.jsx?$": "babel-jest",
-    "^.+\\.tsx?$": "ts-jest"
+    "^.+\\.tsx?$": "ts-jest",
+    "^.+\\.mjs$": "babel-jest",
   },
   transformIgnorePatterns: [
     "/node_modules/(?!(@?tape-promise|testing-library/jest-dom))"
   ],
-  moduleNameMapper: {
-    "^react-bkoi-gl/test(.*)$": "<rootDir>/__tests__$1",
-    "^react-bkoi-gl(.*)$": "<rootDir>/src$1",
-    "\\.(css|less)$": "identity-obj-proxy",
-    "^(maplibre-gl|bkoi-gl)$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
-  },
+  // moduleNameMapper: {
+  //   "^react-bkoi-gl/test(.*)$": "<rootDir>/__tests__$1",
+  //   "^react-bkoi-gl(.*)$": "<rootDir>/src$1",
+  //   "\\.(css|less)$": "identity-obj-proxy",
+  //   "^(maplibre-gl|bkoi-gl)$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
+  // },
   testMatch: [
     "<rootDir>/__tests__/**/*test*.{js,jsx,ts,tsx}"
   ],
