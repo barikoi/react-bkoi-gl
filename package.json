@@ -1,6 +1,7 @@
 {
   "name": "react-bkoi-gl",
   "version": "2.0.0",
+  "updatedAt": "12-05-2025 3:23:52 PM",
   "engines": {
     "node": ">=18.13.0"
   },
@@ -35,8 +36,9 @@
     "clean": "rm -rf dist && mkdir -p dist",
     "build": "ocular-clean && ocular-build && node scripts/modify-css.js",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
-    "test": "npm run typecheck && jest --config jest.config.cjs",
-    "coverage": "jest --config jest.config.cjs --coverage --passWithNoTests"
+    "test": "npm run typecheck && jest",
+    "coverage": "jest --coverage --passWithNoTests",
+    "update-version": "node scripts/update-version.cjs"
   },
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^23.2.1",
@@ -47,10 +49,6 @@
     "react-dom": ">=16.3.0"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "^7.24.1",
-    "@babel/preset-env": "^7.24.3",
-    "@babel/preset-react": "^7.24.1",
-    "@babel/preset-typescript": "^7.24.1",
     "@commitlint/cli": "^19.4.1",
     "@commitlint/config-conventional": "^19.4.1",
     "@testing-library/jest-dom": "^6.4.2",

@@ -216,7 +216,6 @@ Here is a list of all available components in `react-bkoi-gl`:
 | `FullscreenControl` | Adds a button to toggle fullscreen mode.                                    |
 | `GeolocateControl`  | Centers the map on the user's location.                                     |
 | `ScaleControl`      | Displays a scale bar.                                                       |
-| `AttributionControl`| Displays map attribution information.                                       |
 | `TerrainControl`    | Adds terrain control to the map.                                            |
 | `useMap`            | Custom hook for managing the map instance.                                  |
 | `useControl`        | Custom hook for managing map controls.                                      |

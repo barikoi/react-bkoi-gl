@@ -17,7 +17,7 @@ module.exports = {
     "/__tests__/",
     "/dist/",
   ],
-  coverageReporters: ["text", "lcov", "html"],
+  coverageReporters: ["text", "lcov", "json"],
   transform: {
     "^.+\\.(js|jsx|ts|tsx|cjs)$": [
       "babel-jest",
@@ -40,7 +40,7 @@ module.exports = {
     "^react-bkoi-gl/test(.*)$": "<rootDir>/__tests__$1",
     "^react-bkoi-gl(.*)$": "<rootDir>/src$1",
     "\\.(css|less)$": "identity-obj-proxy",
-    "^(maplibre-gl|bkoi-gl)$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
+    "^(maplibre-gl)$": "<rootDir>/__tests__/mocks/maplibre-gl.js"
   },
   testMatch: [
     "<rootDir>/__tests__/**/*test*.{js,jsx,ts,tsx,cjs}"
