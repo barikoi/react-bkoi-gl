@@ -1,7 +1,7 @@
 {
   "name": "react-bkoi-gl",
   "version": "2.0.0",
-  "updatedAt": "12-05-2025 3:23:52 PM",
+  "updatedAt": "12-05-2025 5:19:02 PM",
   "engines": {
     "node": ">=18.13.0"
   },
@@ -14,7 +14,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.cjs",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
     },
     "./styles": {
       "types": "./dist/styles/index.d.ts",
