@@ -70,8 +70,21 @@ const mockImplementation = {
   AttributionControl: class AttributionControl {}
 };
 
-export default mockImplementation;
+module.exports = mockImplementation;
 
 // Mock URL methods needed by maplibre
-global.URL.createObjectURL = () => 'mock-url';
-global.URL.revokeObjectURL = () => {}; 
+if (typeof global !== 'undefined') {
+  if (!global.URL) {
+    global.URL = {
+      createObjectURL: () => 'mock-url',
+      revokeObjectURL: () => {}
+    };
+  } else {
+    if (!global.URL.createObjectURL) {
+      global.URL.createObjectURL = () => 'mock-url';
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = () => {};
+    }
+  }
+} 

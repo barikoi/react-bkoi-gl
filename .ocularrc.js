@@ -2,7 +2,7 @@ import {resolve} from 'path';
 
 export default {
   lint: {
-    paths: ['src', '__tests__', 'scripts']
+    paths: ['src', '__tests__']
   },
 
   typescript: {
@@ -16,7 +16,8 @@ export default {
   },
 
   nodeAliases: {
-    'react-dom': resolve('./__tests__/mocks/react-dom-mock.js')
+    'react-dom': resolve('./__tests__/mocks/react-dom-mock.js'),
+    'maplibre-gl': resolve('./__tests__/mocks/maplibre-gl.js'),
   },
 
   browserTest: {
@@ -27,5 +28,14 @@ export default {
     test: '__tests__/setup.js',
     'test-browser': '__tests__/setup.js',
     size: ['src/index.ts', 'src/components/index.ts']
+  },
+
+  esm: true, // Enable ESM support
+  
+  jest: {
+    config: 'jest.config.js',
+    testMatch: [
+      '**/__tests__/**/*test*.(js|jsx|ts|tsx)'
+    ]
   }
 };
