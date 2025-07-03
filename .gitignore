@@ -12,3 +12,4 @@ yarn-error.log
 .reify-cache
 .env*
 .idea
+*.tgz
