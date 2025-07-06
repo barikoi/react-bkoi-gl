@@ -2,7 +2,7 @@ name: SonarQube Scan
 
 on:
   push:
-    branches: ["dev"]
+    branches: [] # Temporarily disabled all branches while SonarQube is down
 
 env: 
   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

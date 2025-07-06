@@ -1,4 +1,4 @@
-# 🗺️ react-bkoi-gl Developer Guide
+# 🗺️ react-bkoi-gl Development Guide
 
 Welcome to the developer documentation for `react-bkoi-gl`! This guide will help you understand, develop, test, and contribute to the project with confidence. 🚀
 
@@ -39,6 +39,8 @@ react-bkoi-gl/
 ├── docs/
 ├── package.json
 ├── README.md
+├── CONTRIBUTING.md
+├── DEVELOPMENT.md
 └── ...
 ```
 
@@ -119,6 +121,7 @@ Mapbox GL JS is a popular JavaScript library for building interactive, customiza
 | `test`             | Runs typecheck, then all Jest tests                                          |
 | `coverage`         | Runs Jest with coverage reporting                                            |
 | `update-version`   | Updates `package.json` version and timestamp from `CHANGELOG.md`             |
+| `prepare`          | Sets up Husky hooks (runs automatically after `npm install`)                  |
 
 **Details:**
 - **`build`**: Uses `ocular-clean` and `ocular-build` (from `ocular-dev-tools`) for TypeScript and Babel compilation, then runs `scripts/modify-css.js` to handle CSS (see below).
@@ -225,6 +228,11 @@ Instead, use the `.tgz` tarball method for reliable, isolated testing:
 - Runs on pushes to the `dev` branch.
 - Installs dependencies, runs tests and coverage, and triggers SonarQube analysis.
 - Notifies a Discord webhook on success, failure, or cancellation.
+
+### `husky/` (Git Hooks)
+- Pre-commit hook: Runs linting and tests
+- Commit-msg hook: Enforces Conventional Commits via commitlint
+- Pre-push hook: Runs full test suite
 
 ---
 
