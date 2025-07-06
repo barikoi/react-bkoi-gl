@@ -1,5 +1,41 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+. "$(dirname "$0")/_/husky.sh"
 
-npm run lint
-npm test
+# Get the branch name
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# This script runs linting, type checking, and tests before allowing a commit
+echo '🛠️  Preparing to commit: Running checks...'
+
+# Run ESLint for linting
+echo "🔍 Running ESLint..."
+npm run lint || {
+  echo '❌ ESLint check failed. Please fix the linting issues before committing.'
+  exit 1
+}
+
+# Run TypeScript type checking (uses your existing typecheck script)
+echo "🔍 Running TypeScript type checking..."
+npm run typecheck || {
+  echo '❌ TypeScript type checking failed. Please fix the type errors before committing.'
+  exit 1
+}
+
+# Run tests (your test script already includes typecheck)
+echo "🧪 Running tests..."
+npm test || {
+  echo '❌ Tests failed. Please fix the test failures before committing.'
+  exit 1
+}
+
+# Run build only for main and dev branches
+if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "dev" ]; then
+  echo "🏗️  Running build for $BRANCH_NAME branch..."
+  npm run build || {
+    echo '❌ Build failed. Please ensure the build process completes successfully before committing.'
+    exit 1
+  }
+fi
+
+# All checks passed
+echo '✅ All pre-commit checks passed. You can proceed with the commit.'
