@@ -23,7 +23,7 @@ npm run typecheck || {
 
 # Run tests (your test script already includes typecheck)
 echo "🧪 Running tests..."
-npm test || {
+npm run test || {
   echo '❌ Tests failed. Please fix the test failures before committing.'
   exit 1
 }
