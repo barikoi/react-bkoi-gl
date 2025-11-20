@@ -56,15 +56,44 @@ const applyCustomStyles = async (cssFilePath) => {
       'a.maplibregl-ctrl-logo.maplibregl-compact': {
         width: '100% !important',
       },
-      // Fixed Attribute
-      '.maplibregl-ctrl-attrib': {
+      // Fixed Attribution Control - Base (expanded state)
+      '.maplibregl-ctrl.maplibregl-ctrl-attrib': {
         'background-color': '#fff !important',
-        'margin': '10px',
-        'min-height': '20px',
-        'padding': '2',
-        'border-radius': '12px',
-        'line-height': '18px',
-        'color': '#000',
+        'margin': '10px !important',
+        'min-height': '20px !important',
+        'padding': '4px 8px !important',
+        'border-radius': '12px !important',
+        'line-height': '18px !important',
+        'color': '#000 !important',
+        'position': 'relative !important',
+      },
+      // Compact show state (expanded with text + icon) - needs right padding for icon space
+      '.maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact-show': {
+        'padding-right': '32px !important',
+      },
+      // Fix icon button positioning - centered vertically, positioned from right
+      '.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button': {
+        'position': 'absolute !important',
+        'right': '4px !important',
+        'top': '50% !important',
+        'transform': 'translateY(-50%) !important',
+      },
+      // For left-aligned attribution controls
+      '.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib.maplibregl-compact-show': {
+        'padding-right': '8px !important',
+        'padding-left': '32px !important',
+      },
+      '.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib.maplibregl-compact-show': {
+        'padding-right': '8px !important',
+        'padding-left': '32px !important',
+      },
+      '.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button': {
+        'left': '4px !important',
+        'right': 'auto !important',
+      },
+      '.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button': {
+        'left': '4px !important',
+        'right': 'auto !important',
       },
     };
 
