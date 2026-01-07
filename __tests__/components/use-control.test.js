@@ -1,6 +1,6 @@
 // Jest-based tests for useControl hook
 import React from 'react';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import { useControl } from '../../src/components/use-control';
 import { MapContext } from '../../src/components/map';
 

@@ -27,6 +27,42 @@ export type {
   MapBoxZoomEvent,
 };
 
+interface MapEvent<SourceT, OriginalEventT = undefined> {
+  type: string;
+  target: SourceT;
+  originalEvent: OriginalEventT;
+}
+
+export type ErrorEvent = MapEvent<Map> & {
+  type: "error";
+  error: Error;
+};
+
+export type MapMouseEvent = _MapMouseEvent & {
+  point: Point;
+  lngLat: LngLat;
+  features?: MapGeoJSONFeature[];
+};
+
+export type ViewStateChangeEvent =
+  | (MapEvent<Map, MouseEvent | TouchEvent | WheelEvent | undefined> & {
+      type: "movestart" | "move" | "moveend" | "zoomstart" | "zoom" | "zoomend";
+      viewState: ViewState;
+    })
+  | (MapEvent<Map, MouseEvent | TouchEvent | undefined> & {
+      type:
+        | "rotatestart"
+        | "rotate"
+        | "rotateend"
+        | "dragstart"
+        | "drag"
+        | "dragend"
+        | "pitchstart"
+        | "pitch"
+        | "pitchend";
+      viewState: ViewState;
+    });
+
 export type MapCallbacks = {
   onMouseDown?: (e: MapLayerMouseEvent) => void;
   onMouseUp?: (e: MapLayerMouseEvent) => void;
@@ -74,42 +110,6 @@ export type MapCallbacks = {
   onStyleData?: (e: MapStyleDataEvent) => void;
   onSourceData?: (e: MapSourceDataEvent) => void;
 };
-
-interface MapEvent<SourceT, OriginalEventT = undefined> {
-  type: string;
-  target: SourceT;
-  originalEvent: OriginalEventT;
-}
-
-export type ErrorEvent = MapEvent<Map> & {
-  type: "error";
-  error: Error;
-};
-
-export type MapMouseEvent = _MapMouseEvent & {
-  point: Point;
-  lngLat: LngLat;
-  features?: MapGeoJSONFeature[];
-};
-
-export type ViewStateChangeEvent =
-  | (MapEvent<Map, MouseEvent | TouchEvent | WheelEvent | undefined> & {
-      type: "movestart" | "move" | "moveend" | "zoomstart" | "zoom" | "zoomend";
-      viewState: ViewState;
-    })
-  | (MapEvent<Map, MouseEvent | TouchEvent | undefined> & {
-      type:
-        | "rotatestart"
-        | "rotate"
-        | "rotateend"
-        | "dragstart"
-        | "drag"
-        | "dragend"
-        | "pitchstart"
-        | "pitch"
-        | "pitchend";
-      viewState: ViewState;
-    });
 
 export type PopupEvent = {
   type: "open" | "close";

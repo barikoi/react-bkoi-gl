@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect, memo } from "react";
 import { applyReactStyle } from "../utils/apply-react-style";
 import { useControl } from "./use-control";
+import { useMap } from "./use-map";
 
 import type { ControlPosition, AttributionControlOptions } from "../types/lib";
 
@@ -15,39 +16,47 @@ export type AttributionControlProps = AttributionControlOptions & {
 };
 
 function _AttributionControl(props: AttributionControlProps) {
+  const { current: map } = useMap();
+  
   const ctrl = useControl(
-    ({ mapLib }) => new mapLib.AttributionControl(props),
+    ({ mapLib }) =>
+      new mapLib.AttributionControl({
+        compact: true,
+        ...props,
+      }),
     { position: props.position },
   );
 
   useEffect(() => {
     applyReactStyle(ctrl._container, props.style);
 
-    // Ensure the container is available
-    if (!ctrl._container) return;
+    if (!ctrl._container || !map) return;
 
-    // Create and append the custom attribution control
-    // const customAttribution = document.createElement('details');
-    // customAttribution.className = 'maplibregl-ctrl maplibregl-ctrl-attrib maplibregl-compact maplibregl-compact-show';
-    // customAttribution.setAttribute('open', '');
+    const onLoad = () => {
+      setTimeout(() => {
+        const inner = ctrl._container.querySelector(
+          ".maplibregl-ctrl-attrib-inner",
+        );
 
-    // const summary = document.createElement('summary');
-    // summary.className = 'maplibregl-ctrl-attrib-button';
-    // summary.setAttribute('title', 'Toggle attribution');
-    // summary.setAttribute('aria-label', 'Toggle attribution');
-    // customAttribution.appendChild(summary);
+        if (inner) {
+          inner.innerHTML =
+            '© <a href="https://barikoi.com" target="_blank">Barikoi</a> ' +
+            '© <a href="https://openmaptiles.org" target="_blank">OpenMapTiles</a> ' +
+            '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>';
+        }
+      }, 0);
+    };
 
-    // const innerDiv = document.createElement('div');
-    // innerDiv.className = 'maplibregl-ctrl-attrib-inner';
-    // innerDiv.innerHTML = `
-    //   <a href="https://barikoi.com/" target="_blank">© Barikoi</a> |
-    //   <a href="https://www.openmaptiles.org/" target="_blank">© OpenMapTiles</a> |
-    //   <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>
-    // `;
-    // customAttribution.appendChild(innerDiv);
+    if (map.loaded()) {
+      onLoad();
+    } else {
+      map.once("load", onLoad);
+    }
 
-    // ctrl._container.appendChild(customAttribution);
-  }, [props.style, ctrl._container]);
+    return () => {
+      map.off("load", onLoad);
+    };
+  }, [props.style, ctrl._container, map]);
 
   return null;
 }

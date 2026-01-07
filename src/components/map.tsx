@@ -1,5 +1,3 @@
-/* eslint-disable react/display-name */
-/* eslint-disable react/no-unknown-property */
 import * as React from "react";
 import {
   useState,

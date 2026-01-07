@@ -159,6 +159,7 @@ const handlerNames = [
 /**
  * A wrapper for mapbox-gl's Map class
  */
+// eslint-disable-next-line no-use-before-define
 export default class Maplibre {
   private _MapClass: { new (options: any): MapInstance };
   // mapboxgl.Map instance
@@ -177,6 +178,7 @@ export default class Maplibre {
     terrain?: TerrainSpecification | null;
   } = {};
 
+  // eslint-disable-next-line no-use-before-define
   static savedMaps: Maplibre[] = [];
 
   constructor(

@@ -18,20 +18,15 @@ module.exports = {
     "/dist/",
   ],
   coverageReporters: ["text", "lcov", "json"],
-  transform: {
-    "^.+\\.(js|jsx|ts|tsx|cjs)$": [
-      "babel-jest",
-      {
-        presets: [
-          ["@babel/preset-env", { targets: { node: "current" } }],
-          "@babel/preset-typescript",
-          ["@babel/preset-react", { runtime: "automatic" }]
-        ],
-        plugins: [
-          ["@babel/plugin-transform-modules-commonjs", { allowTopLevelThis: true }]
-        ]
-      }
-    ]
+  preset: 'ts-jest/presets/js-with-ts',
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+      },
+    },
   },
   transformIgnorePatterns: [
     "/node_modules/(?!(@?tape-promise|@testing-library/jest-dom))"

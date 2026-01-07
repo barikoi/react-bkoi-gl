@@ -4,7 +4,7 @@ import { useEffect, memo } from "react";
 import { applyReactStyle } from "../utils/apply-react-style";
 import { useControl } from "./use-control";
 
-import type { ControlPosition, LogoControlOptions } from "../types/lib";
+import type { ControlPosition, LogoControlOptions, IControl } from "../types/lib";
 
 export type LogoControlProps = LogoControlOptions & {
   /** Placement of the control relative to the map. */
@@ -14,28 +14,32 @@ export type LogoControlProps = LogoControlOptions & {
 };
 
 function _LogoControl(props: LogoControlProps) {
-  const ctrl = useControl(({ mapLib }) => new mapLib.LogoControl(props), {
-    position: props.position,
-  });
+  // Create custom control
+  const ctrl = useControl(
+    () => {
+      const control: IControl & { _container?: HTMLElement } = {
+        onAdd: (): HTMLElement => {
+          const container = document.createElement("a");
+          container.className = "maplibregl-ctrl-logo";
+          container.href = "https://www.barikoi.com";
+          container.target = "_blank";
+          container.setAttribute("alt", "Barikoi");
+          container.setAttribute("aria-label", "Barikoi logo");
+          container.setAttribute("rel", "noopener nofollow");
+          control._container = container;
+          return container;
+        },
+        onRemove: (): void => {
+          delete control._container;
+        },
+      };
+      return control;
+    },
+    { position: props.position }
+  );
 
   useEffect(() => {
     applyReactStyle(ctrl._container, props.style);
-
-    // Update the DOM structure and attributes directly
-    const logoElement = ctrl._container?.querySelector(
-      ".maplibregl-ctrl-logo",
-    ) as HTMLAnchorElement | null;
-    if (logoElement) {
-      // Update the link attributes
-      logoElement.href = "https://barikoi.com/";
-      logoElement.setAttribute("aria-label", "Barikoi logo");
-      logoElement.target = "_blank";
-      logoElement.rel = "noopener nofollow";
-      logoElement.style.cursor = "pointer";
-
-      // Remove any existing click handlers
-      logoElement.replaceWith(logoElement.cloneNode(true));
-    }
   }, [props.style, ctrl._container]);
 
   return null;

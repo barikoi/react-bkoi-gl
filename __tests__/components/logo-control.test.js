@@ -14,54 +14,27 @@ describe('LogoControl Component', () => {
   let mockMap;
   let mockMapLib;
   let mapContextValue;
-  let mockLogoControlInstance;
-  let mockLogoElement;
   
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Create mock logo element
-    mockLogoElement = document.createElement('a');
-    mockLogoElement.className = 'maplibregl-ctrl-logo';
-    mockLogoElement.href = 'https://maplibre.org/';
+    // Create mock mapLib (not used in new implementation, but still required by context)
+    mockMapLib = {};
     
-    // Create mock container with logo
-    const container = document.createElement('div');
-    container.appendChild(mockLogoElement);
-    
-    // Create mock querySelector
-    container.querySelector = jest.fn().mockImplementation(selector => {
-      if (selector === '.maplibregl-ctrl-logo') {
-        return mockLogoElement;
-      }
-      return null;
-    });
-    
-    // Create mock control instance
-    mockLogoControlInstance = {
-      _container: container,
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('bottom-left')
-    };
-    
-    // Mock for the Element.replaceWith method
-    mockLogoElement.replaceWith = jest.fn(node => {
-      mockLogoElement = node;
-      return mockLogoElement;
-    });
-    
-    // Create mock mapLib with constructor
-    mockMapLib = {
-      LogoControl: jest.fn().mockImplementation(() => mockLogoControlInstance)
-    };
+    // Track added controls for hasControl mock
+    let addedControls = new Set();
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
-        return control === mockLogoControlInstance; 
+      hasControl: jest.fn((ctrl) => addedControls.has(ctrl)),
+      addControl: jest.fn((ctrl) => {
+        addedControls.add(ctrl);
+        // Simulate MapLibre calling onAdd when control is added
+        if (ctrl.onAdd) {
+          ctrl.onAdd(mockMap);
+        }
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
+      removeControl: jest.fn((ctrl) => addedControls.delete(ctrl)),
       getMap: jest.fn().mockReturnValue({})
     };
     
@@ -84,71 +57,51 @@ describe('LogoControl Component', () => {
       </MapContext.Provider>
     );
     
-    // Constructor called with props
-    expect(mockMapLib.LogoControl).toHaveBeenCalledWith({
-      position: 'bottom-right',
-      style: { color: 'red' }
-    });
-    
-    // Mock addControl to simulate what the component would have done
-    mockMap.addControl.mockImplementation((control, position) => {
-      // This simulates what would happen in the real map
-      return true;
-    });
-    
-    // Manually call the map.addControl that useControl would have done
-    mockMap.addControl(mockLogoControlInstance, 'bottom-right');
-    
     // Control added to map with position
     expect(mockMap.addControl).toHaveBeenCalledWith(
-      mockLogoControlInstance,
+      expect.objectContaining({
+        onAdd: expect.any(Function),
+        onRemove: expect.any(Function)
+      }),
       'bottom-right'
     );
     
-    // Style applied
+    // Get the control that was added
+    const addedControl = mockMap.addControl.mock.calls[0][0];
+    
+    // Verify onAdd creates the correct element
+    const container = addedControl.onAdd(mockMap);
+    expect(container.tagName).toBe('A');
+    expect(container.className).toBe('maplibregl-ctrl-logo');
+    expect(container.href).toBe('https://www.barikoi.com/');
+    
+    // Now _container should be set
+    expect(addedControl._container).toBe(container);
+    
+    // Style applied (applyReactStyle is called after onAdd via useEffect)
     const { applyReactStyle } = applyReactStyleModule;
     expect(applyReactStyle).toHaveBeenCalledWith(
-      mockLogoControlInstance._container,
+      container,
       { color: 'red' }
     );
   });
   
-  test('updates logo element attributes', () => {
-    // Mock the replaceWith function as a Jest mock
-    mockLogoElement.replaceWith = jest.fn();
-
+  test('creates control without errors', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
         <LogoControl />
       </MapContext.Provider>
     );
     
-    // Logo element should be queried
-    expect(mockLogoControlInstance._container.querySelector).toHaveBeenCalledWith('.maplibregl-ctrl-logo');
+    // Control should be added successfully
+    expect(mockMap.addControl).toHaveBeenCalled();
     
-    // Attributes should be updated
-    expect(mockLogoElement.href).toBe('https://barikoi.com/');
-    expect(mockLogoElement.getAttribute('aria-label')).toBe('Barikoi logo');
-    expect(mockLogoElement.target).toBe('_blank');
-    expect(mockLogoElement.rel).toBe('noopener nofollow');
-    expect(mockLogoElement.style.cursor).toBe('pointer');
+    // Get the control that was added
+    const addedControl = mockMap.addControl.mock.calls[0][0];
     
-    // Element should be replaced with clone to remove event listeners
-    expect(mockLogoElement.replaceWith).toHaveBeenCalled();
-  });
-  
-  test('does nothing if logo element is not found', () => {
-    // Mock that the logo element isn't found
-    mockLogoControlInstance._container.querySelector = jest.fn().mockReturnValue(null);
-    
-    render(
-      <MapContext.Provider value={mapContextValue}>
-        <LogoControl />
-      </MapContext.Provider>
-    );
-    
-    // No error should occur
-    expect(mockLogoControlInstance._container.querySelector).toHaveBeenCalledWith('.maplibregl-ctrl-logo');
+    // Should have both onAdd and onRemove methods
+    expect(addedControl.onAdd).toBeDefined();
+    expect(addedControl.onRemove).toBeDefined();
   });
   
   test('cleans up when unmounted', () => {
@@ -158,9 +111,12 @@ describe('LogoControl Component', () => {
       </MapContext.Provider>
     );
     
+    // Get the control that was added
+    const addedControl = mockMap.addControl.mock.calls[0][0];
+    
     unmount();
     
     // Control removed from map
-    expect(mockMap.removeControl).toHaveBeenCalledWith(mockLogoControlInstance);
+    expect(mockMap.removeControl).toHaveBeenCalledWith(addedControl);
   });
 }); 

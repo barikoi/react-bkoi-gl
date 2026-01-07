@@ -1,9 +1,9 @@
 {
   "name": "react-bkoi-gl",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "updatedAt": "6-07-2025 1:24:36 PM",
   "engines": {
-    "node": ">=18.13.0"
+    "node": ">=18.18.0"
   },
   "description": "React components for Barikoi GL JS",
   "type": "module",
@@ -12,10 +12,14 @@
   "module": "dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js",
-      "default": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./styles": {
       "types": "./dist/styles/index.d.ts",
@@ -28,14 +32,14 @@
   "license": "MIT",
   "homepage": "https://docs.barikoi.com/docs/maps-api",
   "files": [
-    "src",
     "dist",
+    "LICENSE",
     "README.md"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.build.json",
-    "clean": "rm -rf dist && mkdir -p dist",
-    "build": "ocular-clean && ocular-build && node scripts/modify-css.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "build": "tsup && node scripts/modify-css.js",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
     "test": "npm run typecheck && jest",
     "coverage": "jest --coverage --passWithNoTests",
@@ -43,8 +47,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@maplibre/maplibre-gl-style-spec": "^23.2.1",
-    "maplibre-gl": "^5.4.0"
+    "@maplibre/maplibre-gl-style-spec": "^24.4.1",
+    "maplibre-gl": "^5.15.0"
   },
   "peerDependencies": {
     "react": ">=16.3.0",
@@ -55,23 +59,29 @@
     "@commitlint/config-conventional": "^19.4.1",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
-    "@testing-library/react-hooks": "8.0.1",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",
-    "@types/react": "^16.0.0",
+    "@types/react": "^18.3.27",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "babel-jest": "^29.7.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "ocular-dev-tools": "2.0.0-alpha.15",
     "puppeteer": "^22.4.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-test-renderer": "^18.0.0",
     "tape-promise": "^4.0.0",
     "ts-jest": "^29.1.2",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "barikoi",
@@ -82,7 +92,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/barikoi/react-bkoi-gl.git"
+    "url": "git+https://github.com/barikoi/react-bkoi-gl.git"
   },
   "overrides": {
     "@testing-library/react-hooks": {

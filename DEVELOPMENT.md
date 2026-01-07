@@ -177,6 +177,38 @@ Instead, use the `.tgz` tarball method for reliable, isolated testing:
 
 ## 🚀 Publishing to NPM
 
+### Pre-Publishing Checklist
+
+Run these commands before publishing to ensure package quality:
+
+```bash
+# 1. Check package configuration
+npx publint
+
+# 2. Verify TypeScript types
+npx @arethetypeswrong/cli --pack .
+
+# 3. Build the project
+npm run build
+
+# 4. Generate and verify tarball
+npm pack
+
+# 5. Check package size
+# Look for "package size:" in the npm pack output above
+# Ensure it's reasonable for your library (typically < 5MB for bundled libs)
+```
+
+### 📝 Understanding the Tool Outputs
+
+**publint**: Should show "All good!" for a properly configured package.
+
+**@arethetypeswrong/cli**: May show resolution failures for CSS files and subpaths. These are expected and can be ignored - the tool can't resolve non-JavaScript files, which is normal for library packages. The important thing is that the main package resolution works.
+
+**npm pack**: Look for "package size:" in the output. Ensure it's reasonable for your library.
+
+### Publishing Steps
+
 1. **Ensure you are logged in:**
    ```bash
    npm login
@@ -189,11 +221,12 @@ Instead, use the `.tgz` tarball method for reliable, isolated testing:
      npm run update-version
      ```
    - This syncs the version in `package.json`.
-3. **Build the package:**
+3. **Run the pre-publishing checklist** (see above).
+4. **Build the package:**
    ```bash
    npm run build
    ```
-4. **Publish:**
+5. **Publish:**
    ```bash
    npm publish --access public
    ```

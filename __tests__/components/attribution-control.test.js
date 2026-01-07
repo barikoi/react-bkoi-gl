@@ -3,6 +3,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { AttributionControl } from '../../src/components/attribution-control';
 import { MapContext } from '../../src/components/map';
+import { MountedMapsContext } from '../../src/components/use-map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as useControlModule from '../../src/components/use-control';
 
@@ -19,16 +20,22 @@ describe('AttributionControl Component', () => {
   let mockMapLib;
   let mapContextValue;
   let mockAttributionControlInstance;
+  let mountedMapsContextValue;
   
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Create mock control instance
+    // Create mock control instance with querySelector support
     mockAttributionControlInstance = {
       _container: document.createElement('div'),
       remove: jest.fn(),
       getDefaultPosition: jest.fn().mockReturnValue('bottom-right')
     };
+    
+    // Add inner element for attribution content
+    const innerDiv = document.createElement('div');
+    innerDiv.className = 'maplibregl-ctrl-attrib-inner';
+    mockAttributionControlInstance._container.appendChild(innerDiv);
     
     // Create mock mapLib with constructor
     mockMapLib = {
@@ -39,20 +46,30 @@ describe('AttributionControl Component', () => {
       })
     };
     
-    // Create mock map
+    // Create mock map with load event support
     mockMap = {
       hasControl: jest.fn().mockImplementation(control => {
         return control === mockAttributionControlInstance;
       }),
       addControl: jest.fn(),
       removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      getMap: jest.fn().mockReturnValue({}),
+      loaded: jest.fn().mockReturnValue(true),
+      once: jest.fn(),
+      off: jest.fn()
     };
     
     // Create context value
     mapContextValue = {
       map: mockMap,
       mapLib: mockMapLib
+    };
+
+    // Create mounted maps context value
+    mountedMapsContextValue = {
+      maps: { default: mockMap },
+      onMapMount: jest.fn(),
+      onMapUnmount: jest.fn()
     };
 
     // Mock the useControl hook to return our mocked instance
@@ -71,13 +88,17 @@ describe('AttributionControl Component', () => {
     };
     
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl {...props} />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl {...props} />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
-    // Constructor called with props
-    expect(mockMapLib.AttributionControl).toHaveBeenCalledWith(props);
+    // Constructor called with compact: true and spread props
+    expect(mockMapLib.AttributionControl).toHaveBeenCalledWith(
+      expect.objectContaining({ compact: true })
+    );
     
     // Check that useControl was called with correct params
     expect(useControlModule.useControl).toHaveBeenCalledWith(
@@ -94,9 +115,11 @@ describe('AttributionControl Component', () => {
     };
     
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl style={customStyle} />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl style={customStyle} />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     // Check that style was applied
@@ -114,9 +137,11 @@ describe('AttributionControl Component', () => {
       jest.clearAllMocks();
       
       render(
-        <MapContext.Provider value={mapContextValue}>
-          <AttributionControl position={position} />
-        </MapContext.Provider>
+        <MountedMapsContext.Provider value={mountedMapsContextValue}>
+          <MapContext.Provider value={mapContextValue}>
+            <AttributionControl position={position} />
+          </MapContext.Provider>
+        </MountedMapsContext.Provider>
       );
       
       // Check that useControl was called with correct position
@@ -130,9 +155,11 @@ describe('AttributionControl Component', () => {
   test('works with compact option enabled and disabled', () => {
     // Test with compact enabled
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl compact={true} />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl compact={true} />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     expect(mockMapLib.AttributionControl).toHaveBeenCalledWith(
@@ -143,9 +170,11 @@ describe('AttributionControl Component', () => {
     
     // Test with compact disabled
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl compact={false} />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl compact={false} />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     expect(mockMapLib.AttributionControl).toHaveBeenCalledWith(
@@ -160,9 +189,11 @@ describe('AttributionControl Component', () => {
     // Should not throw error when container is null
     expect(() => {
       render(
-        <MapContext.Provider value={mapContextValue}>
-          <AttributionControl style={{ color: 'red' }} />
-        </MapContext.Provider>
+        <MountedMapsContext.Provider value={mountedMapsContextValue}>
+          <MapContext.Provider value={mapContextValue}>
+            <AttributionControl style={{ color: 'red' }} />
+          </MapContext.Provider>
+        </MountedMapsContext.Provider>
       );
     }).not.toThrow();
     
@@ -185,10 +216,12 @@ describe('AttributionControl Component', () => {
       .mockImplementationOnce(() => secondControlInstance);
     
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl position="top-left" />
-        <AttributionControl position="bottom-right" />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl position="top-left" />
+          <AttributionControl position="bottom-right" />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     // useControl should be called twice with different positions
@@ -209,9 +242,11 @@ describe('AttributionControl Component', () => {
     // This test is now implicitly testing the useControl hook's cleanup function
     // We're verifying that the control is properly created and passed to useControl
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl position="bottom-right" />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl position="bottom-right" />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     // Verify the control was created correctly
@@ -224,9 +259,11 @@ describe('AttributionControl Component', () => {
     // The actual cleanup logic happens in the useControl hook
     // Just verify the component renders without errors
     render(
-      <MapContext.Provider value={mapContextValue}>
-        <AttributionControl position="bottom-right" />
-      </MapContext.Provider>
+      <MountedMapsContext.Provider value={mountedMapsContextValue}>
+        <MapContext.Provider value={mapContextValue}>
+          <AttributionControl position="bottom-right" />
+        </MapContext.Provider>
+      </MountedMapsContext.Provider>
     );
     
     expect(useControlModule.useControl).toHaveBeenCalled();
