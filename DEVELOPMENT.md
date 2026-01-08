@@ -5,7 +5,7 @@ Welcome to the developer documentation for `react-bkoi-gl`! This guide will help
 ---
 
 ## 📚 Table of Contents
-1. [Project Structure](#-project-structure)
+1. [Contributing](#-contributing)
 2. [Version & Migration History](#-version--migration-history)
 3. [Components](#-components)
 4. [Hooks](#-hooks)
@@ -13,36 +13,19 @@ Welcome to the developer documentation for `react-bkoi-gl`! This guide will help
 6. [NPM Scripts](#-npm-scripts)
 7. [How CSS Customization Works](#-how-css-customization-works)
 8. [Unit Testing](#-unit-testing)
-9. [Local Testing](#-local-testing)
-10. [Publishing to NPM](#-publishing-to-npm)
-11. [Configuration Files](#-configuration-files)
-12. [Resources](#-resources)
+9. [Publishing to NPM](#-publishing-to-npm)
+10. [Configuration Files](#-configuration-files)
+11. [Resources](#-resources)
 
 ---
 
-## 🗂️ Project Structure
+## 🤝 Contributing
 
-```plaintext
-react-bkoi-gl/
-├── src/
-│   ├── components/
-│   ├── hooks/
-│   ├── types/
-│   └── utils/
-├── __tests__/
-│   ├── components/
-│   ├── maplibre/
-│   ├── mocks/
-│   └── utils/
-├── scripts/
-├── dist/
-├── docs/
-├── package.json
-├── README.md
-├── CONTRIBUTING.md
-├── DEVELOPMENT.md
-└── ...
-```
+Want to contribute to react-bkoi-gl? Please read our **[CONTRIBUTING.md](./CONTRIBUTING.md)** for:
+- Development environment setup
+- Testing workflow
+- Commit guidelines
+- Release process
 
 ---
 
@@ -120,12 +103,10 @@ Mapbox GL JS is a popular JavaScript library for building interactive, customiza
 | `lint`             | Runs ESLint on all source files                                              |
 | `test`             | Runs typecheck, then all Jest tests                                          |
 | `coverage`         | Runs Jest with coverage reporting                                            |
-| `update-version`   | Updates `package.json` version and timestamp from `CHANGELOG.md`             |
 | `prepare`          | Sets up Husky hooks (runs automatically after `npm install`)                  |
 
 **Details:**
 - **`build`**: Uses `ocular-clean` and `ocular-build` (from `ocular-dev-tools`) for TypeScript and Babel compilation, then runs `scripts/modify-css.js` to handle CSS (see below).
-- **`update-version`**: Reads the latest version from `CHANGELOG.md` and updates `package.json` accordingly.
 
 ---
 
@@ -151,86 +132,28 @@ This ensures that when users import `react-bkoi-gl/styles`, they get Barikoi-bra
 
 ---
 
-## 🧰 Local Testing
-
-**Do NOT use `npm link` for local testing.**
-Instead, use the `.tgz` tarball method for reliable, isolated testing:
-
-1. **Build the package:**
-   ```bash
-   npm run build
-   ```
-2. **Generate a tarball:**
-   ```bash
-   npm pack
-   ```
-   This creates a file like `react-bkoi-gl-2.0.0.tgz` in your project root.
-3. **Test in another project:**
-   ```bash
-   npm install /absolute/path/to/react-bkoi-gl-2.0.0.tgz
-   ```
-   This simulates a real npm install, ensuring all dependencies and peer dependencies are resolved as they would be for end users.
-4. **Update and retest:**
-   After making changes, repeat the build and pack steps, then reinstall the new `.tgz` in your test project.
-
----
-
 ## 🚀 Publishing to NPM
 
-### Pre-Publishing Checklist
+> **Note:** For complete publishing workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md#-release-process)
 
-Run these commands before publishing to ensure package quality:
+### Pre-Publishing Checklist Tools
+
+Run these commands to validate package quality:
 
 ```bash
-# 1. Check package configuration
-npx publint
-
-# 2. Verify TypeScript types
-npx @arethetypeswrong/cli --pack .
-
-# 3. Build the project
-npm run build
-
-# 4. Generate and verify tarball
-npm pack
-
-# 5. Check package size
-# Look for "package size:" in the npm pack output above
-# Ensure it's reasonable for your library (typically < 5MB for bundled libs)
+npx publint                           # Check package configuration
+npx @arethetypeswrong/cli --pack .    # Verify TypeScript types
+npm run build                         # Build the project
+npm pack                              # Generate tarball
 ```
 
-### 📝 Understanding the Tool Outputs
+### Tool Output Interpretation
 
 **publint**: Should show "All good!" for a properly configured package.
 
-**@arethetypeswrong/cli**: May show resolution failures for CSS files and subpaths. These are expected and can be ignored - the tool can't resolve non-JavaScript files, which is normal for library packages. The important thing is that the main package resolution works.
+**@arethetypeswrong/cli**: May show resolution failures for CSS files and subpaths. These are expected and can be ignored - the tool can't resolve non-JavaScript files, which is normal for library packages.
 
-**npm pack**: Look for "package size:" in the output. Ensure it's reasonable for your library.
-
-### Publishing Steps
-
-1. **Ensure you are logged in:**
-   ```bash
-   npm login
-   ```
-   - **Note:** Publishing requires 2-factor authentication (2FA). You must have access to the npm authenticator app or device.
-2. **Update version:**
-   - Update `CHANGELOG.md` with the new version.
-   - Run:
-     ```bash
-     npm run update-version
-     ```
-   - This syncs the version in `package.json`.
-3. **Run the pre-publishing checklist** (see above).
-4. **Build the package:**
-   ```bash
-   npm run build
-   ```
-5. **Publish:**
-   ```bash
-   npm publish --access public
-   ```
-   - Ensure `dist/` and all necessary files are included (see `files` in `package.json`).
+**npm pack**: Check "package size:" in output. Ensure it's reasonable for your library (typically < 5MB for bundled libs).
 
 ---
 
@@ -263,9 +186,13 @@ npm pack
 - Notifies a Discord webhook on success, failure, or cancellation.
 
 ### `husky/` (Git Hooks)
-- Pre-commit hook: Runs linting and tests
-- Commit-msg hook: Enforces Conventional Commits via commitlint
-- Pre-push hook: Runs full test suite
+
+Automatically enforces code quality and commit standards:
+- Pre-commit: Linting and tests
+- Commit-msg: Conventional Commits validation
+- Pre-push: Full test suite
+
+For commit guidelines and usage, see [CONTRIBUTING.md](./CONTRIBUTING.md#-commit-guidelines).
 
 ---
 
