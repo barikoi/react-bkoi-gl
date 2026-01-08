@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=18.18.0"
   },
-  "description": "React components for Barikoi GL JS",
+  "description": "React components for Barikoi Maps with interactive maps, markers, popups, and navigation controls for mapping",
   "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.cjs",
@@ -85,14 +85,36 @@
   },
   "keywords": [
     "barikoi",
+    "bkoi",
     "bkoi-gl",
     "react",
     "react-bkoi-gl",
-    "react bkoi"
+    "react bkoi",
+    "react-bkoi",
+    "barikoi maps",
+    "barikoi-gl",
+    "maplibre",
+    "maplibre-gl",
+    "react-map",
+    "react-maplibre",
+    "maps",
+    "mapping",
+    "bangladesh",
+    "bangladesh maps",
+    "interactive maps",
+    "map components",
+    "markers",
+    "popups",
+    "navigation",
+    "geolocation",
+    "map controls"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/barikoi/react-bkoi-gl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/barikoi/react-bkoi-gl/issues"
   },
   "overrides": {
     "@testing-library/react-hooks": {
