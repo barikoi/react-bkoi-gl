@@ -4,7 +4,7 @@
   "engines": {
     "node": ">=18.18.0"
   },
-  "description": "React components for Barikoi Maps with interactive maps, markers, popups, and navigation controls for mapping",
+  "description": "A React library for Barikoi Maps with interactive components, markers, popups, and controls.",
   "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.cjs",
