@@ -51,7 +51,7 @@ function updateLayer(
       }
     }
     for (const key in prevLayout) {
-      if (!layout.hasOwnProperty(key)) {
+      if (!Object.prototype.hasOwnProperty.call(layout, key)) {
         map.setLayoutProperty(id, key, undefined);
       }
     }
@@ -64,13 +64,13 @@ function updateLayer(
       }
     }
     for (const key in prevPaint) {
-      if (!paint.hasOwnProperty(key)) {
+      if (!Object.prototype.hasOwnProperty.call(paint, key)) {
         map.setPaintProperty(id, key, undefined);
       }
     }
   }
 
-  // @ts-ignore filter does not exist in some Layer types
+  // @ts-ignore - filter does not exist in some Layer types
   if (!deepEqual(filter, prevProps.filter)) {
     map.setFilter(id, filter);
   }
@@ -80,7 +80,7 @@ function updateLayer(
 }
 
 function createLayer(map: MapInstance, id: string, props: LayerProps) {
-  // @ts-ignore
+  // @ts-ignore - accessing internal map.style property
   if (
     map.style &&
     map.style._loaded &&
@@ -89,7 +89,7 @@ function createLayer(map: MapInstance, id: string, props: LayerProps) {
     const options: LayerProps = { ...props, id };
     delete options.beforeId;
 
-    // @ts-ignore
+    // @ts-ignore - addLayer accepts beforeId as second parameter
     map.addLayer(options, props.beforeId);
   }
 }
@@ -113,7 +113,7 @@ export function Layer(props: LayerProps) {
 
       return () => {
         map.off("styledata", forceUpdate);
-        // @ts-ignore
+        // @ts-ignore - accessing internal map.style property
         if (map.style && map.style._loaded && map.getLayer(id)) {
           map.removeLayer(id);
         }
@@ -122,7 +122,7 @@ export function Layer(props: LayerProps) {
     return undefined;
   }, [map]);
 
-  // @ts-ignore
+  // @ts-ignore - accessing internal map.style property to check layer existence
   const layer = map && map.style && map.getLayer(id);
   if (layer) {
     try {

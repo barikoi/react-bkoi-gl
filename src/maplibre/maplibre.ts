@@ -161,7 +161,7 @@ const handlerNames = [
  */
 // eslint-disable-next-line no-use-before-define
 export default class Maplibre {
-  private _MapClass: { new (options: any): MapInstance };
+  private _MapClass: { new (options: unknown): MapInstance };
   // mapboxgl.Map instance
   private _map: MapInstance = null;
   // User-supplied props
@@ -182,7 +182,7 @@ export default class Maplibre {
   static savedMaps: Maplibre[] = [];
 
   constructor(
-    MapClass: { new (options: any): MapInstance },
+    MapClass: { new (options: unknown): MapInstance },
     props: MaplibreProps,
     container: HTMLDivElement,
   ) {
@@ -234,13 +234,13 @@ export default class Maplibre {
       container.appendChild(oldContainer.childNodes[0]);
     }
     // Step 2: replace the internal container with new container from the react component
-    // @ts-ignore
+    // @ts-ignore - accessing private _container property for reuse functionality
     map._container = container;
 
     // With maplibre-gl as mapLib, map uses ResizeObserver to observe when its container resizes.
     // When reusing the saved map, we need to disconnect the observer and observe the new container.
     // Step 3: telling the ResizeObserver to disconnect and observe the new container
-    // @ts-ignore
+    // @ts-ignore - accessing private _resizeObserver property for reuse functionality
     const resizeObserver = map._resizeObserver;
     if (resizeObserver) {
       resizeObserver.disconnect();
@@ -270,7 +270,7 @@ export default class Maplibre {
     }
 
     // Force reload
-    // @ts-ignore
+    // @ts-ignore - calling internal _update method to force map reload
     map._update();
     return that;
   }
@@ -300,7 +300,7 @@ export default class Maplibre {
       const getContext = HTMLCanvasElement.prototype.getContext;
       // Hijack canvas.getContext to return our own WebGLContext
       // This will be called inside the mapboxgl.Map constructor
-      // @ts-expect-error
+      // @ts-expect-error - temporarily overriding getContext to inject custom WebGL context
       HTMLCanvasElement.prototype.getContext = () => {
         // Unhijack immediately
         HTMLCanvasElement.prototype.getContext = getContext;
@@ -364,7 +364,7 @@ export default class Maplibre {
   // render cycle, which is managed by Mapbox's animation loop.
   // This removes the synchronization issue caused by requestAnimationFrame.
   redraw() {
-    const map = this._map as any;
+    const map = this._map as unknown as { style: unknown; _frame: { cancel: () => void } | null; _render: () => void };
     // map._render will throw error if style does not exist
     // https://github.com/mapbox/mapbox-gl-js/blob/fb9fc316da14e99ff4368f3e4faa3888fb43c513
     //   /src/ui/map.js#L1834
@@ -413,7 +413,7 @@ export default class Maplibre {
     // Avoid manipulating the real transform when interaction/animation is ongoing
     // as it would interfere with Mapbox's handlers
     if (!isMoving) {
-      const changes: any = applyViewStateToTransform(tr, nextProps);
+      const changes: Record<string, unknown> = applyViewStateToTransform(tr, nextProps);
       if (Object.keys(changes).length > 0) {
         this._internalUpdate = true;
         map.jumpTo(changes);
@@ -460,7 +460,7 @@ export default class Maplibre {
     }
     if (nextProps.mapStyle !== currProps.mapStyle) {
       const { mapStyle = DEFAULT_STYLE, styleDiffing = true } = nextProps;
-      const options: any = {
+      const options: Record<string, unknown> = {
         diff: styleDiffing,
       };
       if ("localIdeographFontFamily" in nextProps) {
@@ -497,7 +497,7 @@ export default class Maplibre {
       ) {
         currProps.projection =
           typeof projection === "string" ? { type: projection } : projection;
-        // @ts-ignore setProjection does not exist in v4
+        // @ts-ignore - setProjection does not exist in maplibre-gl v4
         map.setProjection?.(currProps.projection);
       }
       if (sky && !deepEqual(sky, currProps.sky)) {
@@ -533,7 +533,7 @@ export default class Maplibre {
   }
 
   private _onEvent = (e: MapEvent) => {
-    // @ts-ignore
+    // @ts-ignore - dynamically accessing event handler from props
     const cb = this.props[otherEvents[e.type]];
     if (cb) {
       cb(e);
@@ -548,7 +548,7 @@ export default class Maplibre {
     }
     e.viewState =
       this._propsedCameraUpdate || transformToViewState(this._map.transform);
-    // @ts-ignore
+    // @ts-ignore - dynamically accessing event handler from props
     const cb = this.props[cameraEvents[e.type]];
     if (cb) {
       cb(e);
@@ -560,7 +560,7 @@ export default class Maplibre {
       return tr;
     }
     this._propsedCameraUpdate = transformToViewState(tr);
-    return applyViewStateToTransform(tr, this.props) as any;
+    return applyViewStateToTransform(tr, this.props) as TransformLike;
   };
 
   private _queryRenderedFeatures(point: Point) {
@@ -608,7 +608,7 @@ export default class Maplibre {
       this._updateHover(e);
     }
 
-    // @ts-ignore
+    // @ts-ignore - dynamically accessing pointer event handler from props
     const cb = this.props[pointerEvents[e.type]];
     if (cb) {
       if (

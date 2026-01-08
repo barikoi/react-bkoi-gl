@@ -21,18 +21,19 @@ import type { Map as MapInstance } from "../types/lib";
 
 export type SourceProps = SourceSpecification & {
   id?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children?: any;
 };
 
 let sourceCounter = 0;
 
 function createSource(map: MapInstance, id: string, props: SourceProps) {
-  // @ts-ignore
+  // @ts-ignore - accessing internal map.style property
   if (map.style && map.style._loaded) {
     const options = { ...props };
     delete options.id;
     delete options.children;
-    // @ts-ignore
+    // @ts-ignore - addSource accepts options without id
     map.addSource(id, options);
     return map.getSource(id);
   }
@@ -78,15 +79,15 @@ function updateSource(
   } else {
     switch (changedKey) {
       case "coordinates":
-        // @ts-ignore
+        // @ts-ignore - setCoordinates may not exist on all source types
         source.setCoordinates?.(props.coordinates);
         break;
       case "url":
-        // @ts-ignore
+        // @ts-ignore - setUrl may not exist on all source types
         source.setUrl?.(props.url);
         break;
       case "tiles":
-        // @ts-ignore
+        // @ts-ignore - setTiles may not exist on all source types
         source.setTiles?.(props.tiles);
         break;
       default:
@@ -114,7 +115,7 @@ export function Source(props: SourceProps) {
 
       return () => {
         map.off("styledata", forceUpdate);
-        // @ts-ignore
+        // @ts-ignore - accessing internal map.style property
         if (map.style && map.style._loaded && map.getSource(id)) {
           // Parent effects are destroyed before child ones, see
           // https://github.com/facebook/react/issues/16728
@@ -135,7 +136,7 @@ export function Source(props: SourceProps) {
     return undefined;
   }, [map]);
 
-  // @ts-ignore
+  // @ts-ignore - accessing internal map.style property
   let source = map && map.style && map.getSource(id);
   if (source) {
     updateSource(source, props, propsRef.current);

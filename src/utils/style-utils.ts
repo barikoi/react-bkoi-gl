@@ -46,11 +46,11 @@ export function normalizeStyle(
     }
 
     // Style diffing doesn't work with refs so expand them out manually before diffing.
-    // @ts-ignore legacy field not typed
+    // @ts-ignore - ref is a legacy field not included in current type definitions
     const layerRef = layerIndex[layer.ref];
     if (layerRef) {
       normalizedLayer = normalizedLayer || Object.assign({}, layer);
-      // @ts-ignore
+      // @ts-ignore - deleting legacy ref field that's not in type definitions
       delete normalizedLayer.ref;
       // https://github.com/mapbox/mapbox-gl-js/blob/master/src/style-spec/deref.js
       for (const propName of refProps) {

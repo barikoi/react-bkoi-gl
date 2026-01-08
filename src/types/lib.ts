@@ -52,7 +52,7 @@ export type {
  * Only losely typed for compatibility
  */
 export interface MapLib {
-  supported?: (options: any) => boolean;
+  supported?: (options: unknown) => boolean;
 
   Map: { new (options: MapOptions): Map };
 

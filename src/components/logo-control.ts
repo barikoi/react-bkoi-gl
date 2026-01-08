@@ -4,7 +4,7 @@ import { useEffect, memo } from "react";
 import { applyReactStyle } from "../utils/apply-react-style";
 import { useControl } from "./use-control";
 
-import type { ControlPosition, LogoControlOptions, IControl } from "../types/lib";
+import type { ControlPosition, LogoControlOptions, IControl, Map as MaplibreMap } from "../types/lib";
 
 export type LogoControlProps = LogoControlOptions & {
   /** Placement of the control relative to the map. */
@@ -18,7 +18,7 @@ function _LogoControl(props: LogoControlProps) {
   const ctrl = useControl(
     () => {
       const control: IControl & { _container?: HTMLElement } = {
-        onAdd: (map: any): HTMLElement => {
+        onAdd: (map: MaplibreMap): HTMLElement => {
           // Check if logo already exists 
           if (map.getContainer) {
             const existingLogo = map.getContainer().querySelector('a.maplibregl-ctrl-logo[href="https://www.barikoi.com"]');

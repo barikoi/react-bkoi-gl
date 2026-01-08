@@ -21,7 +21,7 @@ export function arePointsEqual(a?: PointLike, b?: PointLike): boolean {
  * @param b
  * @returns true if the objects are deep equal
  */
-export function deepEqual(a: any, b: any): boolean {
+export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) {
     return true;
   }
@@ -48,7 +48,7 @@ export function deepEqual(a: any, b: any): boolean {
       return false;
     }
     for (const key of aKeys) {
-      if (!b.hasOwnProperty(key)) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) {
         return false;
       }
       if (!deepEqual(a[key], b[key])) {

@@ -1,4 +1,4 @@
-export default function assert(condition: any, message: string) {
+export default function assert(condition: unknown, message: string) {
   if (!condition) {
     throw new Error(message);
   }

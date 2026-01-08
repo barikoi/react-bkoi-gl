@@ -35,12 +35,13 @@ export default function createRef(mapInstance: Maplibre): MapRef | null {
   }
 
   const map = mapInstance.map;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: any = {
     getMap: () => map,
   };
 
   for (const key of getMethodNames(map)) {
-    // @ts-expect-error
+    // @ts-expect-error - dynamically binding map methods to result object
     if (!(key in result) && !skipMethods.includes(key)) {
       result[key] = map[key].bind(map);
     }
@@ -49,7 +50,7 @@ export default function createRef(mapInstance: Maplibre): MapRef | null {
   return result;
 }
 
-function getMethodNames(obj: Object) {
+function getMethodNames(obj: object) {
   const result = new Set<string>();
 
   let proto = obj;

@@ -15,6 +15,7 @@ export type GlobalSettings = {
   workerUrl?: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function setGlobals(mapLib: any, props: GlobalSettings) {
   const { RTLTextPlugin, maxParallelImageRequests, workerCount, workerUrl } =
     props;

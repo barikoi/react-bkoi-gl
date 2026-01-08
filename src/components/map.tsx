@@ -84,7 +84,7 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
             mapboxgl.Map,
             {
               ...props,
-              // @ts-ignore
+              // @ts-ignore - attributionControl is not in the type definition but is supported by maplibre-gl
               attributionControl: false,
             },
             containerRef.current,
