@@ -18,7 +18,15 @@ function _LogoControl(props: LogoControlProps) {
   const ctrl = useControl(
     () => {
       const control: IControl & { _container?: HTMLElement } = {
-        onAdd: (): HTMLElement => {
+        onAdd: (map: any): HTMLElement => {
+          // Check if logo already exists 
+          if (map.getContainer) {
+            const existingLogo = map.getContainer().querySelector('a.maplibregl-ctrl-logo[href="https://www.barikoi.com"]');
+            if (existingLogo) {
+              existingLogo.remove();
+            }
+          }
+          
           const container = document.createElement("a");
           container.className = "maplibregl-ctrl-logo";
           container.href = "https://www.barikoi.com";
