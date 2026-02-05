@@ -30,6 +30,10 @@ export type { LogoControlProps } from "./components/logo-control";
 export type { SourceProps } from "./components/source";
 export type { LayerProps } from "./components/layer";
 
+// MapStyle SDK
+export { MapStyle } from "./styles/map-style";
+export type { MapStyleType } from "./styles/map-style";
+
 // Types
 export * from "./types/common";
 export * from "./types/events";
