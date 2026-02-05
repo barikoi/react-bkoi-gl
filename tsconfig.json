@@ -10,7 +10,8 @@
     "moduleResolution": "node",
     "noEmit": true,
     "sourceMap": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*",
