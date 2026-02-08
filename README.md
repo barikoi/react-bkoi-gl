@@ -221,35 +221,63 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
 
 ### Available Map Styles
 
-#### `MapStyle.LIGHT` - Barikoi Light
-
-<img src="img/light.webp" alt="Barikoi Light Map Style" width="300"/>
-
-Best for: Dashboards, web apps, default interface
-
-#### `MapStyle.DARK` - Barikoi Dark Mode
-
-<img src="img/dark.webp" alt="Barikoi Dark Map Style" width="300"/>
-
-Best for: Admin panels, logistics, dark UIs
-
-#### `MapStyle.GREEN` - Barikoi Green
-
-<img src="img/green.webp" alt="Barikoi Green Map Style" width="300"/>
-
-Best for: Eco apps, agriculture, tourism
-
-#### `MapStyle.PLANET` - Planet Map
-
-<img src="img/planet.webp" alt="Planet Map Style" width="300"/>
-
-Best for: Real estate, urban planning
-
-#### `MapStyle.OSM.LIBERTY` - OSM Liberty
-
-<img src="img/osm_liberty.webp" alt="OSM Liberty Map Style" width="300"/>
-
-Best for: Open-data projects, minimal design
+<table>
+  <tr>
+    <td align="center" width="20%">
+      <code>MapStyle.LIGHT</code>
+    </td>
+    <td align="center" width="40%">
+      <img src="img/light.webp" alt="Barikoi Light Map Style" width="300"/>
+    </td>
+    <td align="center" width="40%">
+      Dashboards, web apps, default interface
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="20%">
+      <code>MapStyle.DARK</code>
+    </td>
+    <td align="center" width="40%">
+      <img src="img/dark.webp" alt="Barikoi Dark Map Style" width="300"/>
+    </td>
+    <td align="center" width="40%">
+      Admin panels, logistics, dark UIs
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="20%">
+      <code>MapStyle.GREEN</code>
+    </td>
+    <td align="center" width="40%">
+      <img src="img/green.webp" alt="Barikoi Green Map Style" width="300"/>
+    </td>
+    <td align="center" width="40%">
+      Eco apps, agriculture, tourism
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="20%">
+      <code>MapStyle.PLANET</code>
+    </td>
+    <td align="center" width="40%">
+      <img src="img/planet.webp" alt="Planet Map Style" width="300"/>
+    </td>
+    <td align="center" width="40%">
+      Real estate, urban planning
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="20%">
+      <code>MapStyle.OSM.LIBERTY</code>
+    </td>
+    <td align="center" width="40%">
+      <img src="img/osm_liberty.webp" alt="OSM Liberty Map Style" width="300"/>
+    </td>
+    <td align="center" width="40%">
+      Open-data projects, minimal design
+    </td>
+  </tr>
+</table>
 
 ### Usage
 
