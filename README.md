@@ -235,7 +235,7 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
         <code>MapStyle.LIGHT</code>
       </td>
       <td align="center">
-        <img src="img/light.png" alt="Barikoi Light Map Style" width="320" height="320"/>
+        <img src="img/light.png" alt="Barikoi Light Map Style" width="440" height="380"/>
       </td>
       <td align="center">
         Dashboards, web apps, default interface
@@ -246,7 +246,7 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
         <code>MapStyle.DARK</code>
       </td>
       <td align="center">
-        <img src="img/dark.png" alt="Barikoi Dark Map Style" width="320" height="320"/>
+        <img src="img/dark.png" alt="Barikoi Dark Map Style" width="440" height="380"/>
       </td>
       <td align="center">
         Admin panels, logistics, dark UIs
@@ -257,7 +257,7 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
         <code>MapStyle.GREEN</code>
       </td>
       <td align="center">
-        <img src="img/green.png" alt="Barikoi Green Map Style" width="320" height="320"/>
+        <img src="img/green.png" alt="Barikoi Green Map Style" width="440" height="380"/>
       </td>
       <td align="center">
         Eco apps, agriculture, tourism
@@ -268,7 +268,7 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
         <code>MapStyle.PLANET</code>
       </td>
       <td align="center">
-        <img src="img/planet.png" alt="Planet Map Style" width="320" height="320"/>
+        <img src="img/planet.png" alt="Planet Map Style" width="440" height="380"/>
       </td>
       <td align="center">
         Real estate, urban planning
@@ -279,7 +279,7 @@ The MapStyle SDK provides convenient constants for accessing Barikoi's predefine
         <code>MapStyle.OSM.LIBERTY</code>
       </td>
       <td align="center">
-        <img src="img/osm_liberty.png" alt="OSM Liberty Map Style" width="320" height="320"/>
+        <img src="img/osm_liberty.png" alt="OSM Liberty Map Style" width="440" height="380"/>
       </td>
       <td align="center">
         Open-data projects, minimal design
