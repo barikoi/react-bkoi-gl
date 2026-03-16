@@ -1,0 +1,15 @@
+node_modules/
+nginx/
+.next/
+out/
+public/
+scripts/update-version.js
+next-env.d.ts
+coverage/
+__tests__/
+redux/
+*.config.js
+tsconfig.json
+.eslintrc.json
+index.d.ts
+CHANGELOG.md

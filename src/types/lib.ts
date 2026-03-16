@@ -19,7 +19,7 @@ import type {
   TerrainSpecification,
   LogoControl,
   LogoControlOptions,
-} from "maplibre-gl";
+} from 'maplibre-gl'
 
 export type {
   ControlPosition,
@@ -44,7 +44,7 @@ export type {
   LogoControl,
   LogoControlOptions,
   CustomLayerInterface,
-} from "maplibre-gl";
+} from 'maplibre-gl'
 
 /**
  * A user-facing type that represents the minimal intersection between Mapbox and Maplibre
@@ -52,33 +52,33 @@ export type {
  * Only losely typed for compatibility
  */
 export interface MapLib {
-  supported?: (options: unknown) => boolean;
+  supported?: (options: unknown) => boolean
 
-  Map: { new (options: MapOptions): Map };
+  Map: { new (options: MapOptions): Map }
 
-  Marker: { new (options: MarkerOptions): Marker };
+  Marker: { new (options: MarkerOptions): Marker }
 
-  Popup: { new (options: PopupOptions): Popup };
+  Popup: { new (options: PopupOptions): Popup }
 
   AttributionControl: {
-    new (options: AttributionControlOptions): AttributionControl;
-  };
+    new (options: AttributionControlOptions): AttributionControl
+  }
 
   FullscreenControl: {
-    new (options: FullscreenControlOptions): FullscreenControl;
-  };
+    new (options: FullscreenControlOptions): FullscreenControl
+  }
 
   GeolocateControl: {
-    new (options: GeolocateControlOptions): GeolocateControl;
-  };
+    new (options: GeolocateControlOptions): GeolocateControl
+  }
 
   NavigationControl: {
-    new (options: NavigationControlOptions): NavigationControl;
-  };
+    new (options: NavigationControlOptions): NavigationControl
+  }
 
-  ScaleControl: { new (options: ScaleControlOptions): ScaleControl };
+  ScaleControl: { new (options: ScaleControlOptions): ScaleControl }
 
-  TerrainControl: { new (options: TerrainSpecification): TerrainControl };
+  TerrainControl: { new (options: TerrainSpecification): TerrainControl }
 
-  LogoControl: { new (options: LogoControlOptions): LogoControl };
+  LogoControl: { new (options: LogoControlOptions): LogoControl }
 }

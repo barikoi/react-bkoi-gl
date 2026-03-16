@@ -1,18 +1,18 @@
 // Internal types
-import type { LngLat, PaddingOptions } from "maplibre-gl";
+import type { LngLat, PaddingOptions } from 'maplibre-gl'
 
 /**
  * maplibre's Transform interface / CameraUpdateTransformFunction argument
  */
 export type TransformLike = {
-  center: LngLat;
-  zoom: number;
-  roll?: number;
-  pitch: number;
-  bearing: number;
-  elevation: number;
-  padding?: PaddingOptions;
-};
+  center: LngLat
+  zoom: number
+  roll?: number
+  pitch: number
+  bearing: number
+  elevation: number
+  padding?: PaddingOptions
+}
 
 export type {
   GeoJSONSource as GeoJSONSourceImplementation,
@@ -23,4 +23,4 @@ export type {
   RasterDEMTileSource as RasterDemSourceImplementation,
   VideoSource as VideoSourceImplementation,
   Source as AnySourceImplementation,
-} from "maplibre-gl";
+} from 'maplibre-gl'

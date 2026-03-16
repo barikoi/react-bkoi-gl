@@ -1,4 +1,4 @@
-import type { PointLike } from "../types/common";
+import type { PointLike } from '../types/common'
 
 /**
  * Compare two points
@@ -7,14 +7,13 @@ import type { PointLike } from "../types/common";
  * @returns true if the points are equal
  */
 export function arePointsEqual(a?: PointLike, b?: PointLike): boolean {
-  const ax = Array.isArray(a) ? a[0] : a ? a.x : 0;
-  const ay = Array.isArray(a) ? a[1] : a ? a.y : 0;
-  const bx = Array.isArray(b) ? b[0] : b ? b.x : 0;
-  const by = Array.isArray(b) ? b[1] : b ? b.y : 0;
-  return ax === bx && ay === by;
+  const ax = Array.isArray(a) ? a[0] : a ? a.x : 0
+  const ay = Array.isArray(a) ? a[1] : a ? a.y : 0
+  const bx = Array.isArray(b) ? b[0] : b ? b.x : 0
+  const by = Array.isArray(b) ? b[1] : b ? b.y : 0
+  return ax === bx && ay === by
 }
 
-/* eslint-disable complexity */
 /**
  * Compare any two objects
  * @param a
@@ -23,39 +22,39 @@ export function arePointsEqual(a?: PointLike, b?: PointLike): boolean {
  */
 export function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) {
-    return true;
+    return true
   }
   if (!a || !b) {
-    return false;
+    return false
   }
   if (Array.isArray(a)) {
     if (!Array.isArray(b) || a.length !== b.length) {
-      return false;
+      return false
     }
     for (let i = 0; i < a.length; i++) {
       if (!deepEqual(a[i], b[i])) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   } else if (Array.isArray(b)) {
-    return false;
+    return false
   }
-  if (typeof a === "object" && typeof b === "object") {
-    const aKeys = Object.keys(a);
-    const bKeys = Object.keys(b);
+  if (typeof a === 'object' && typeof b === 'object') {
+    const aKeys = Object.keys(a)
+    const bKeys = Object.keys(b)
     if (aKeys.length !== bKeys.length) {
-      return false;
+      return false
     }
     for (const key of aKeys) {
       if (!Object.prototype.hasOwnProperty.call(b, key)) {
-        return false;
+        return false
       }
       if (!deepEqual(a[key], b[key])) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   }
-  return false;
+  return false
 }

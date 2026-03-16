@@ -1,44 +1,44 @@
-import * as React from "react";
-import { useEffect, useRef, memo } from "react";
-import { applyReactStyle } from "../utils/apply-react-style";
-import { useControl } from "./use-control";
+import * as React from 'react'
+import { useEffect, useRef, memo } from 'react'
+import { applyReactStyle } from '../utils/apply-react-style'
+import { useControl } from './use-control'
 
-import type { ControlPosition, ScaleControlOptions } from "../types/lib";
+import type { ControlPosition, ScaleControlOptions } from '../types/lib'
 
 export type ScaleControlProps = ScaleControlOptions & {
   // These props will be further constraint by OptionsT
-  unit?: string;
-  maxWidth?: number;
+  unit?: string
+  maxWidth?: number
 
   /** Placement of the control relative to the map. */
-  position?: ControlPosition;
+  position?: ControlPosition
   /** CSS style override, applied to the control's container */
-  style?: React.CSSProperties;
-};
+  style?: React.CSSProperties
+}
 
 function _ScaleControl(props: ScaleControlProps) {
   const ctrl = useControl(({ mapLib }) => new mapLib.ScaleControl(props), {
     position: props.position,
-  });
-  const propsRef = useRef<ScaleControlProps>(props);
+  })
+  const propsRef = useRef<ScaleControlProps>(props)
 
-  const prevProps = propsRef.current;
-  propsRef.current = props;
+  const prevProps = propsRef.current
+  propsRef.current = props
 
-  const { style } = props;
+  const { style } = props
 
   if (props.maxWidth !== undefined && props.maxWidth !== prevProps.maxWidth) {
-    ctrl.options.maxWidth = props.maxWidth;
+    ctrl.options.maxWidth = props.maxWidth
   }
   if (props.unit !== undefined && props.unit !== prevProps.unit) {
-    ctrl.setUnit(props.unit);
+    ctrl.setUnit(props.unit)
   }
 
   useEffect(() => {
-    applyReactStyle(ctrl._container, style);
-  }, [style]);
+    applyReactStyle(ctrl._container, style)
+  }, [style])
 
-  return null;
+  return null
 }
 
-export const ScaleControl: React.FC<ScaleControlProps> = memo(_ScaleControl);
+export const ScaleControl: React.FC<ScaleControlProps> = memo(_ScaleControl)

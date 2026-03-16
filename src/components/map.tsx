@@ -1,83 +1,72 @@
-import * as React from "react";
-import {
-  useState,
-  useRef,
-  useEffect,
-  useContext,
-  useMemo,
-  useImperativeHandle,
-} from "react";
+import * as React from 'react'
+import { useState, useRef, useEffect, useContext, useMemo, useImperativeHandle } from 'react'
 
-import { MountedMapsContext } from "./use-map";
-import Maplibre, { MaplibreProps } from "../maplibre/maplibre";
-import createRef, { MapRef } from "../maplibre/create-ref";
+import { MountedMapsContext } from './use-map'
+import Maplibre, { MaplibreProps } from '../maplibre/maplibre'
+import createRef, { MapRef } from '../maplibre/create-ref'
 
-import type { CSSProperties } from "react";
-import useIsomorphicLayoutEffect from "../utils/use-isomorphic-layout-effect";
-import setGlobals, { GlobalSettings } from "../utils/set-globals";
-import type { MapLib, MapOptions } from "../types/lib";
-import { LogoControl } from "./logo-control";
-import { AttributionControl } from "./attribution-control";
+import type { CSSProperties } from 'react'
+import useIsomorphicLayoutEffect from '../utils/use-isomorphic-layout-effect'
+import setGlobals, { GlobalSettings } from '../utils/set-globals'
+import type { MapLib, MapOptions } from '../types/lib'
+import { LogoControl } from './logo-control'
+import { AttributionControl } from './attribution-control'
 
 export type MapContextValue = {
-  mapLib: MapLib;
-  map: MapRef;
-};
+  mapLib: MapLib
+  map: MapRef
+}
 
-export const MapContext = React.createContext<MapContextValue>(null);
+export const MapContext = React.createContext<MapContextValue>(null)
 
 type MapInitOptions = Omit<
   MapOptions,
-  "style" | "container" | "bounds" | "fitBoundsOptions" | "center"
->;
+  'style' | 'container' | 'bounds' | 'fitBoundsOptions' | 'center'
+>
 
 export type MapProps = MapInitOptions &
   MaplibreProps &
   GlobalSettings & {
-    mapLib?: MapLib | Promise<MapLib>;
-    reuseMaps?: boolean;
+    mapLib?: MapLib | Promise<MapLib>
+    reuseMaps?: boolean
     /** Map container id */
-    id?: string;
+    id?: string
     /** Map container CSS style */
-    style?: CSSProperties;
-    children?: React.ReactNode;
-    /** Show Barikoi logo (default: true) */
-    showBarikoiLogo?: boolean;
-    /** Show Attribution (default: true) */
-    showAttribution?: boolean;
-  } & React.RefAttributes<MapRef>;
+    style?: CSSProperties
+    children?: React.ReactNode
+  } & React.RefAttributes<MapRef>
 
 function _Map(props: MapProps, ref: React.Ref<MapRef>) {
-  const mountedMapsContext = useContext(MountedMapsContext);
-  const [mapInstance, setMapInstance] = useState<Maplibre>(null);
-  const containerRef = useRef();
+  const mountedMapsContext = useContext(MountedMapsContext)
+  const [mapInstance, setMapInstance] = useState<Maplibre>(null)
+  const containerRef = useRef()
 
   const { current: contextValue } = useRef<MapContextValue>({
     mapLib: null,
     map: null,
-  });
+  })
 
   useEffect(() => {
-    const mapLib = props.mapLib;
-    let isMounted = true;
-    let maplibre: Maplibre;
+    const mapLib = props.mapLib
+    let isMounted = true
+    let maplibre: Maplibre
 
-    Promise.resolve(mapLib || import("maplibre-gl"))
+    Promise.resolve(mapLib || import('maplibre-gl'))
       .then((module: MapLib | { default: MapLib }) => {
         if (!isMounted) {
-          return;
+          return
         }
         if (!module) {
-          throw new Error("Invalid mapLib");
+          throw new Error('Invalid mapLib')
         }
-        const mapboxgl = "Map" in module ? module : module.default;
+        const mapboxgl = 'Map' in module ? module : module.default
         if (!mapboxgl.Map) {
-          throw new Error("Invalid mapLib");
+          throw new Error('Invalid mapLib')
         }
 
-        setGlobals(mapboxgl, props);
+        setGlobals(mapboxgl, props)
         if (props.reuseMaps) {
-          maplibre = Maplibre.reuse(props, containerRef.current);
+          maplibre = Maplibre.reuse(props, containerRef.current)
         }
         if (!maplibre) {
           maplibre = new Maplibre(
@@ -87,78 +76,78 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
               // @ts-ignore - attributionControl is not in the type definition but is supported by maplibre-gl
               attributionControl: false,
             },
-            containerRef.current,
-          );
+            containerRef.current
+          )
         }
-        contextValue.map = createRef(maplibre);
-        contextValue.mapLib = mapboxgl;
+        contextValue.map = createRef(maplibre)
+        contextValue.mapLib = mapboxgl
 
-        setMapInstance(maplibre);
-        mountedMapsContext?.onMapMount(contextValue.map, props.id);
+        setMapInstance(maplibre)
+        mountedMapsContext?.onMapMount(contextValue.map, props.id)
       })
-      .catch((error) => {
-        const { onError } = props;
+      .catch(error => {
+        const { onError } = props
         if (onError) {
           onError({
-            type: "error",
+            type: 'error',
             target: null,
             originalEvent: null,
             error,
-          });
+          })
         } else {
-          console.error(error); // eslint-disable-line
+          console.error(error)
         }
-      });
+      })
 
     return () => {
-      isMounted = false;
+      isMounted = false
       if (maplibre) {
-        mountedMapsContext?.onMapUnmount(props.id);
+        mountedMapsContext?.onMapUnmount(props.id)
         if (props.reuseMaps) {
-          maplibre.recycle();
+          maplibre.recycle()
         } else {
-          maplibre.destroy();
+          maplibre.destroy()
         }
       }
-    };
-  }, []);
+    }
+  }, [])
 
   useIsomorphicLayoutEffect(() => {
     if (mapInstance) {
-      mapInstance.setProps(props);
+      mapInstance.setProps(props)
     }
-  });
+  })
 
-  useImperativeHandle(ref, () => contextValue.map, [mapInstance]);
+  useImperativeHandle(ref, () => contextValue.map, [mapInstance])
 
   const style: CSSProperties = useMemo(
     () => ({
-      position: "relative",
-      width: "100%",
-      height: "100%",
+      position: 'relative',
+      width: '100%',
+      height: '100%',
       ...props.style,
     }),
-    [props.style],
-  );
+    [props.style]
+  )
 
   const CHILD_CONTAINER_STYLE = {
-    height: "100%",
-  };
+    height: '100%',
+  }
 
   return (
     <div id={props.id} ref={containerRef} style={style}>
       {mapInstance && (
         <MapContext.Provider value={contextValue}>
-          <div mapboxgl-children="" style={CHILD_CONTAINER_STYLE}>
+          <div style={CHILD_CONTAINER_STYLE}>
             {/* Automatically include Barikoi Logo and Attribution controls */}
-            <LogoControl position="bottom-left" />
-            <AttributionControl position="bottom-right" />
+            <LogoControl position='bottom-left' />
+            <AttributionControl position='bottom-right' />
             {props.children}
           </div>
         </MapContext.Provider>
       )}
     </div>
-  );
+  )
 }
 
-export const Map: React.FC<MapProps> = React.forwardRef(_Map);
+export const Map: React.FC<MapProps> = React.forwardRef(_Map)

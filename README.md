@@ -47,8 +47,8 @@ import {
 import "react-bkoi-gl/styles";
 
 const App = () => {
-  const BARIKOI_API_KEY = 'YOUR_BARIKOI_API_KEY_HERE';
-  const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`;
+  const BARIKOI_API_KEY = 'bkoi_38b527ad4d372c58270e7b04fca4e29c39befad01e52aaffef855dab0fbfe9de';
+  const mapStyle = `https://map.barikoi.com/styles/osm_barikoi_v2/style.json?key=${BARIKOI_API_KEY}`;
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const initialViewState = {

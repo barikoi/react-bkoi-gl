@@ -6,11 +6,19 @@ BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 echo '🛠️  Preparing to commit: Running checks...'
 
 # Run ESLint for linting
-echo "🔍 Running ESLint..."
-npm run lint || {
-  echo '❌ ESLint check failed. Please fix the linting issues before committing.'
+# echo "🔍 Running ESLint..."
+# npm run lint || {
+#   echo '❌ ESLint check failed. Please fix the linting issues before committing.'
+#   exit 1
+# }
+
+# Run lint-staged for ESLint/Prettier fixes on staged files
+echo "🔍 Running lint-staged (ESLint/Prettier)..."
+npx lint-staged ||
+(
+  echo '❌ Lint-staged failed. Please fix ESLint/Prettier issues and try committing again.'
   exit 1
-}
+)
 
 # Run TypeScript type checking (uses your existing typecheck script)
 echo "🔍 Running TypeScript type checking..."

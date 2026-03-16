@@ -31,4 +31,4 @@ export type {
   LightSpecification,
   TerrainSpecification,
   ProjectionSpecification,
-} from "maplibre-gl";
+} from 'maplibre-gl'

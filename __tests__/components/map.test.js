@@ -174,7 +174,7 @@ describe('Map Component', () => {
 
     // Wait for the map to load and controls to be added
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Check if our mocked components are in the document
@@ -217,7 +217,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Verify that setGlobals was called with our mockMapLib
@@ -237,7 +237,7 @@ describe('Map Component', () => {
     
     // Wait for the promise and map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Verify that setGlobals was called with our mockMapLib
@@ -294,7 +294,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Reset the mock to ensure we're only tracking calls after unmount
@@ -323,7 +323,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Check if reuse was called
@@ -375,7 +375,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Check if the ref has the map instance
@@ -401,7 +401,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // Check if onMapMount was called
@@ -439,7 +439,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(document.querySelector('[mapboxgl-children]')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
     
     // LogoControl and AttributionControl should still be included
