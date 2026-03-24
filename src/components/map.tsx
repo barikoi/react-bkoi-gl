@@ -79,10 +79,11 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
             containerRef.current
           )
         }
-        contextValue.map = createRef(maplibre)
-        contextValue.mapLib = mapboxgl
-
-        setMapInstance(maplibre)
+        if (maplibre) {
+          contextValue.map = createRef(maplibre)
+          contextValue.mapLib = mapboxgl
+          setMapInstance(maplibre)
+        }
         mountedMapsContext?.onMapMount(contextValue.map, props.id)
       })
       .catch(error => {

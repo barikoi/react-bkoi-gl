@@ -8,7 +8,7 @@ const refProps = ['type', 'source', 'source-layer', 'minzoom', 'maxzoom', 'filte
 // Work around some issues in older styles that would fail Mapbox's diffing
 export function normalizeStyle(
   style: string | StyleSpecification | ImmutableLike<StyleSpecification>
-): string | StyleSpecification {
+): string | StyleSpecification | null {
   if (!style) {
     return null
   }

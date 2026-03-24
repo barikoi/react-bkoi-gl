@@ -142,14 +142,38 @@ const defaultInteractions: MinimapInteractions = {
 const DEFAULT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.6 18L8 8.4V17H6V5h12v2H9.4l9.6 9.6l-1.4 1.4Z" /></svg>`
 
 /**
- * Generate a random UUID
+ * Generate a random UUID using crypto API
  */
 function getRandomUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  // Fallback for older environments
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0
+    const array = new Uint8Array(1)
+    crypto.getRandomValues(array)
+    const r = array[0] % 16
     const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
+}
+
+/**
+ * Sanitize SVG string to prevent XSS attacks
+ */
+function sanitizeSVG(svgString: string): string {
+  // Only allow valid SVG structure
+  const svgPattern = /^<svg[^>]*>[\s\S]*<\/svg>$/i
+  if (!svgPattern.test(svgString)) {
+    console.warn('Invalid SVG format, using default icon')
+    return DEFAULT_ICON
+  }
+
+  // Remove potentially dangerous elements and attributes
+  return svgString
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
 }
 
 /**
@@ -379,7 +403,7 @@ class Minimap implements IControl {
     const el = document.createElement('button')
     const elId = 'btn-' + getRandomUUID()
 
-    el.innerHTML = this.options.toggleButton?.icon || DEFAULT_ICON
+    el.innerHTML = sanitizeSVG(this.options.toggleButton?.icon || DEFAULT_ICON)
     el.setAttribute('id', elId)
     el.setAttribute('type', 'button')
     el.setAttribute('aria-label', this.options.hideText || 'Hide minimap')

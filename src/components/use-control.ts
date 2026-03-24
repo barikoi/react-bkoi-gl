@@ -32,6 +32,11 @@ export function useControl<T extends IControl>(
   arg3?: ControlOptions
 ): T {
   const context = useContext(MapContext)
+
+  if (!context) {
+    throw new Error('useControl must be used within a Map component')
+  }
+
   const ctrl = useMemo(() => onCreate(context), [])
 
   useEffect(() => {

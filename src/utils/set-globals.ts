@@ -15,6 +15,23 @@ export type GlobalSettings = {
   workerUrl?: string
 }
 
+/**
+ * Validates that a URL uses a safe protocol (http/https)
+ */
+const validateUrl = (url: string, settingName: string): boolean => {
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      console.warn(`${settingName}: Only http/https protocols are allowed, got: ${parsed.protocol}`)
+      return false
+    }
+    return true
+  } catch {
+    console.warn(`${settingName}: Invalid URL format: ${url}`)
+    return false
+  }
+}
+
 export default function setGlobals(mapLib: any, props: GlobalSettings) {
   const { RTLTextPlugin, maxParallelImageRequests, workerCount, workerUrl } = props
   if (
@@ -25,15 +42,17 @@ export default function setGlobals(mapLib: any, props: GlobalSettings) {
     const { pluginUrl, lazy = true } =
       typeof RTLTextPlugin === 'string' ? { pluginUrl: RTLTextPlugin } : RTLTextPlugin
 
-    mapLib.setRTLTextPlugin(
-      pluginUrl,
-      (error?: Error) => {
-        if (error) {
-          console.error(error)
-        }
-      },
-      lazy
-    )
+    if (validateUrl(pluginUrl, 'RTLTextPlugin')) {
+      mapLib.setRTLTextPlugin(
+        pluginUrl,
+        (error?: Error) => {
+          if (error) {
+            console.error(error)
+          }
+        },
+        lazy
+      )
+    }
   }
   if (maxParallelImageRequests !== undefined) {
     mapLib.setMaxParallelImageRequests(maxParallelImageRequests)
@@ -42,6 +61,8 @@ export default function setGlobals(mapLib: any, props: GlobalSettings) {
     mapLib.setWorkerCount(workerCount)
   }
   if (workerUrl !== undefined) {
-    mapLib.setWorkerUrl(workerUrl)
+    if (validateUrl(workerUrl, 'workerUrl')) {
+      mapLib.setWorkerUrl(workerUrl)
+    }
   }
 }

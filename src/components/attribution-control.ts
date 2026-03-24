@@ -35,10 +35,25 @@ function _AttributionControl(props: AttributionControlProps) {
         const inner = ctrl._container.querySelector('.maplibregl-ctrl-attrib-inner')
 
         if (inner) {
-          inner.innerHTML =
-            '© <a href="https://barikoi.com" target="_blank">Barikoi</a> ' +
-            '© <a href="https://openmaptiles.org" target="_blank">OpenMapTiles</a> ' +
-            '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
+          // Use DOM APIs instead of innerHTML for security
+          inner.textContent = ''
+
+          const createLink = (text: string, href: string) => {
+            const a = document.createElement('a')
+            a.href = href
+            a.target = '_blank'
+            a.rel = 'noopener noreferrer'
+            a.textContent = text
+            return a
+          }
+
+          inner.appendChild(createLink('Barikoi', 'https://barikoi.com'))
+          inner.appendChild(document.createTextNode(' © '))
+          inner.appendChild(createLink('OpenMapTiles', 'https://openmaptiles.org'))
+          inner.appendChild(document.createTextNode(' © '))
+          inner.appendChild(
+            createLink('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright')
+          )
         }
       }, 0)
     }
