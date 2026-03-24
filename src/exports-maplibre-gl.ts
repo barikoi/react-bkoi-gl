@@ -16,6 +16,17 @@ export { Source } from './components/source'
 export { Layer } from './components/layer'
 export { useControl } from './components/use-control'
 export { MapProvider, useMap } from './components/use-map'
+export { DrawControl } from './components/draw-control'
+export {
+  MinimapControl,
+  Minimap,
+  type MinimapControlOptions,
+  type MinimapControlProps,
+  type MinimapInteractions,
+  type MapInteractions,
+  type ParentRectConfig,
+  type ToggleButtonConfig,
+} from './components/minimap-control'
 
 export type { MapProps } from './components/map'
 export type { MapRef } from './maplibre/create-ref'
@@ -30,6 +41,7 @@ export type { TerrainControlProps } from './components/terrain-control'
 export type { LogoControlProps } from './components/logo-control'
 export type { SourceProps } from './components/source'
 export type { LayerProps } from './components/layer'
+export type { DrawControlProps, DrawControlOptions } from './components/draw-control'
 
 // Types
 export * from './types/common'
