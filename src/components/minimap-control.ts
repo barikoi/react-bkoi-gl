@@ -121,10 +121,10 @@ export interface MinimapControlOptions {
 export type MinimapControlProps = MinimapControlOptions
 
 /**
- * Default interactions (all disabled)
+ * Default interactions (dragPan enabled for navigation)
  */
 const defaultInteractions: MinimapInteractions = {
-  dragPan: false,
+  dragPan: true,
   scrollZoom: false,
   boxZoom: false,
   dragRotate: false,

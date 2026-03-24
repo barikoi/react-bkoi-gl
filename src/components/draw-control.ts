@@ -1,11 +1,10 @@
 import * as React from 'react'
-import { useEffect, useMemo, memo, useRef } from 'react'
+import { useEffect, useMemo, memo, useRef, useState, useContext } from 'react'
 // @ts-ignore - maplibre-gl-draw doesn't have perfect types
 import MapboxDraw from 'maplibre-gl-draw'
-import { useControl } from './use-control'
+import { MapContext } from './map'
 
 import type { ControlPosition, IControl, Map as MapInstance } from '../types/lib'
-import type { MapContextValue } from './map'
 
 /**
  * Draw event types
@@ -87,6 +86,12 @@ function _DrawControl(props: DrawControlProps) {
     ...drawOptions
   } = props
 
+  const context = useContext(MapContext)
+
+  if (!context) {
+    throw new Error('DrawControl must be used within a Map component')
+  }
+
   // Merge user options with defaults
   const options = useMemo<DrawControlOptions>(
     () => ({
@@ -102,7 +107,10 @@ function _DrawControl(props: DrawControlProps) {
     ]
   )
 
-  // Track callbacks in refs to avoid recreating the control
+  // Create a stable key for the options to detect changes
+  const optionsKey = useMemo(() => JSON.stringify(options), [options])
+
+  // Track callbacks in refs to avoid recreating the control for callback changes
   const callbacksRef = useRef({
     onDrawCreate,
     onDrawDelete,
@@ -113,16 +121,6 @@ function _DrawControl(props: DrawControlProps) {
     onDrawUncombine,
     onDrawRender,
   })
-  const listenersRef = useRef<{
-    handleCreate?: (e: DrawEvent) => void
-    handleUpdate?: (e: DrawEvent) => void
-    handleDelete?: (e: DrawEvent) => void
-    handleSelectionChange?: (e: DrawEvent) => void
-    handleModeChange?: (e: DrawEvent) => void
-    handleCombine?: (e: DrawEvent) => void
-    handleUncombine?: (e: DrawEvent) => void
-    handleRender?: (e: DrawEvent) => void
-  }>({})
 
   useEffect(() => {
     callbacksRef.current = {
@@ -146,113 +144,143 @@ function _DrawControl(props: DrawControlProps) {
     onDrawRender,
   ])
 
-  // Create the draw control using useControl hook
-  const ctrl = useControl<IControl & { getMode: () => string }>(
-    ({ mapLib }: MapContextValue) => {
-      // @ts-ignore - maplibre-gl-draw types
-      const DrawClass = MapboxDraw as typeof MapboxDraw & {
-        new (options: DrawControlOptions): IControl & { getMode: () => string }
-      }
-      return new DrawClass(options)
-    },
-    (context: MapContextValue) => {
-      const map = context.map.getMap() as MapInstance
-      if (!map) return
+  // Store control reference
+  const ctrlRef = useRef<(IControl & { getMode: () => string }) | null>(null)
+  const listenersRef = useRef<{
+    handleCreate?: (e: DrawEvent) => void
+    handleUpdate?: (e: DrawEvent) => void
+    handleDelete?: (e: DrawEvent) => void
+    handleSelectionChange?: (e: DrawEvent) => void
+    handleModeChange?: (e: DrawEvent) => void
+    handleCombine?: (e: DrawEvent) => void
+    handleUncombine?: (e: DrawEvent) => void
+    handleRender?: (e: DrawEvent) => void
+  }>({})
 
-      // Helper to reset cursor when not in drawing mode
-      const resetCursorIfNeeded = () => {
-        const currentMode = ctrl.getMode()
+  useEffect(() => {
+    const { map } = context
+    if (!map) return
+
+    const mapInstance = map.getMap() as MapInstance
+    if (!mapInstance) return
+
+    // @ts-ignore - maplibre-gl-draw types
+    const DrawClass = MapboxDraw as typeof MapboxDraw & {
+      new (options: DrawControlOptions): IControl & { getMode: () => string }
+    }
+
+    // Helper to reset cursor when not in drawing mode
+    const resetCursorIfNeeded = () => {
+      if (ctrlRef.current) {
+        const currentMode = ctrlRef.current.getMode()
         if (currentMode === 'simple_select') {
-          map.getCanvas().style.cursor = ''
+          mapInstance.getCanvas().style.cursor = ''
         }
       }
+    }
 
-      // Event handlers
-      const handleCreate = (e: DrawEvent) => {
-        resetCursorIfNeeded()
-        callbacksRef.current.onDrawCreate?.(e)
-      }
+    // Event handlers
+    const handleCreate = (e: DrawEvent) => {
+      resetCursorIfNeeded()
+      callbacksRef.current.onDrawCreate?.(e)
+    }
 
-      const handleUpdate = (e: DrawEvent) => {
-        resetCursorIfNeeded()
-        callbacksRef.current.onDrawUpdate?.(e)
-      }
+    const handleUpdate = (e: DrawEvent) => {
+      resetCursorIfNeeded()
+      callbacksRef.current.onDrawUpdate?.(e)
+    }
 
-      const handleDelete = (e: DrawEvent) => {
-        resetCursorIfNeeded()
-        callbacksRef.current.onDrawDelete?.(e)
-      }
+    const handleDelete = (e: DrawEvent) => {
+      resetCursorIfNeeded()
+      callbacksRef.current.onDrawDelete?.(e)
+    }
 
-      const handleSelectionChange = (e: DrawEvent) => {
-        resetCursorIfNeeded()
-        callbacksRef.current.onDrawSelectionChange?.(e)
-      }
+    const handleSelectionChange = (e: DrawEvent) => {
+      resetCursorIfNeeded()
+      callbacksRef.current.onDrawSelectionChange?.(e)
+    }
 
-      const handleModeChange = (e: DrawEvent) => {
-        resetCursorIfNeeded()
-        callbacksRef.current.onDrawModeChange?.(e)
-      }
-      const handleCombine = (e: DrawEvent) => {
-        callbacksRef.current.onDrawCombine?.(e)
-      }
-      const handleUncombine = (e: DrawEvent) => {
-        callbacksRef.current.onDrawUncombine?.(e)
-      }
-      const handleRender = (e: DrawEvent) => {
-        callbacksRef.current.onDrawRender?.(e)
-      }
-      listenersRef.current = {
-        handleCreate,
-        handleUpdate,
-        handleDelete,
-        handleSelectionChange,
-        handleModeChange,
-        handleCombine,
-        handleUncombine,
-        handleRender,
-      }
+    const handleModeChange = (e: DrawEvent) => {
+      resetCursorIfNeeded()
+      callbacksRef.current.onDrawModeChange?.(e)
+    }
 
-      // Add event listeners
-      map.on('draw.create', handleCreate)
-      map.on('draw.update', handleUpdate)
-      map.on('draw.delete', handleDelete)
-      map.on('draw.selectionchange', handleSelectionChange)
-      map.on('draw.modechange', handleModeChange)
-      map.on('draw.combine', handleCombine)
-      map.on('draw.uncombine', handleUncombine)
-      map.on('draw.render', handleRender)
-    },
-    (context: MapContextValue) => {
-      const map = context.map.getMap() as MapInstance
-      if (!map) return
+    const handleCombine = (e: DrawEvent) => {
+      callbacksRef.current.onDrawCombine?.(e)
+    }
 
+    const handleUncombine = (e: DrawEvent) => {
+      callbacksRef.current.onDrawUncombine?.(e)
+    }
+
+    const handleRender = (e: DrawEvent) => {
+      callbacksRef.current.onDrawRender?.(e)
+    }
+
+    // Create new control
+    const ctrl = new DrawClass(options)
+    ctrlRef.current = ctrl
+
+    // Add control to map
+    map.addControl(ctrl, position)
+
+    // Store listeners for cleanup
+    listenersRef.current = {
+      handleCreate,
+      handleUpdate,
+      handleDelete,
+      handleSelectionChange,
+      handleModeChange,
+      handleCombine,
+      handleUncombine,
+      handleRender,
+    }
+
+    // Add event listeners
+    mapInstance.on('draw.create', handleCreate)
+    mapInstance.on('draw.update', handleUpdate)
+    mapInstance.on('draw.delete', handleDelete)
+    mapInstance.on('draw.selectionchange', handleSelectionChange)
+    mapInstance.on('draw.modechange', handleModeChange)
+    mapInstance.on('draw.combine', handleCombine)
+    mapInstance.on('draw.uncombine', handleUncombine)
+    mapInstance.on('draw.render', handleRender)
+
+    // Cleanup function
+    return () => {
+      // Remove event listeners
       if (listenersRef.current.handleCreate) {
-        map.off('draw.create', listenersRef.current.handleCreate)
+        mapInstance.off('draw.create', listenersRef.current.handleCreate)
       }
       if (listenersRef.current.handleUpdate) {
-        map.off('draw.update', listenersRef.current.handleUpdate)
+        mapInstance.off('draw.update', listenersRef.current.handleUpdate)
       }
       if (listenersRef.current.handleDelete) {
-        map.off('draw.delete', listenersRef.current.handleDelete)
+        mapInstance.off('draw.delete', listenersRef.current.handleDelete)
       }
       if (listenersRef.current.handleSelectionChange) {
-        map.off('draw.selectionchange', listenersRef.current.handleSelectionChange)
+        mapInstance.off('draw.selectionchange', listenersRef.current.handleSelectionChange)
       }
       if (listenersRef.current.handleModeChange) {
-        map.off('draw.modechange', listenersRef.current.handleModeChange)
+        mapInstance.off('draw.modechange', listenersRef.current.handleModeChange)
       }
       if (listenersRef.current.handleCombine) {
-        map.off('draw.combine', listenersRef.current.handleCombine)
+        mapInstance.off('draw.combine', listenersRef.current.handleCombine)
       }
       if (listenersRef.current.handleUncombine) {
-        map.off('draw.uncombine', listenersRef.current.handleUncombine)
+        mapInstance.off('draw.uncombine', listenersRef.current.handleUncombine)
       }
       if (listenersRef.current.handleRender) {
-        map.off('draw.render', listenersRef.current.handleRender)
+        mapInstance.off('draw.render', listenersRef.current.handleRender)
       }
-    },
-    { position }
-  )
+
+      // Remove control from map
+      if (ctrlRef.current && map.hasControl(ctrlRef.current)) {
+        map.removeControl(ctrlRef.current)
+      }
+      ctrlRef.current = null
+    }
+  }, [context, optionsKey, position])
 
   return null
 }

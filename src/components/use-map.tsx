@@ -61,7 +61,10 @@ export function useMap(): MapCollection {
   const currentMap = useContext(MapContext)
 
   const mapsWithCurrent = useMemo(() => {
-    return { ...maps, current: currentMap?.map }
+    // If currentMap is available from MapContext, use it
+    // Otherwise, fall back to the first registered map from MountedMapsContext
+    const current = currentMap?.map || (maps ? Object.values(maps)[0] : undefined)
+    return { ...maps, current }
   }, [maps, currentMap])
 
   return mapsWithCurrent as MapCollection

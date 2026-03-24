@@ -50,7 +50,8 @@
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^24.4.1",
     "maplibre-gl": "^5.15.0",
-    "maplibre-gl-draw": "^1.6.9"
+    "maplibre-gl-draw": "^1.6.9",
+    "react-bkoi-gl": "file:react-bkoi-gl-2.0.1.tgz"
   },
   "peerDependencies": {
     "react": ">=16.3.0",
