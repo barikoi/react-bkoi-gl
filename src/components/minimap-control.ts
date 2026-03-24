@@ -118,10 +118,7 @@ export interface MinimapControlOptions {
   maxHeight?: string
 }
 
-export type MinimapControlProps = MinimapControlOptions & {
-  /** CSS style override */
-  style?: React.CSSProperties
-}
+export type MinimapControlProps = MinimapControlOptions
 
 /**
  * Default interactions (all disabled)
@@ -698,7 +695,7 @@ class Minimap implements IControl {
 }
 
 function _MinimapControl(props: MinimapControlProps) {
-  const { position, style, ...options } = props
+  const { position, ...options } = props
 
   // Create minimap control using useControl
   useControl<Minimap>(() => new Minimap(options), { position })

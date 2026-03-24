@@ -44,8 +44,6 @@ export interface DrawControlOptions {
 export type DrawControlProps = DrawControlOptions & {
   /** Placement of the control relative to the map. */
   position?: ControlPosition
-  /** CSS style override, applied to the control's container */
-  style?: React.CSSProperties
   /** Callback fired when a feature is created */
   onDrawCreate?: (e: DrawEvent) => void
   /** Callback fired when a feature is deleted */
