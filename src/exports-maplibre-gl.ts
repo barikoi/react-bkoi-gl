@@ -13,10 +13,12 @@ export { ScaleControl } from './components/scale-control'
 export { TerrainControl } from './components/terrain-control'
 export { LogoControl } from './components/logo-control'
 export { Source } from './components/source'
+export { CanvasSource } from './components/canvas-source'
 export { Layer } from './components/layer'
 export { useControl } from './components/use-control'
 export { MapProvider, useMap } from './components/use-map'
 export { DrawControl } from './components/draw-control'
+export { GlobeControl } from './components/globe-control'
 export {
   MinimapControl,
   Minimap,
@@ -40,8 +42,13 @@ export type { ScaleControlProps } from './components/scale-control'
 export type { TerrainControlProps } from './components/terrain-control'
 export type { LogoControlProps } from './components/logo-control'
 export type { SourceProps } from './components/source'
+export type { CanvasSourceProps, CanvasCoordinates } from './components/canvas-source'
 export type { LayerProps } from './components/layer'
+
+// Re-export MapLayerMouseEvent for layer event typing
+export type { MapLayerMouseEvent } from 'maplibre-gl'
 export type { DrawControlProps, DrawControlOptions } from './components/draw-control'
+export type { GlobeControlProps, GlobeControlOptions } from './components/globe-control'
 
 // Types
 export * from './types/common'
