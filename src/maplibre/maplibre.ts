@@ -2,7 +2,7 @@ import { transformToViewState, applyViewStateToTransform } from '../utils/transf
 import { normalizeStyle } from '../utils/style-utils'
 import { deepEqual } from '../utils/deep-equal'
 
-import type { TransformLike } from '../types/internal'
+import type { TransformLike, MapInternalProperties, MapWithProjection } from '../types/internal'
 import type {
   ViewState,
   Point,
@@ -225,14 +225,13 @@ export default class Maplibre {
       container.appendChild(oldContainer.childNodes[0])
     }
     // Step 2: replace the internal container with new container from the react component
-    // @ts-ignore - accessing private _container property for reuse functionality
-    map._container = container
+    const mapInternal = map as unknown as MapInternalProperties
+    mapInternal._container = container
 
     // With maplibre-gl as mapLib, map uses ResizeObserver to observe when its container resizes.
     // When reusing the saved map, we need to disconnect the observer and observe the new container.
     // Step 3: telling the ResizeObserver to disconnect and observe the new container
-    // @ts-ignore - accessing private _resizeObserver property for reuse functionality
-    const resizeObserver = map._resizeObserver
+    const resizeObserver = mapInternal._resizeObserver
     if (resizeObserver) {
       resizeObserver.disconnect()
       resizeObserver.observe(container)
@@ -261,8 +260,8 @@ export default class Maplibre {
     }
 
     // Force reload
-    // @ts-ignore - calling internal _update method to force map reload
-    map._update()
+    const mapInternalForUpdate = map as unknown as MapInternalProperties
+    mapInternalForUpdate._update()
     return that
   }
 
@@ -309,11 +308,11 @@ export default class Maplibre {
     map.transformCameraUpdate = this._onCameraUpdate
     map.on('style.load', () => {
       // Map style has changed, this would have wiped out all settings from props
+      const mapWithProjection = map as unknown as MapWithProjection
       this._styleComponents = {
         light: map.getLight(),
         sky: map.getSky(),
-        // @ts-ignore getProjection() does not exist in v4
-        projection: map.getProjection?.(),
+        projection: mapWithProjection.getProjection?.(),
         terrain: map.getTerrain(),
       }
       this._updateStyleComponents(this.props)
@@ -442,7 +441,7 @@ export default class Maplibre {
         diff: styleDiffing,
       }
       if ('localIdeographFontFamily' in nextProps) {
-        // @ts-ignore Mapbox specific prop
+        // Mapbox specific prop not in maplibre types
         options.localIdeographFontFamily = nextProps.localIdeographFontFamily
       }
       this._map.setStyle(normalizeStyle(mapStyle), options)
@@ -457,6 +456,7 @@ export default class Maplibre {
   private _updateStyleComponents({ light, projection, sky, terrain }: MaplibreProps): void {
     const map = this._map
     const currProps = this._styleComponents
+    const mapWithProjection = map as unknown as MapWithProjection
     // We can safely manipulate map style once it's loaded
     if (map.style._loaded) {
       if (light && !deepEqual(light, currProps.light)) {
@@ -469,8 +469,7 @@ export default class Maplibre {
         projection !== currProps.projection?.type
       ) {
         currProps.projection = typeof projection === 'string' ? { type: projection } : projection
-        // @ts-ignore - setProjection does not exist in maplibre-gl v4
-        map.setProjection?.(currProps.projection)
+        mapWithProjection.setProjection?.(currProps.projection)
       }
       if (sky && !deepEqual(sky, currProps.sky)) {
         currProps.sky = sky
@@ -502,8 +501,8 @@ export default class Maplibre {
   }
 
   private _onEvent = (e: MapEvent) => {
-    // @ts-ignore - dynamically accessing event handler from props
-    const cb = this.props[otherEvents[e.type]]
+    const handlerName = otherEvents[e.type] as keyof MapCallbacks
+    const cb = this.props[handlerName] as ((e: MapEvent) => void) | undefined
     if (cb) {
       cb(e)
     } else if (e.type === 'error') {
@@ -516,8 +515,8 @@ export default class Maplibre {
       return
     }
     e.viewState = this._propsedCameraUpdate || transformToViewState(this._map.transform)
-    // @ts-ignore - dynamically accessing event handler from props
-    const cb = this.props[cameraEvents[e.type]]
+    const handlerName = cameraEvents[e.type] as keyof MapCallbacks
+    const cb = this.props[handlerName] as ((e: ViewStateChangeEvent) => void) | undefined
     if (cb) {
       cb(e)
     }
@@ -575,8 +574,8 @@ export default class Maplibre {
       this._updateHover(e)
     }
 
-    // @ts-ignore - dynamically accessing pointer event handler from props
-    const cb = this.props[pointerEvents[e.type]]
+    const handlerName = pointerEvents[e.type as keyof typeof pointerEvents] as keyof MapCallbacks
+    const cb = this.props[handlerName] as ((e: MapMouseEvent) => void) | undefined
     if (cb) {
       if (this.props.interactiveLayerIds && e.type !== 'mouseover' && e.type !== 'mouseout') {
         e.features = this._hoveredFeatures || this._queryRenderedFeatures(e.point)

@@ -120,6 +120,15 @@ export interface MinimapControlOptions {
 
 export type MinimapControlProps = MinimapControlOptions
 
+// Named constants for default values
+const DEFAULT_ZOOM_ADJUST = -4
+const DEFAULT_COLLAPSED_SIZE = '29px'
+const DEFAULT_BORDER_RADIUS = '3px'
+const TRANSITION_DURATION_MS = 600
+const RESIZE_DEBOUNCE_MS = 100
+const DEFAULT_WIDTH = '400px'
+const DEFAULT_HEIGHT = '300px'
+
 /**
  * Default interactions (dragPan enabled for navigation)
  */
@@ -215,16 +224,16 @@ class Minimap implements IControl {
     const containerStyle = this.validateContainerStyle(options.containerStyle)
 
     this.options = {
-      zoomAdjust: -4,
+      zoomAdjust: DEFAULT_ZOOM_ADJUST,
       position: 'top-right',
       pitchAdjust: false,
       attributionControl: false,
       logoPosition: 'bottom-left',
       toggleable: true,
       initialMinimized: false,
-      collapsedWidth: '29px',
-      collapsedHeight: '29px',
-      borderRadius: '3px',
+      collapsedWidth: DEFAULT_COLLAPSED_SIZE,
+      collapsedHeight: DEFAULT_COLLAPSED_SIZE,
+      borderRadius: DEFAULT_BORDER_RADIUS,
       hideText: 'Hide minimap',
       showText: 'Show minimap',
       responsive: true,
@@ -232,8 +241,8 @@ class Minimap implements IControl {
       responsiveHeight: '20vh',
       minWidth: '200px',
       minHeight: '150px',
-      maxWidth: '400px',
-      maxHeight: '300px',
+      maxWidth: DEFAULT_WIDTH,
+      maxHeight: DEFAULT_HEIGHT,
       interactions,
       ...options,
       containerStyle,
@@ -253,7 +262,7 @@ class Minimap implements IControl {
     this.container = this.createContainer()
 
     this.options.container = this.container
-    this.options.zoom = parentMap.getZoom() + (this.options.zoomAdjust ?? -4)
+    this.options.zoom = parentMap.getZoom() + (this.options.zoomAdjust ?? DEFAULT_ZOOM_ADJUST)
     this.options.center ??= parentMap.getCenter().toArray() as [number, number]
     this.options.bearing = parentMap.getBearing()
     this.options.pitch = this.options.pitchAdjust ? parentMap.getPitch() : 0
@@ -310,8 +319,8 @@ class Minimap implements IControl {
     }
 
     if (this.isMinimized) {
-      container.style.width = this.options.collapsedWidth || '29px'
-      container.style.height = this.options.collapsedHeight || '29px'
+      container.style.width = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
+      container.style.height = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
     }
 
     const preventDefault = (e: Event) => e.preventDefault()
@@ -321,11 +330,11 @@ class Minimap implements IControl {
   }
 
   private getContainerStyles(): string {
-    const width = this.options.containerStyle?.width || '400px'
-    const height = this.options.containerStyle?.height || '300px'
-    const collapsedWidth = this.options.collapsedWidth || '29px'
-    const collapsedHeight = this.options.collapsedHeight || '29px'
-    const borderRadius = this.options.borderRadius || '3px'
+    const width = this.options.containerStyle?.width || DEFAULT_WIDTH
+    const height = this.options.containerStyle?.height || DEFAULT_HEIGHT
+    const collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
+    const collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
+    const borderRadius = this.options.borderRadius || DEFAULT_BORDER_RADIUS
 
     return `
       #${this.id}.custom-ctrl-minimap {
@@ -361,7 +370,7 @@ class Minimap implements IControl {
   }
 
   private validateContainerStyle(style?: Record<string, string>): Record<string, string> {
-    const defaults = { border: '1px solid #000', width: '400px', height: '300px' }
+    const defaults = { border: '1px solid #000', width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
     if (!style) return defaults
 
     const validated: Record<string, string> = {}
@@ -501,8 +510,8 @@ class Minimap implements IControl {
 
       const minW = parseFloat(this.options.minWidth || '200px')
       const minH = parseFloat(this.options.minHeight || '150px')
-      const maxW = parseFloat(this.options.maxWidth || '400px')
-      const maxH = parseFloat(this.options.maxHeight || '300px')
+      const maxW = parseFloat(this.options.maxWidth || DEFAULT_WIDTH)
+      const maxH = parseFloat(this.options.maxHeight || DEFAULT_HEIGHT)
 
       width = Math.max(minW, Math.min(maxW, width))
       height = Math.max(minH, Math.min(maxH, height))
@@ -519,7 +528,7 @@ class Minimap implements IControl {
     let resizeTimeout: ReturnType<typeof setTimeout>
     this.resizeHandler = () => {
       clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(updateSize, 100)
+      resizeTimeout = setTimeout(updateSize, RESIZE_DEBOUNCE_MS)
     }
 
     window.addEventListener('resize', this.resizeHandler)
@@ -528,8 +537,8 @@ class Minimap implements IControl {
   toggle(): void {
     this.isMinimized = !this.isMinimized
 
-    const collapsedWidth = this.options.collapsedWidth || '29px'
-    const collapsedHeight = this.options.collapsedHeight || '29px'
+    const collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
+    const collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
 
     if (this.isMinimized) {
       this.container.classList.add('minimized')
@@ -540,8 +549,8 @@ class Minimap implements IControl {
       if (this.options.responsive && this.resizeHandler) {
         this.resizeHandler()
       } else {
-        const expandedWidth = this.options.containerStyle?.width || '400px'
-        const expandedHeight = this.options.containerStyle?.height || '300px'
+        const expandedWidth = this.options.containerStyle?.width || DEFAULT_WIDTH
+        const expandedHeight = this.options.containerStyle?.height || DEFAULT_HEIGHT
         this.container.style.width = expandedWidth
         this.container.style.height = expandedHeight
       }
@@ -552,7 +561,7 @@ class Minimap implements IControl {
     setTimeout(() => {
       this.map.resize()
       this.setParentBounds()
-    }, 600)
+    }, TRANSITION_DURATION_MS)
   }
 
   isMinimizedState(): boolean {
@@ -671,7 +680,9 @@ class Minimap implements IControl {
       const to = which === 'parent' ? this.map : this.parentMap
 
       const center = from.getCenter()
-      const zoom = from.getZoom() + (this.options.zoomAdjust ?? -4) * (which === 'parent' ? 1 : -1)
+      const zoom =
+        from.getZoom() +
+        (this.options.zoomAdjust ?? DEFAULT_ZOOM_ADJUST) * (which === 'parent' ? 1 : -1)
       const bearing = from.getBearing()
       const pitch = from.getPitch()
 

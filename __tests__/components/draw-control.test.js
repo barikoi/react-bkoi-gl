@@ -115,7 +115,7 @@ describe('DrawControl', () => {
       )
     })
 
-    test('merges options with defaults (shallow merge)', () => {
+    test('merges options with defaults (deep merge for controls)', () => {
       const props = {
         controls: {
           point: true,
@@ -129,12 +129,14 @@ describe('DrawControl', () => {
       )
 
       const MapboxDraw = require('maplibre-gl-draw')
-      // Note: This is a shallow merge, so user controls override defaults completely
+      // Deep merge: user controls are merged with default controls
       expect(MapboxDraw).toHaveBeenCalledWith(
         expect.objectContaining({
           displayControlsDefault: false,
           controls: {
-            point: true,
+            polygon: true, // from defaults
+            trash: true, // from defaults
+            point: true, // from user
           },
         })
       )

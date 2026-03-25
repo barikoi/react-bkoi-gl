@@ -3,6 +3,14 @@ import type { ImmutableLike } from '../types/common'
 
 const refProps = ['type', 'source', 'source-layer', 'minzoom', 'maxzoom', 'filter', 'layout']
 
+// Legacy layer type with optional fields not in current type definitions
+interface LegacyLayer {
+  id: string
+  interactive?: boolean
+  ref?: string
+  [key: string]: unknown
+}
+
 // Prepare a map style object for diffing
 // If immutable - convert to plain object
 // Work around some issues in older styles that would fail Mapbox's diffing
@@ -21,28 +29,26 @@ export function normalizeStyle(
   if (!style.layers) {
     return style
   }
-  const layerIndex = {}
+  const layerIndex: Record<string, LegacyLayer> = {}
 
   for (const layer of style.layers) {
-    layerIndex[layer.id] = layer
+    layerIndex[layer.id] = layer as LegacyLayer
   }
 
   const layers = style.layers.map(layer => {
-    let normalizedLayer: typeof layer = null
+    const legacyLayer = layer as LegacyLayer
+    let normalizedLayer: LegacyLayer | null = null
 
-    if ('interactive' in layer) {
-      normalizedLayer = Object.assign({}, layer)
+    if ('interactive' in legacyLayer) {
+      normalizedLayer = Object.assign({}, legacyLayer)
       // Breaks style diffing :(
-      // @ts-ignore legacy field not typed
       delete normalizedLayer.interactive
     }
 
     // Style diffing doesn't work with refs so expand them out manually before diffing.
-    // @ts-ignore - ref is a legacy field not included in current type definitions
-    const layerRef = layerIndex[layer.ref]
+    const layerRef = layerIndex[legacyLayer.ref as string]
     if (layerRef) {
-      normalizedLayer = normalizedLayer || Object.assign({}, layer)
-      // @ts-ignore - deleting legacy ref field that's not in type definitions
+      normalizedLayer = normalizedLayer || Object.assign({}, legacyLayer)
       delete normalizedLayer.ref
       // https://github.com/mapbox/mapbox-gl-js/blob/master/src/style-spec/deref.js
       for (const propName of refProps) {
@@ -52,7 +58,7 @@ export function normalizeStyle(
       }
     }
 
-    return normalizedLayer || layer
+    return (normalizedLayer || layer) as typeof layer
   })
 
   // Do not mutate the style object provided by the user

@@ -1,10 +1,26 @@
-import { useContext, useEffect, useMemo, useState, useRef } from 'react'
+import { useContext, useEffect, useMemo, useState, useRef, memo, useId } from 'react'
 import { MapContext } from './map'
 import assert from '../utils/assert'
 import { deepEqual } from '../utils/deep-equal'
 
+import type { FilterSpecification } from 'maplibre-gl'
+
 import type { Map as MapInstance, CustomLayerInterface } from '../types/lib'
 import type { LayerSpecification } from '../types/style-spec'
+import type { MapInternalProperties } from '../types/internal'
+
+// Type for layer with filter property (not all layer types have filter)
+type LayerWithFilter = {
+  filter?: FilterSpecification | null
+  layout?: Record<string, unknown>
+  paint?: Record<string, unknown>
+  minzoom?: number
+  maxzoom?: number
+  beforeId?: string
+  type?: string
+  id?: string
+  source?: string
+}
 
 // Omiting property from a union type, see
 // https://github.com/microsoft/TypeScript/issues/39556#issuecomment-656925230
@@ -24,14 +40,15 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
     return
   }
 
-  // @ts-ignore filter does not exist in some Layer types
-  const { layout = {}, paint = {}, filter, minzoom, maxzoom, beforeId } = props
+  const propsWithFilter = props as unknown as LayerWithFilter
+  const prevPropsWithFilter = prevProps as unknown as LayerWithFilter
+  const { layout = {}, paint = {}, filter, minzoom, maxzoom, beforeId } = propsWithFilter
 
-  if (beforeId !== prevProps.beforeId) {
+  if (beforeId !== prevPropsWithFilter.beforeId) {
     map.moveLayer(id, beforeId)
   }
-  if (layout !== prevProps.layout) {
-    const prevLayout = prevProps.layout || {}
+  if (layout !== prevPropsWithFilter.layout) {
+    const prevLayout = prevPropsWithFilter.layout || {}
     for (const key in layout) {
       if (!deepEqual(layout[key], prevLayout[key])) {
         map.setLayoutProperty(id, key, layout[key])
@@ -43,8 +60,8 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
       }
     }
   }
-  if (paint !== prevProps.paint) {
-    const prevPaint = prevProps.paint || {}
+  if (paint !== prevPropsWithFilter.paint) {
+    const prevPaint = prevPropsWithFilter.paint || {}
     for (const key in paint) {
       if (!deepEqual(paint[key], prevPaint[key])) {
         map.setPaintProperty(id, key, paint[key])
@@ -57,34 +74,41 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
     }
   }
 
-  // @ts-ignore - filter does not exist in some Layer types
-  if (!deepEqual(filter, prevProps.filter)) {
-    map.setFilter(id, filter)
+  if (!deepEqual(filter, prevPropsWithFilter.filter)) {
+    map.setFilter(id, filter ?? null)
   }
-  if (minzoom !== prevProps.minzoom || maxzoom !== prevProps.maxzoom) {
+  if (minzoom !== prevPropsWithFilter.minzoom || maxzoom !== prevPropsWithFilter.maxzoom) {
     map.setLayerZoomRange(id, minzoom, maxzoom)
   }
 }
 
 function createLayer(map: MapInstance, id: string, props: LayerProps) {
-  // @ts-ignore - accessing internal map.style property
-  if (map.style && map.style._loaded && (!('source' in props) || map.getSource(props.source))) {
+  const mapInternal = map as unknown as MapInternalProperties
+  if (
+    mapInternal.style &&
+    mapInternal.style._loaded &&
+    (!('source' in props) || map.getSource(props.source as string))
+  ) {
     const options: LayerProps = { ...props, id }
     delete options.beforeId
 
-    // @ts-ignore - addLayer accepts beforeId as second parameter
-    map.addLayer(options, props.beforeId)
+    map.addLayer(options as LayerSpecification, props.beforeId)
   }
 }
 
-let layerCounter = 0
-
-export function Layer(props: LayerProps) {
+function _Layer(props: LayerProps) {
   const map = useContext(MapContext).map.getMap()
   const propsRef = useRef(props)
   const [, setStyleLoaded] = useState(0)
 
-  const id = useMemo(() => props.id || `jsx-layer-${layerCounter++}`, [])
+  // Generate a stable ID once on mount
+  // Note: props.id changes after mount will trigger an error in updateLayer
+  const generatedId = useId()
+  const id = useMemo(
+    () => props.id || `jsx-layer-${generatedId.replace(/:/g, '-')}`,
+    // Empty deps - id is set once on mount and should not change
+    []
+  )
 
   useEffect(() => {
     if (map) {
@@ -94,8 +118,8 @@ export function Layer(props: LayerProps) {
 
       return () => {
         map.off('styledata', forceUpdate)
-        // @ts-ignore - accessing internal map.style property
-        if (map.style && map.style._loaded && map.getLayer(id)) {
+        const mapInternal = map as unknown as MapInternalProperties
+        if (mapInternal.style && mapInternal.style._loaded && map.getLayer(id)) {
           map.removeLayer(id)
         }
       }
@@ -103,8 +127,8 @@ export function Layer(props: LayerProps) {
     return undefined
   }, [map])
 
-  // @ts-ignore - accessing internal map.style property to check layer existence
-  const layer = map && map.style && map.getLayer(id)
+  const mapInternal = map as unknown as MapInternalProperties
+  const layer = map && mapInternal.style && map.getLayer(id)
   if (layer) {
     try {
       updateLayer(map, id, props, propsRef.current)
@@ -120,3 +144,5 @@ export function Layer(props: LayerProps) {
 
   return null
 }
+
+export const Layer = memo(_Layer)

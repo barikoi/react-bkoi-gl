@@ -135,6 +135,9 @@ export const Marker: React.FC<MarkerProps> = memo(
 
     const prevClassNameRef = useRef(className)
 
+    // Intentionally no dependency array - we need to update marker properties on every render
+    // to ensure they reflect the latest props. This avoids stale prop issues and is safe
+    // because the marker's setter methods are idempotent.
     useEffect(() => {
       if (marker.getLngLat().lng !== longitude || marker.getLngLat().lat !== latitude) {
         marker.setLngLat([longitude, latitude])

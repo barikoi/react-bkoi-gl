@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useContext, useEffect, useMemo, useState, useRef, cloneElement } from 'react'
+import { useContext, useEffect, useMemo, useState, useRef, cloneElement, memo, useId } from 'react'
 import { MapContext } from './map'
 import assert from '../utils/assert'
 import { deepEqual } from '../utils/deep-equal'
@@ -8,6 +8,9 @@ import type {
   GeoJSONSourceImplementation,
   ImageSourceImplementation,
   AnySourceImplementation,
+  MapInternalProperties,
+  SourceWithOptionalMethods,
+  LayerWithSource,
 } from '../types/internal'
 import type { SourceSpecification } from '../types/style-spec'
 import type { Map as MapInstance } from '../types/lib'
@@ -18,16 +21,13 @@ export type SourceProps = SourceSpecification & {
   children?: any
 }
 
-let sourceCounter = 0
-
 function createSource(map: MapInstance, id: string, props: SourceProps) {
-  // @ts-ignore - accessing internal map.style property
-  if (map.style && map.style._loaded) {
+  const mapInternal = map as unknown as MapInternalProperties
+  if (mapInternal.style && mapInternal.style._loaded) {
     const options = { ...props }
     delete options.id
     delete options.children
-    // @ts-ignore - addSource accepts options without id
-    map.addSource(id, options)
+    map.addSource(id, options as SourceSpecification)
     return map.getSource(id)
   }
   return null
@@ -61,18 +61,17 @@ function updateSource(source: AnySourceImplementation, props: SourceProps, prevP
       coordinates: props.coordinates,
     })
   } else {
+    const sourceWithMethods = source as unknown as SourceWithOptionalMethods
+    const propsWithOptional = props as Record<string, unknown>
     switch (changedKey) {
       case 'coordinates':
-        // @ts-ignore - setCoordinates may not exist on all source types
-        source.setCoordinates?.(props.coordinates)
+        sourceWithMethods.setCoordinates?.(propsWithOptional.coordinates)
         break
       case 'url':
-        // @ts-ignore - setUrl may not exist on all source types
-        source.setUrl?.(props.url)
+        sourceWithMethods.setUrl?.(propsWithOptional.url as string)
         break
       case 'tiles':
-        // @ts-ignore - setTiles may not exist on all source types
-        source.setTiles?.(props.tiles)
+        sourceWithMethods.setTiles?.(propsWithOptional.tiles as string[])
         break
       default:
         console.warn(`Unable to update <Source> prop: ${changedKey}`)
@@ -80,12 +79,19 @@ function updateSource(source: AnySourceImplementation, props: SourceProps, prevP
   }
 }
 
-export function Source(props: SourceProps) {
+function _Source(props: SourceProps) {
   const map = useContext(MapContext).map.getMap()
   const propsRef = useRef(props)
   const [, setStyleLoaded] = useState(0)
 
-  const id = useMemo(() => props.id || `jsx-source-${sourceCounter++}`, [])
+  // Generate a stable ID once on mount
+  // Note: props.id changes after mount will trigger an error in updateSource
+  const generatedId = useId()
+  const id = useMemo(
+    () => props.id || `jsx-source-${generatedId.replace(/:/g, '-')}`,
+    // Empty deps - id is set once on mount and should not change
+    []
+  )
 
   useEffect(() => {
     if (map) {
@@ -96,16 +102,16 @@ export function Source(props: SourceProps) {
 
       return () => {
         map.off('styledata', forceUpdate)
-        // @ts-ignore - accessing internal map.style property
-        if (map.style && map.style._loaded && map.getSource(id)) {
+        const mapInternal = map as unknown as MapInternalProperties
+        if (mapInternal.style && mapInternal.style._loaded && map.getSource(id)) {
           // Parent effects are destroyed before child ones, see
           // https://github.com/facebook/react/issues/16728
           // Source can only be removed after all child layers are removed
           const allLayers = map.getStyle()?.layers
           if (allLayers) {
             for (const layer of allLayers) {
-              // @ts-ignore (2339) source does not exist on all layer types
-              if (layer.source === id) {
+              const layerWithSource = layer as unknown as LayerWithSource
+              if (layerWithSource.source === id) {
                 map.removeLayer(layer.id)
               }
             }
@@ -117,8 +123,8 @@ export function Source(props: SourceProps) {
     return undefined
   }, [map])
 
-  // @ts-ignore - accessing internal map.style property
-  let source = map && map.style && map.getSource(id)
+  const mapInternal = map as unknown as MapInternalProperties
+  let source = map && mapInternal.style && map.getSource(id)
   if (source) {
     updateSource(source, props, propsRef.current)
   } else {
@@ -139,3 +145,5 @@ export function Source(props: SourceProps) {
     null
   )
 }
+
+export const Source = memo(_Source)

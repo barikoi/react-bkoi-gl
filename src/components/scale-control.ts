@@ -25,18 +25,21 @@ function _ScaleControl(props: ScaleControlProps) {
   const prevProps = propsRef.current
   propsRef.current = props
 
-  const { style } = props
+  const { style, maxWidth, unit } = props
 
-  if (props.maxWidth !== undefined && props.maxWidth !== prevProps.maxWidth) {
-    ctrl.options.maxWidth = props.maxWidth
-  }
-  if (props.unit !== undefined && props.unit !== prevProps.unit) {
-    ctrl.setUnit(props.unit)
-  }
+  // Move prop updates to useEffect to avoid render-phase side effects
+  useEffect(() => {
+    if (maxWidth !== undefined && maxWidth !== prevProps.maxWidth) {
+      ctrl.options.maxWidth = maxWidth
+    }
+    if (unit !== undefined && unit !== prevProps.unit) {
+      ctrl.setUnit(unit)
+    }
+  }, [ctrl, maxWidth, unit, prevProps.maxWidth, prevProps.unit])
 
   useEffect(() => {
     applyReactStyle(ctrl._container, style)
-  }, [style])
+  }, [ctrl, style])
 
   return null
 }

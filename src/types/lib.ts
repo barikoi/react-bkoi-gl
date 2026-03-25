@@ -19,8 +19,11 @@ import type {
   TerrainSpecification,
   LogoControl,
   LogoControlOptions,
+  MapMouseEvent as MapMouseEventBase,
 } from 'maplibre-gl'
 
+// Re-export MapMouseEvent as MapMouseEventBase for internal use
+// Note: The extended MapMouseEvent with additional features is exported from types/events.ts
 export type {
   ControlPosition,
   IControl,
@@ -45,6 +48,9 @@ export type {
   LogoControlOptions,
   CustomLayerInterface,
 } from 'maplibre-gl'
+
+// Re-export the base MapMouseEvent type for internal use (extended version is in events.ts)
+export type { MapMouseEventBase }
 
 /**
  * A user-facing type that represents the minimal intersection between Mapbox and Maplibre

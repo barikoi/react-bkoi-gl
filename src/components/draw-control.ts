@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useEffect, useMemo, memo, useRef, useState, useContext } from 'react'
-// @ts-ignore - maplibre-gl-draw doesn't have perfect types
 import MapboxDraw from 'maplibre-gl-draw'
 import { MapContext } from './map'
 
@@ -43,6 +42,8 @@ export interface DrawControlOptions {
 export type DrawControlProps = DrawControlOptions & {
   /** Placement of the control relative to the map. */
   position?: ControlPosition
+  /** CSS style override, applied to the control's container */
+  style?: React.CSSProperties
   /** Callback fired when a feature is created */
   onDrawCreate?: (e: DrawEvent) => void
   /** Callback fired when a feature is deleted */
@@ -75,6 +76,7 @@ const defaultDrawOptions: DrawControlOptions = {
 function _DrawControl(props: DrawControlProps) {
   const {
     position,
+    style,
     onDrawCreate,
     onDrawDelete,
     onDrawUpdate,
@@ -92,11 +94,15 @@ function _DrawControl(props: DrawControlProps) {
     throw new Error('DrawControl must be used within a Map component')
   }
 
-  // Merge user options with defaults
+  // Deep merge user options with defaults to preserve nested object properties
   const options = useMemo<DrawControlOptions>(
     () => ({
       ...defaultDrawOptions,
       ...drawOptions,
+      controls: {
+        ...defaultDrawOptions.controls,
+        ...drawOptions.controls,
+      },
     }),
     [
       drawOptions.displayControlsDefault,
@@ -164,7 +170,6 @@ function _DrawControl(props: DrawControlProps) {
     const mapInstance = map.getMap() as MapInstance
     if (!mapInstance) return
 
-    // @ts-ignore - maplibre-gl-draw types
     const DrawClass = MapboxDraw as typeof MapboxDraw & {
       new (options: DrawControlOptions): IControl & { getMode: () => string }
     }

@@ -9,6 +9,7 @@ import type { CSSProperties } from 'react'
 import useIsomorphicLayoutEffect from '../utils/use-isomorphic-layout-effect'
 import setGlobals, { GlobalSettings } from '../utils/set-globals'
 import type { MapLib, MapOptions } from '../types/lib'
+import type { MapOptionsInternal } from '../types/internal'
 import { LogoControl } from './logo-control'
 import { AttributionControl } from './attribution-control'
 
@@ -49,7 +50,7 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   useEffect(() => {
     const mapLib = props.mapLib
     let isMounted = true
-    let maplibre: Maplibre
+    let maplibre: Maplibre | null = null
 
     Promise.resolve(mapLib || import('maplibre-gl'))
       .then((module: MapLib | { default: MapLib }) => {
@@ -73,9 +74,8 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
             mapboxgl.Map,
             {
               ...props,
-              // @ts-ignore - attributionControl is not in the type definition but is supported by maplibre-gl
               attributionControl: false,
-            },
+            } as MapOptions & MapOptionsInternal & MaplibreProps,
             containerRef.current
           )
         }
