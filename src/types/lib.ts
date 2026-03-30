@@ -53,6 +53,17 @@ export type {
 export type { MapMouseEventBase }
 
 /**
+ * A relaxed control interface that accepts both MapLibre IControl implementations
+ * and third-party controls (e.g. @deck.gl/mapbox MapboxOverlay) that may use
+ * different Map type definitions.
+ */
+export interface MapControl {
+  onAdd?(map: unknown): unknown
+  onRemove?(map: unknown): unknown
+  getDefaultPosition?(): string
+}
+
+/**
  * A user-facing type that represents the minimal intersection between Mapbox and Maplibre
  * User provided `mapLib` is supposed to implement this interface
  * Only losely typed for compatibility

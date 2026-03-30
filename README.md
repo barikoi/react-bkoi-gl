@@ -1075,10 +1075,11 @@ Render custom HTML canvas elements as map layers.
 ```tsx
 import { Map, CanvasSource, Layer } from 'react-bkoi-gl';
 import "react-bkoi-gl/styles";
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 function CanvasExample() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1093,6 +1094,8 @@ function CanvasExample() {
       ctx.arc(128, 128, 50, 0, 2 * Math.PI);
       ctx.fill();
     }
+
+    setCanvasEl(canvas);
   }, []);
 
   return (
@@ -1106,7 +1109,7 @@ function CanvasExample() {
       style={{ width: '100%', height: '100vh' }}
     >
       <canvas ref={canvasRef} width={256} height={256} style={{ display: 'none' }} />
-      {canvasRef.current && (
+      {canvasEl && (
         <CanvasSource
           id="my-canvas"
           coordinates={[
@@ -1115,7 +1118,7 @@ function CanvasExample() {
             [90.41, 23.81],
             [90.38, 23.81]
           ]}
-          canvas={canvasRef.current}
+          canvas={canvasEl}
           animate={true}
         >
           <Layer type="raster" paint={{ 'raster-opacity': 0.8 }} />

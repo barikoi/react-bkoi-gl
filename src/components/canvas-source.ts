@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react'
-import { useContext, useEffect, useMemo, useRef, memo } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { MapContext } from './map'
 
 import type { Map as MapInstance } from '../types/lib'
@@ -41,27 +41,33 @@ export type CanvasCoordinates = [
  * ```tsx
  * // Canvas source with dynamic content
  * const canvasRef = useRef<HTMLCanvasElement>(null);
+ * const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
  *
  * useEffect(() => {
- *   const ctx = canvasRef.current?.getContext('2d');
+ *   const canvas = canvasRef.current;
+ *   if (!canvas) return;
+ *   const ctx = canvas.getContext('2d');
  *   if (ctx) {
  *     ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
  *     ctx.fillRect(0, 0, 100, 100);
  *   }
+ *   setCanvasEl(canvas);
  * }, []);
  *
- * <CanvasSource
- *   id="canvas-source"
- *   coordinates={[
- *     [90.39, 23.83], // top-left
- *     [90.41, 23.83], // top-right
- *     [90.41, 23.81], // bottom-right
- *     [90.39, 23.81]  // bottom-left
- *   ]}
- *   canvas={canvasRef.current}
- * >
- *   <Layer type="raster" paint={{ 'raster-opacity': 0.8 }} />
- * </CanvasSource>
+ * {canvasEl && (
+ *   <CanvasSource
+ *     id="canvas-source"
+ *     coordinates={[
+ *       [90.39, 23.83], // top-left
+ *       [90.41, 23.83], // top-right
+ *       [90.41, 23.81], // bottom-right
+ *       [90.39, 23.81]  // bottom-left
+ *     ]}
+ *     canvas={canvasEl}
+ *   >
+ *     <Layer type="raster" paint={{ 'raster-opacity': 0.8 }} />
+ *   </CanvasSource>
+ * )}
  * ```
  */
 export type CanvasSourceProps = {
@@ -92,10 +98,11 @@ export type CanvasSourceProps = {
  * ```tsx
  * import { Map, CanvasSource, Layer } from 'react-bkoi-gl';
  * import "react-bkoi-gl/styles";
- * import { useRef, useEffect } from 'react';
+ * import { useRef, useEffect, useState } from 'react';
  *
  * function CanvasExample() {
  *   const canvasRef = useRef<HTMLCanvasElement>(null);
+ *   const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
  *
  *   useEffect(() => {
  *     const canvas = canvasRef.current;
@@ -110,6 +117,8 @@ export type CanvasSourceProps = {
  *       ctx.arc(128, 128, 50, 0, 2 * Math.PI);
  *       ctx.fill();
  *     }
+ *
+ *     setCanvasEl(canvas);
  *   }, []);
  *
  *   return (
@@ -122,7 +131,7 @@ export type CanvasSourceProps = {
  *       }}
  *     >
  *       <canvas ref={canvasRef} width={256} height={256} style={{ display: 'none' }} />
- *       {canvasRef.current && (
+ *       {canvasEl && (
  *         <CanvasSource
  *           id="my-canvas"
  *           coordinates={[
@@ -131,7 +140,7 @@ export type CanvasSourceProps = {
  *             [90.41, 23.81],
  *             [90.38, 23.81]
  *           ]}
- *           canvas={canvasRef.current}
+ *           canvas={canvasEl}
  *         >
  *           <Layer type="raster" paint={{ 'raster-opacity': 0.8 }} />
  *         </CanvasSource>
@@ -250,4 +259,4 @@ function _CanvasSource(props: CanvasSourceProps) {
   )
 }
 
-export const CanvasSource = memo(_CanvasSource)
+export const CanvasSource = memo<CanvasSourceProps>(_CanvasSource)

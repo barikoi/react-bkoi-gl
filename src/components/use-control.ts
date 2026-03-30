@@ -1,5 +1,5 @@
 import { useContext, useMemo, useEffect } from 'react'
-import type { IControl, ControlPosition } from '../types/lib'
+import type { IControl, ControlPosition, MapControl } from '../types/lib'
 import { MapContext } from './map'
 import type { MapContextValue } from './map'
 
@@ -7,25 +7,25 @@ type ControlOptions = {
   position?: ControlPosition
 }
 
-export function useControl<T extends IControl>(
+export function useControl<T extends MapControl>(
   onCreate: (context: MapContextValue) => T,
   opts?: ControlOptions
 ): T
 
-export function useControl<T extends IControl>(
+export function useControl<T extends MapControl>(
   onCreate: (context: MapContextValue) => T,
   onRemove: (context: MapContextValue) => void,
   opts?: ControlOptions
 ): T
 
-export function useControl<T extends IControl>(
+export function useControl<T extends MapControl>(
   onCreate: (context: MapContextValue) => T,
   onAdd: (context: MapContextValue) => void,
   onRemove: (context: MapContextValue) => void,
   opts?: ControlOptions
 ): T
 
-export function useControl<T extends IControl>(
+export function useControl<T extends MapControl>(
   onCreate: (context: MapContextValue) => T,
   arg1?: ((context: MapContextValue) => void) | ControlOptions,
   arg2?: ((context: MapContextValue) => void) | ControlOptions,
@@ -45,8 +45,9 @@ export function useControl<T extends IControl>(
     const onRemove = typeof arg2 === 'function' ? arg2 : typeof arg1 === 'function' ? arg1 : null
 
     const { map } = context
-    if (!map.hasControl(ctrl)) {
-      map.addControl(ctrl, opts?.position)
+    const ctrlAsIControl = ctrl as unknown as IControl
+    if (!map.hasControl(ctrlAsIControl)) {
+      map.addControl(ctrlAsIControl, opts?.position)
       if (onAdd) {
         onAdd(context)
       }
@@ -57,8 +58,8 @@ export function useControl<T extends IControl>(
         onRemove(context)
       }
       // Map might have been removed (parent effects are destroyed before child ones)
-      if (map.hasControl(ctrl)) {
-        map.removeControl(ctrl)
+      if (map.hasControl(ctrlAsIControl)) {
+        map.removeControl(ctrlAsIControl)
       }
     }
   }, [])
