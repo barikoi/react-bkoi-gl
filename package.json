@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "engines": {
     "node": ">=18.18.0"
   },
@@ -50,8 +50,7 @@
   "dependencies": {
     "@maplibre/maplibre-gl-style-spec": "^24.4.1",
     "maplibre-gl": "^5.15.0",
-    "maplibre-gl-draw": "^1.6.9",
-    "react-bkoi-gl": "file:react-bkoi-gl-2.0.1.tgz"
+    "maplibre-gl-draw": "^1.6.9"
   },
   "peerDependencies": {
     "react": ">=16.3.0",
