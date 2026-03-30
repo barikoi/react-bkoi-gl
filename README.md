@@ -88,24 +88,37 @@ function App() {
 
 ## Components
 
-| Component | Description |
-|-----------|-------------|
-| [`Map`](#map-component) | Core map component. Must be the parent of all other components. |
-| [`Marker`](#marker-component) | Displays a marker at specified coordinates. |
-| [`Popup`](#popup-component) | Displays a popup with custom content. |
-| [`Source`](#source-component) | Defines a data source (GeoJSON, vector, raster). |
-| [`CanvasSource`](#canvas-source-component) | Canvas-based data source for custom overlays. |
-| [`Layer`](#layer-component) | Renders data from a source on the map with interactive events. |
-| [`NavigationControl`](#navigation-control) | Zoom and rotation controls. |
-| [`FullscreenControl`](#fullscreen-control) | Toggle fullscreen mode. |
-| [`GeolocateControl`](#geolocate-control) | Center map on user's location. |
-| [`ScaleControl`](#scale-control) | Display a scale bar. |
-| [`TerrainControl`](#terrain-control) | Add terrain visualization. |
-| [`DrawControl`](#draw-control) | Drawing tools for shapes. |
-| [`GlobeControl`](#globe-control) | Toggle between 2D map and 3D globe view. |
-| [`MinimapControl`](#minimap-control) | Minimap for navigation. |
-| [`useMap`](#usemap-hook) | Hook to access map instance. |
-| [`useControl`](#usecontrol-hook) | Hook for custom controls. |
+Build maps by composing the `Map` component with layers, sources, UI controls, and hooks.
+
+### Quick Index
+
+#### Core
+
+- [`Map`](#map-component): Core map component. Parent of all other components.
+- [`Marker`](#marker-component): Marker at a coordinate (supports custom children).
+- [`Popup`](#popup-component): Popup UI at a coordinate or attached to a marker.
+
+#### Data & Rendering
+
+- [`Source`](#source-component): Data source (GeoJSON, vector, raster, image, video, etc.).
+- [`CanvasSource`](#canvas-source): Render a custom HTML canvas as a source.
+- [`Layer`](#layer-component): Render MapLibre layers from a source (supports events).
+
+#### Controls
+
+- [`NavigationControl`](#navigation-control): Zoom/compass controls.
+- [`FullscreenControl`](#fullscreen-control): Fullscreen toggle.
+- [`GeolocateControl`](#geolocate-control): Locate and track the user.
+- [`ScaleControl`](#scale-control): Scale bar.
+- [`TerrainControl`](#terrain-control): Terrain visualization.
+- [`DrawControl`](#draw-control): Draw/edit polygons, lines, points.
+- [`GlobeControl`](#globe-control): Toggle globe projection (MapLibre 3.x+).
+- [`MinimapControl`](#minimap-control): Overview minimap (toggleable, responsive).
+
+#### Hooks
+
+- [`useMap`](#usemap-hook): Access map instances via `MapProvider`.
+- [`useControl`](#usecontrol-hook): Create custom controls.
 
 ---
 
@@ -136,8 +149,7 @@ And all [MapLibre Map options](https://maplibre.org/maplibre-gl-js/docs/API/type
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, MapRef } from 'react-bkoi-gl';
@@ -177,8 +189,6 @@ function MapExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Marker Component
@@ -208,8 +218,7 @@ Displays a marker on the map at specified coordinates.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, Marker } from 'react-bkoi-gl';
@@ -267,8 +276,6 @@ function MarkerExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Popup Component
@@ -294,8 +301,7 @@ Displays a popup with custom content at specified coordinates.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, Marker, Popup } from 'react-bkoi-gl';
@@ -341,8 +347,6 @@ function PopupExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Source Component
@@ -365,8 +369,7 @@ Defines a data source for the map. Supports GeoJSON, vector tiles, raster tiles,
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, Source, Layer } from 'react-bkoi-gl';
@@ -491,8 +494,6 @@ function SourceExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Layer Component
@@ -517,8 +518,7 @@ Renders data from a source on the map. Supports all MapLibre layer types.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, Source, Layer } from 'react-bkoi-gl';
@@ -598,8 +598,6 @@ function LayerExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Navigation Control
@@ -618,8 +616,7 @@ Adds zoom and rotation controls to the map.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, NavigationControl } from 'react-bkoi-gl';
@@ -642,8 +639,6 @@ function NavigationExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Fullscreen Control
@@ -660,8 +655,7 @@ Adds a button to toggle fullscreen mode.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, FullscreenControl } from 'react-bkoi-gl';
@@ -683,8 +677,6 @@ function FullscreenExample() {
   );
 }
 ```
-
-</details>
 
 ---
 
@@ -708,8 +700,7 @@ Centers the map on the user's current location.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, GeolocateControl } from 'react-bkoi-gl';
@@ -741,8 +732,6 @@ function GeolocateExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Scale Control
@@ -760,8 +749,7 @@ Displays a scale bar on the map.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, ScaleControl } from 'react-bkoi-gl';
@@ -784,8 +772,6 @@ function ScaleExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Terrain Control
@@ -802,8 +788,7 @@ Adds terrain visualization to the map.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, TerrainControl, Source, Layer } from 'react-bkoi-gl';
@@ -834,8 +819,6 @@ function TerrainExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Draw Control
@@ -861,8 +844,7 @@ Adds drawing tools for creating and editing polygons, lines, and points.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, DrawControl } from 'react-bkoi-gl';
@@ -915,8 +897,6 @@ function DrawExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Minimap Control
@@ -944,8 +924,7 @@ Displays a small overview map for navigation.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, MinimapControl } from 'react-bkoi-gl';
@@ -996,8 +975,6 @@ function MinimapExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Globe Control
@@ -1017,8 +994,7 @@ Toggle between 2D map and 3D globe view (requires MapLibre GL 3.x+).
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, GlobeControl } from 'react-bkoi-gl';
@@ -1048,8 +1024,6 @@ function GlobeExample() {
 }
 ```
 
-</details>
-
 ---
 
 ### Canvas Source
@@ -1069,8 +1043,7 @@ Render custom HTML canvas elements as map layers.
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, CanvasSource, Layer } from 'react-bkoi-gl';
@@ -1129,8 +1102,6 @@ function CanvasExample() {
 }
 ```
 
-</details>
-
 ---
 
 ## Layer Events
@@ -1153,8 +1124,7 @@ The Layer component supports interactive mouse events:
 
 </details>
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, Source, Layer } from 'react-bkoi-gl';
@@ -1205,8 +1175,6 @@ function InteractiveLayerExample() {
 }
 ```
 
-</details>
-
 ---
 
 ## Hooks
@@ -1215,8 +1183,7 @@ function InteractiveLayerExample() {
 
 Access map instances from any component within the MapProvider.
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, useMap, MapProvider } from 'react-bkoi-gl';
@@ -1268,16 +1235,13 @@ function App() {
 }
 ```
 
-</details>
-
 ---
 
 ### useControl Hook
 
 Create custom map controls.
 
-<details>
-<summary><strong>Example</strong></summary>
+#### Example
 
 ```tsx
 import { Map, useControl } from 'react-bkoi-gl';
@@ -1325,8 +1289,6 @@ function App() {
   );
 }
 ```
-
-</details>
 
 ---
 
@@ -1385,8 +1347,7 @@ The Map component supports various event callbacks:
 
 </details>
 
-<details>
-<summary><strong>Event Example</strong></summary>
+### Event Example
 
 ```tsx
 import { Map, Marker } from 'react-bkoi-gl';
@@ -1427,8 +1388,6 @@ function EventExample() {
   );
 }
 ```
-
-</details>
 
 ---
 
@@ -1515,17 +1474,6 @@ import type {
 
 ---
 
-## Local Development
-
-Do NOT use `npm link`. Use the tarball method:
-
-```bash
-npm run build && npm pack
-npm install /path/to/react-bkoi-gl-*.tgz
-```
-
----
-
 ## Documentation & Resources
 
 - [Barikoi API Documentation](https://docs.barikoi.com/docs/maps-api)
@@ -1537,7 +1485,7 @@ npm install /path/to/react-bkoi-gl-*.tgz
 
 ## License
 
-MIT License. See [LICENSE](https://www.npmjs.com/package/LICENSE) for details.
+This library is licensed under the MIT License. See the [LICENSE](https://github.com/barikoi/react-bkoi-gl/blob/master/LICENSE) file for details.
 
 ## Support
 
