@@ -50,7 +50,7 @@ export type MapProps = MapInitOptions &
 function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   const mountedMapsContext = useContext(MountedMapsContext);
   const [mapInstance, setMapInstance] = useState<Maplibre>(null);
-  const containerRef = useRef();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { current: contextValue } = useRef<MapContextValue>({
     mapLib: null,
