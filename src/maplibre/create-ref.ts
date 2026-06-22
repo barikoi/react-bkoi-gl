@@ -1,70 +1,71 @@
-import type { Map as MapInstance } from "../types/lib";
-import type Maplibre from "./maplibre";
+import type { Map as MapInstance } from '../types/lib'
+import type Maplibre from './maplibre'
 
 /** These methods may break the react binding if called directly */
 const skipMethods = [
-  "setMaxBounds",
-  "setMinZoom",
-  "setMaxZoom",
-  "setMinPitch",
-  "setMaxPitch",
-  "setRenderWorldCopies",
-  "setProjection",
-  "setStyle",
-  "addSource",
-  "removeSource",
-  "addLayer",
-  "removeLayer",
-  "setLayerZoomRange",
-  "setFilter",
-  "setPaintProperty",
-  "setLayoutProperty",
-  "setLight",
-  "setTerrain",
-  "setFog",
-  "remove",
-] as const;
+  'setMaxBounds',
+  'setMinZoom',
+  'setMaxZoom',
+  'setMinPitch',
+  'setMaxPitch',
+  'setRenderWorldCopies',
+  'setProjection',
+  'setStyle',
+  'addSource',
+  'removeSource',
+  'addLayer',
+  'removeLayer',
+  'setLayerZoomRange',
+  'setFilter',
+  'setPaintProperty',
+  'setLayoutProperty',
+  'setLight',
+  'setTerrain',
+  'setFog',
+  'remove',
+] as const
 
 export type MapRef = {
-  getMap(): MapInstance;
-} & Omit<MapInstance, (typeof skipMethods)[number]>;
+  getMap(): MapInstance
+} & Omit<MapInstance, (typeof skipMethods)[number]>
 
 export default function createRef(mapInstance: Maplibre): MapRef | null {
   if (!mapInstance) {
-    return null;
+    return null
   }
 
-  const map = mapInstance.map;
+  const map = mapInstance.map
+
   const result: any = {
     getMap: () => map,
-  };
+  }
 
   for (const key of getMethodNames(map)) {
-    // @ts-expect-error
+    // @ts-expect-error - dynamically binding map methods to result object
     if (!(key in result) && !skipMethods.includes(key)) {
-      result[key] = map[key].bind(map);
+      result[key] = map[key].bind(map)
     }
   }
 
-  return result;
+  return result
 }
 
-function getMethodNames(obj: Object) {
-  const result = new Set<string>();
+function getMethodNames(obj: object) {
+  const result = new Set<string>()
 
-  let proto = obj;
+  let proto = obj
   while (proto) {
     for (const key of Object.getOwnPropertyNames(proto)) {
       if (
-        key[0] !== "_" &&
-        typeof obj[key] === "function" &&
-        key !== "fire" &&
-        key !== "setEventedParent"
+        key[0] !== '_' &&
+        typeof obj[key] === 'function' &&
+        key !== 'fire' &&
+        key !== 'setEventedParent'
       ) {
-        result.add(key);
+        result.add(key)
       }
     }
-    proto = Object.getPrototypeOf(proto);
+    proto = Object.getPrototypeOf(proto)
   }
-  return Array.from(result);
+  return Array.from(result)
 }

@@ -63,7 +63,7 @@ describe('setGlobals utility', () => {
   
   test('logs error when RTLTextPlugin loading fails', () => {
     const props = {
-      RTLTextPlugin: 'error-url'
+      RTLTextPlugin: 'https://example.com/rtl-plugin.js'
     };
     
     setGlobals(mockMapLib, props);

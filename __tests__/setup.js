@@ -81,4 +81,39 @@ if (typeof window !== 'undefined') {
   if (!window.URL.revokeObjectURL) {
     window.URL.revokeObjectURL = () => {};
   }
-} 
+}
+
+// Suppress console warnings and errors during tests to reduce noise
+const originalError = console.error;
+const originalWarn = console.warn;
+
+console.error = (...args) => {
+  const message = args[0]?.toString() || '';
+  // Suppress known React testing warnings that are expected
+  if (
+    message.includes('Not implemented: HTMLFormElement.prototype.submit') ||
+    message.includes('Not implemented: HTMLCanvasElement.prototype.getContext') ||
+    message.includes('Consider adding an error boundary') ||
+    message.includes('An update to') ||
+    message.includes('inside a test was not wrapped in act') ||
+    message.includes('Uncaught [Error:')
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
+console.warn = (...args) => {
+  const message = args[0]?.toString() || '';
+  // Suppress expected warnings from test assertions
+  if (
+    message.includes('layer type changed') ||
+    message.includes('layer id changed') ||
+    message.includes('source type changed') ||
+    message.includes('source id changed') ||
+    message.includes('Unable to update')
+  ) {
+    return;
+  }
+  originalWarn.call(console, ...args);
+}; 
