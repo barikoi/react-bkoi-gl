@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "engines": {
     "node": ">=18.18.0"
   },
@@ -51,6 +51,12 @@
   "peerDependencies": {
     "react": ">=16.3.0",
     "react-dom": ">=16.3.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@commitlint/cli": "21.0.2",

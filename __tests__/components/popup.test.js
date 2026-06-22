@@ -125,18 +125,18 @@ describe('Popup Component', () => {
     );
 
     // Verify that event handlers were registered
-    expect(mockPopupInstance.once).toHaveBeenCalledWith('open', expect.any(Function));
+    expect(mockPopupInstance.on).toHaveBeenCalledWith('open', expect.any(Function));
     expect(mockPopupInstance.on).toHaveBeenCalledWith('close', expect.any(Function));
 
     // Simulate 'open' event
-    const openCallback = mockPopupInstance.once.mock.calls[0][1];
+    const openCallback = mockPopupInstance.on.mock.calls.find(call => call[0] === 'open')[1];
     openCallback({ type: 'open' });
     
     // Verify onOpen was called
     expect(onOpen).toHaveBeenCalledWith({ type: 'open' });
 
     // Simulate 'close' event
-    const closeCallback = mockPopupInstance.on.mock.calls[0][1];
+    const closeCallback = mockPopupInstance.on.mock.calls.find(call => call[0] === 'close')[1];
     closeCallback({ type: 'close' });
     
     // Verify onClose was called

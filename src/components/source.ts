@@ -1,4 +1,14 @@
-import * as React from "react";
+/**
+ * @fileoverview Source component for adding data sources to a MapLibre GL map.
+ *
+ * Sources define the data that layers can render. This component supports all
+ * MapLibre GL source types including GeoJSON, vector tiles, raster tiles. image. and video.
+ *
+ * @module components/source
+ * @see {@link https://maplibre.org/maplibre-gl-js/docs/sources/}
+ */
+
+import * as React from 'react'
 import {
   useContext,
   useEffect,
@@ -6,154 +16,251 @@ import {
   useState,
   useRef,
   cloneElement,
-} from "react";
-import { MapContext } from "./map";
-import assert from "../utils/assert";
-import { deepEqual } from "../utils/deep-equal";
+  memo,
+  useId,
+  forwardRef,
+  useImperativeHandle,
+} from 'react'
+import { MapContext } from './map'
+import assert from '../utils/assert'
+import { deepEqual } from '../utils/deep-equal'
 
 import type {
   GeoJSONSourceImplementation,
   ImageSourceImplementation,
   AnySourceImplementation,
-} from "../types/internal";
-import type { SourceSpecification } from "../types/style-spec";
-import type { Map as MapInstance } from "../types/lib";
+  MapInternalProperties,
+  SourceWithOptionalMethods,
+  LayerWithSource,
+} from '../types/internal'
+import type { SourceSpecification } from '../types/style-spec'
+import type { Map as MapInstance } from '../types/lib'
 
+/**
+ * Props for the Source component.
+ *
+ * @typedef {Object} SourceProps
+ * @property {string} [id] - Unique identifier for the source. If not provided. one will be generated automatically.
+ * @property {React.ReactNode} [children] - Child Layer components that will use this source.
+ * @extends {SourceSpecification}
+ *
+ * @example
+ * ```tsx
+ * // GeoJSON source with a layer
+ * <Source id="my-data" type="geojson" data={geojsonData}>
+ *   <Layer id="points-layer" type="circle" paint={{ 'circle-radius': 8 }} />
+ * </Source>
+ *
+ * // Vector tile source
+ * <Source id="streets" type="vector" url="mapbox://streets-v11" />
+ *
+ * // Raster source
+ * <Source id="satellite" type="raster" tiles={['https://example.com/tiles/{z}/{x}/{y}.png']} tileSize={256} />
+ * ```
+ */
 export type SourceProps = SourceSpecification & {
-  id?: string;
-  children?: any;
-};
+  /** Unique identifier for the source. If not provided. one will be generated automatically. */
+  id?: string
 
-let sourceCounter = 0;
-
-function createSource(map: MapInstance, id: string, props: SourceProps) {
-  // @ts-ignore
-  if (map.style && map.style._loaded) {
-    const options = { ...props };
-    delete options.id;
-    delete options.children;
-    // @ts-ignore
-    map.addSource(id, options);
-    return map.getSource(id);
-  }
-  return null;
+  /** Child Layer components that will use this source. */
+  children?: any
 }
 
-/* eslint-disable complexity */
+/**
+ * Creates a new source on the map.
+ *
+ * @param {MapInstance} map - The MapLibre GL map instance
+ * @param {string} id - Unique identifier for the source
+ * @param {SourceProps} props - Source properties
+ * @returns {AnySourceImplementation | null} The created source or null if style not loaded
+ * @private
+ */
+function createSource(
+  map: MapInstance,
+  id: string,
+  props: SourceProps
+): AnySourceImplementation | null {
+  const mapInternal = map as unknown as MapInternalProperties
+  if (mapInternal.style && mapInternal.style._loaded) {
+    const options = { ...props }
+    delete options.id
+    delete options.children
+    map.addSource(id, options as SourceSpecification)
+    return map.getSource(id)
+  }
+  return null
+}
+
+/**
+ * Updates an existing source with new properties.
+ *
+ * Handles updates for different source types:
+ * - GeoJSON sources: updates data via setData()
+ * - Image sources: updates via updateImage()
+ * - Other sources: uses optional setCoordinates. setUrl. or setTiles methods
+ *
+ * @param {AnySourceImplementation} source - The source to update
+ * @param {SourceProps} props - New properties
+ * @param {SourceProps} prevProps - Previous properties
+ * @throws {Error} If source id or type changes
+ * @private
+ */
 function updateSource(
   source: AnySourceImplementation,
   props: SourceProps,
-  prevProps: SourceProps,
-) {
-  assert(props.id === prevProps.id, "source id changed");
-  assert(props.type === prevProps.type, "source type changed");
+  prevProps: SourceProps
+): void {
+  assert(props.id === prevProps.id, 'source id changed')
+  assert(props.type === prevProps.type, 'source type changed')
 
-  let changedKey = "";
-  let changedKeyCount = 0;
+  let changedKey = ''
+  let changedKeyCount = 0
 
   for (const key in props) {
-    if (
-      key !== "children" &&
-      key !== "id" &&
-      !deepEqual(prevProps[key], props[key])
-    ) {
-      changedKey = key;
-      changedKeyCount++;
+    if (key !== 'children' && key !== 'id' && !deepEqual(prevProps[key], props[key])) {
+      changedKey = key
+      changedKeyCount++
     }
   }
 
   if (!changedKeyCount) {
-    return;
+    return
   }
 
-  const type = props.type;
+  const type = props.type
 
-  if (type === "geojson") {
-    (source as GeoJSONSourceImplementation).setData(props.data);
-  } else if (type === "image") {
-    (source as ImageSourceImplementation).updateImage({
+  if (type === 'geojson') {
+    ;(source as GeoJSONSourceImplementation).setData(props.data)
+  } else if (type === 'image') {
+    ;(source as ImageSourceImplementation).updateImage({
       url: props.url,
       coordinates: props.coordinates,
-    });
+    })
   } else {
+    const sourceWithMethods = source as unknown as SourceWithOptionalMethods
+    const propsWithOptional = props as Record<string, unknown>
     switch (changedKey) {
-      case "coordinates":
-        // @ts-ignore
-        source.setCoordinates?.(props.coordinates);
-        break;
-      case "url":
-        // @ts-ignore
-        source.setUrl?.(props.url);
-        break;
-      case "tiles":
-        // @ts-ignore
-        source.setTiles?.(props.tiles);
-        break;
+      case 'coordinates':
+        sourceWithMethods.setCoordinates?.(propsWithOptional.coordinates)
+        break
+      case 'url':
+        sourceWithMethods.setUrl?.(propsWithOptional.url as string)
+        break
+      case 'tiles':
+        sourceWithMethods.setTiles?.(propsWithOptional.tiles as string[])
+        break
       default:
-        // eslint-disable-next-line
-        console.warn(`Unable to update <Source> prop: ${changedKey}`);
+        console.warn(`Unable to update <Source> prop: ${changedKey}`)
     }
   }
 }
-/* eslint-enable complexity */
 
-export function Source(props: SourceProps) {
-  const map = useContext(MapContext).map.getMap();
-  const propsRef = useRef(props);
-  const [, setStyleLoaded] = useState(0);
+/**
+ * Source component for adding data sources to a MapLibre GL map.
+ *
+ * Sources define the data that layers render. Supports all MapLibre GL source
+ * types including GeoJSON. vector tiles. raster tiles. image. and video.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // GeoJSON source with a layer
+ * <Source id="my-data" type="geojson" data={geojsonData}>
+ *   <Layer id="points-layer" type="circle" paint={{ 'circle-radius': 8 }} />
+ * </Source>
+ *
+ * // Vector tile source
+ * <Source id="streets" type="vector" url="mapbox://streets-v11" />
+ *
+ * // Raster source
+ * <Source id="satellite" type="raster" tiles={['https://example.com/tiles/{z}/{x}/{y}.png']} tileSize={256} />
+ *
+ * // With ref forwarding
+ * const sourceRef = useRef(null);
+ * <Source ref={sourceRef} id="my-data" type="geojson" data={data}>
+ *   <Layer type="circle" />
+ * </Source>
+ *
+ * // Access source methods
+ * useEffect(() => {
+ *   if (sourceRef.current) {
+ *     sourceRef.current.setData(newData);
+ *   }
+ * }, [newData]);
+ * ```
+ */
+function _Source(props: SourceProps, ref: React.Ref<AnySourceImplementation | null>) {
+  const map = useContext(MapContext).map.getMap()
+  const propsRef = useRef(props)
+  const sourceRef = useRef<AnySourceImplementation | null>(null)
+  const [, setStyleLoaded] = useState(0)
 
-  const id = useMemo(() => props.id || `jsx-source-${sourceCounter++}`, []);
+  // Generate a stable ID once on mount
+  // Note: props.id changes after mount will trigger an error in updateSource
+  const generatedId = useId()
+  const id = useMemo(
+    () => props.id || `jsx-source-${generatedId.replace(/:/g, '-')}`,
+    // Empty deps - id is set once on mount and should not change
+    []
+  )
 
   useEffect(() => {
     if (map) {
       /* global setTimeout */
-      const forceUpdate = () =>
-        setTimeout(() => setStyleLoaded((version) => version + 1), 0);
-      map.on("styledata", forceUpdate);
-      forceUpdate();
+      const forceUpdate = () => setTimeout(() => setStyleLoaded(version => version + 1), 0)
+      map.on('styledata', forceUpdate)
+      forceUpdate()
 
       return () => {
-        map.off("styledata", forceUpdate);
-        // @ts-ignore
-        if (map.style && map.style._loaded && map.getSource(id)) {
-          // Parent effects are destroyed before child ones, see
+        map.off('styledata', forceUpdate)
+        const mapInternal = map as unknown as MapInternalProperties
+        if (mapInternal.style && mapInternal.style._loaded && map.getSource(id)) {
+          // Parent effects are destroyed before child ones. see
           // https://github.com/facebook/react/issues/16728
           // Source can only be removed after all child layers are removed
-          const allLayers = map.getStyle()?.layers;
+          const allLayers = map.getStyle()?.layers
           if (allLayers) {
             for (const layer of allLayers) {
-              // @ts-ignore (2339) source does not exist on all layer types
-              if (layer.source === id) {
-                map.removeLayer(layer.id);
+              const layerWithSource = layer as unknown as LayerWithSource
+              if (layerWithSource.source === id) {
+                map.removeLayer(layer.id)
               }
             }
           }
-          map.removeSource(id);
+          map.removeSource(id)
         }
-      };
+      }
     }
-    return undefined;
-  }, [map]);
+    return undefined
+  }, [map])
 
-  // @ts-ignore
-  let source = map && map.style && map.getSource(id);
+  const mapInternal = map as unknown as MapInternalProperties
+  let source = map && mapInternal.style && map.getSource(id)
   if (source) {
-    updateSource(source, props, propsRef.current);
+    updateSource(source, props, propsRef.current)
   } else {
-    source = createSource(map, id, props);
+    source = createSource(map, id, props)
   }
-  propsRef.current = props;
+
+  // Update source ref for imperative handle
+  sourceRef.current = source
+  propsRef.current = props
+
+  // Expose source instance via ref
+  useImperativeHandle(ref, () => sourceRef.current, [source])
 
   return (
     (source &&
       React.Children.map(
         props.children,
-        (child) =>
+        child =>
           child &&
           cloneElement(child, {
             source: id,
-          }),
+          })
       )) ||
     null
-  );
+  )
 }
+
+export const Source = memo(React.forwardRef(_Source))
