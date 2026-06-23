@@ -10,12 +10,16 @@ import useIsomorphicLayoutEffect from '../utils/use-isomorphic-layout-effect'
 import setGlobals, { GlobalSettings } from '../utils/set-globals'
 import type { MapLib, MapOptions } from '../types/lib'
 import type { MapOptionsInternal } from '../types/internal'
+import type { ErrorEvent } from '../types/events'
 import { LogoControl } from './logo-control'
 import { AttributionControl } from './attribution-control'
 
 export type MapContextValue = {
   mapLib: MapLib
   map: MapRef
+  /** Consumer-supplied warning handler, propagated to child components so they
+   * can surface non-fatal warnings without touching console directly. */
+  onWarning?: (e: ErrorEvent) => void
 }
 
 export const MapContext = React.createContext<MapContextValue>(null)
@@ -35,6 +39,14 @@ export type MapProps = MapInitOptions &
     /** Map container CSS style */
     style?: CSSProperties
     children?: React.ReactNode
+    /** Whether to render the Barikoi logo control.
+     * @default true */
+    showBarikoiLogo?: boolean
+    /** Whether to render the map attribution control.
+     * @default true
+     * @remarks Attribution is required by the OpenStreetMap and MapLibre
+     * license terms; keep this enabled unless you provide attribution elsewhere. */
+    showAttribution?: boolean
   } & React.RefAttributes<MapRef>
 
 function _Map(props: MapProps, ref: React.Ref<MapRef>) {
@@ -135,14 +147,19 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
     height: '100%',
   }
 
+  // Propagate the warning handler to children via the (stable) context value.
+  contextValue.onWarning = props.onWarning
+
   return (
     <div id={props.id} ref={containerRef} style={style}>
       {mapInstance && (
         <MapContext.Provider value={contextValue}>
           <div style={CHILD_CONTAINER_STYLE}>
-            {/* Automatically include Barikoi Logo and Attribution controls */}
-            <LogoControl position='bottom-left' />
-            <AttributionControl position='bottom-right' />
+            {/* Automatically include Barikoi Logo and Attribution controls.
+                Both default to true; set showBarikoiLogo / showAttribution to
+                false to opt out. */}
+            {props.showBarikoiLogo !== false && <LogoControl position='bottom-left' />}
+            {props.showAttribution !== false && <AttributionControl position='bottom-right' />}
             {props.children}
           </div>
         </MapContext.Provider>

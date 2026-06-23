@@ -23,6 +23,7 @@ import {
 import { MapContext } from './map'
 import assert from '../utils/assert'
 import { deepEqual } from '../utils/deep-equal'
+import { emitWarning } from '../utils/warn'
 
 import type {
   GeoJSONSourceImplementation,
@@ -34,6 +35,7 @@ import type {
 } from '../types/internal'
 import type { SourceSpecification } from '../types/style-spec'
 import type { Map as MapInstance } from '../types/lib'
+import type { ErrorEvent } from '../types/events'
 
 /**
  * Props for the Source component.
@@ -107,7 +109,8 @@ function createSource(
 function updateSource(
   source: AnySourceImplementation,
   props: SourceProps,
-  prevProps: SourceProps
+  prevProps: SourceProps,
+  onWarning?: (e: ErrorEvent) => void
 ): void {
   assert(props.id === prevProps.id, 'source id changed')
   assert(props.type === prevProps.type, 'source type changed')
@@ -116,7 +119,12 @@ function updateSource(
   let changedKeyCount = 0
 
   for (const key in props) {
-    if (key !== 'children' && key !== 'id' && !deepEqual(prevProps[key], props[key])) {
+    if (
+      key !== 'children' &&
+      key !== 'id' &&
+      Object.prototype.hasOwnProperty.call(props, key) &&
+      !deepEqual(prevProps[key], props[key])
+    ) {
       changedKey = key
       changedKeyCount++
     }
@@ -149,7 +157,7 @@ function updateSource(
         sourceWithMethods.setTiles?.(propsWithOptional.tiles as string[])
         break
       default:
-        console.warn(`Unable to update <Source> prop: ${changedKey}`)
+        emitWarning(onWarning, new Error(`Unable to update <Source> prop: ${changedKey}`))
     }
   }
 }
@@ -189,7 +197,11 @@ function updateSource(
  * ```
  */
 function _Source(props: SourceProps, ref: React.Ref<AnySourceImplementation | null>) {
-  const map = useContext(MapContext).map.getMap()
+  const context = useContext(MapContext)
+  if (!context) {
+    throw new Error('<Source> must be used within a Map component')
+  }
+  const map = context.map.getMap()
   const propsRef = useRef(props)
   const sourceRef = useRef<AnySourceImplementation | null>(null)
   const [, setStyleLoaded] = useState(0)
@@ -236,7 +248,7 @@ function _Source(props: SourceProps, ref: React.Ref<AnySourceImplementation | nu
   const mapInternal = map as unknown as MapInternalProperties
   let source = map && mapInternal.style && map.getSource(id)
   if (source) {
-    updateSource(source, props, propsRef.current)
+    updateSource(source, props, propsRef.current, context.onWarning)
   } else {
     source = createSource(map, id, props)
   }

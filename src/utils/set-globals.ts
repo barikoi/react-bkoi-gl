@@ -1,3 +1,5 @@
+import type { MapLib } from '../types/lib'
+
 export type GlobalSettings = {
   /** The maximum number of images (raster tiles, sprites, icons) to load in parallel.
    * @default 16
@@ -32,7 +34,21 @@ const validateUrl = (url: string, settingName: string): boolean => {
   }
 }
 
-export default function setGlobals(mapLib: any, props: GlobalSettings) {
+/**
+ * The `mapLib` argument augmented with the module-level global setters it uses.
+ * These exist on both mapbox-gl and maplibre-gl but are intentionally omitted
+ * from the shared `MapLib` interface, so they are declared optional here and
+ * invoked with optional chaining at the call sites.
+ */
+type GlobalSettingsMapLib = MapLib & {
+  getRTLTextPluginStatus?: () => string
+  setRTLTextPlugin?: (pluginUrl: string, callback: (error?: Error) => void, lazy: boolean) => void
+  setMaxParallelImageRequests?: (count: number) => void
+  setWorkerCount?: (count: number) => void
+  setWorkerUrl?: (url: string) => void
+}
+
+export default function setGlobals(mapLib: GlobalSettingsMapLib, props: GlobalSettings) {
   const { RTLTextPlugin, maxParallelImageRequests, workerCount, workerUrl } = props
   if (
     RTLTextPlugin &&
@@ -43,7 +59,7 @@ export default function setGlobals(mapLib: any, props: GlobalSettings) {
       typeof RTLTextPlugin === 'string' ? { pluginUrl: RTLTextPlugin } : RTLTextPlugin
 
     if (validateUrl(pluginUrl, 'RTLTextPlugin')) {
-      mapLib.setRTLTextPlugin(
+      mapLib.setRTLTextPlugin?.(
         pluginUrl,
         (error?: Error) => {
           if (error) {
@@ -55,14 +71,14 @@ export default function setGlobals(mapLib: any, props: GlobalSettings) {
     }
   }
   if (maxParallelImageRequests !== undefined) {
-    mapLib.setMaxParallelImageRequests(maxParallelImageRequests)
+    mapLib.setMaxParallelImageRequests?.(maxParallelImageRequests)
   }
   if (workerCount !== undefined) {
-    mapLib.setWorkerCount(workerCount)
+    mapLib.setWorkerCount?.(workerCount)
   }
   if (workerUrl !== undefined) {
     if (validateUrl(workerUrl, 'workerUrl')) {
-      mapLib.setWorkerUrl(workerUrl)
+      mapLib.setWorkerUrl?.(workerUrl)
     }
   }
 }

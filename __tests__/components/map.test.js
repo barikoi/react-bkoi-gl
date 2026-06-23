@@ -419,34 +419,50 @@ describe('Map Component', () => {
   });
   
   test('controls logo and attribution visibility via props', async () => {
-    // Import the actual modules to check if they're rendered
     const { LogoControl } = jest.requireMock('../../src/components/logo-control');
     const { AttributionControl } = jest.requireMock('../../src/components/attribution-control');
-    
-    // Reset the mock implementations
+
+    // --- Both controls hidden when explicitly disabled ---
     LogoControl.mockClear();
     AttributionControl.mockClear();
-    
+
+    let view;
     act(() => {
-      render(
-        <Map 
-          id="test-map" 
-          showBarikoiLogo={false}
-          showAttribution={false}
-        />
+      view = render(
+        <Map id="test-map-hidden" showBarikoiLogo={false} showAttribution={false}>
+          <div data-testid="map-loaded-marker" />
+        </Map>
       );
     });
-    
-    // Wait for the map to load
+
+    // Wait until the map has mounted its children (mapInstance is set).
+    await waitFor(() => {
+      expect(screen.getByTestId('map-loaded-marker')).toBeInTheDocument();
+    });
+
+    // Controls must not be rendered — nor even invoked — when disabled.
+    expect(screen.queryByTestId('logo-control')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attribution-control')).not.toBeInTheDocument();
+    expect(LogoControl).not.toHaveBeenCalled();
+    expect(AttributionControl).not.toHaveBeenCalled();
+
+    view.unmount();
+
+    // --- Both controls shown by default (no props) ---
+    LogoControl.mockClear();
+    AttributionControl.mockClear();
+
+    act(() => {
+      view = render(<Map id="test-map-default" />);
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId('logo-control')).toBeInTheDocument();
     });
-    
-    // LogoControl and AttributionControl should still be included
+    expect(screen.getByTestId('attribution-control')).toBeInTheDocument();
     expect(LogoControl).toHaveBeenCalled();
     expect(AttributionControl).toHaveBeenCalled();
-    
-    // But in a real implementation, these would check the props and not render
-    // That would need to be tested at the component level for LogoControl and AttributionControl
+
+    view.unmount();
   });
 }); 

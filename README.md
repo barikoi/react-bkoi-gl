@@ -28,7 +28,7 @@ Powered by <a href="https://barikoi.com/">Barikoi - Maps for Businesses</a>
 
 ## Installation
 
-Using `react-bkoi-gl` requires `react >= 16.3`.
+Using `react-bkoi-gl` requires `react >= 18` (the library uses the `useId` and `useSyncExternalStore` React 18 APIs). `maplibre-gl` is an optional peer dependency — install it yourself, or pass a custom `mapLib` to `<Map>`.
 
 ```bash
 npm install react-bkoi-gl
@@ -53,6 +53,18 @@ To access Barikoi's API services, you need to:
 1. Register on [Barikoi Developer Dashboard](https://developer.barikoi.com/register)
 2. Verify with your phone number
 3. Claim your API key
+
+### API Key Security
+
+Your Barikoi API key is embedded in the `mapStyle` URL passed to `<Map>`, so it is exposed to the browser. Treat it accordingly:
+
+- **Restrict keys by domain.** In the Barikoi Developer Dashboard, limit each key to the exact origins that will use it (e.g. `example.com`, `www.example.com`). A domain-restricted key is useless if it leaks.
+- **Use separate keys per environment** (local dev, staging, production) so you can rotate production keys without disrupting development.
+- **Load keys from configuration, not source.** Inject the key via an environment variable or your host's secret manager; never hardcode a production key in source control.
+- **Rotate immediately on exposure.** If a key is committed to a public repo, appears in logs, or is shared accidentally, disable it in the dashboard and issue a replacement, then update the deployed `mapStyle` URL.
+- **Monitor usage.** Review request volume in the dashboard for unexpected spikes that can indicate key theft.
+
+> A browser-embedded key cannot be fully hidden. **Domain restriction and rotation are your primary defenses** — not obscurity.
 
 ## Quick Start
 

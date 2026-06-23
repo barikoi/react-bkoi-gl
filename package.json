@@ -38,7 +38,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "build": "tsup && node scripts/modify-css.js",
+    "build": "tsup && node scripts/build-styles.js",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src/",
     "test": "npm run typecheck && jest",
     "coverage": "jest --coverage --passWithNoTests",
@@ -49,8 +49,14 @@
     "maplibre-gl": "5.24.0"
   },
   "peerDependencies": {
-    "react": ">=16.3.0",
-    "react-dom": ">=16.3.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "maplibre-gl": ">=5.15.0 <6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "maplibre-gl": {
+      "optional": true
+    }
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

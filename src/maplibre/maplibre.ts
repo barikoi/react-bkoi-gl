@@ -76,6 +76,10 @@ export type MaplibreProps = Partial<ViewState> &
     interactiveLayerIds?: string[]
     /** CSS cursor */
     cursor?: string
+
+    /** Called with non-fatal warnings (e.g. transient errors before the style
+     * has finished loading). When omitted, warnings fall back to `console.warn`. */
+    onWarning?: (e: ErrorEvent) => void
   }
 
 const DEFAULT_STYLE = {
@@ -167,6 +171,8 @@ export default class Maplibre {
   private _internalUpdate: boolean = false
   private _hoveredFeatures: MapGeoJSONFeature[] = null
   private _propsedCameraUpdate: ViewState | null = null
+  // Suppresses repeated queryRenderedFeatures warnings while the style loads
+  private _warnedQueryFeatures: boolean = false
   private _styleComponents: {
     light?: LightSpecification
     sky?: SkySpecification
@@ -283,19 +289,26 @@ export default class Maplibre {
       bearing: viewState.bearing || 0,
     })
 
+    let savedGetContext: typeof HTMLCanvasElement.prototype.getContext | null = null
     if (props.gl) {
-      const getContext = HTMLCanvasElement.prototype.getContext
-      // Hijack canvas.getContext to return our own WebGLContext
-      // This will be called inside the mapboxgl.Map constructor
+      savedGetContext = HTMLCanvasElement.prototype.getContext
+      // Hijack canvas.getContext to return our own WebGLContext.
+      // This will be called inside the mapboxgl.Map constructor.
       // @ts-expect-error - temporarily overriding getContext to inject custom WebGL context
-      HTMLCanvasElement.prototype.getContext = () => {
-        // Unhijack immediately
-        HTMLCanvasElement.prototype.getContext = getContext
-        return props.gl
-      }
+      HTMLCanvasElement.prototype.getContext = () => props.gl
     }
 
-    const map = new this._MapClass(mapOptions)
+    let map: MapInstance
+    try {
+      map = new this._MapClass(mapOptions)
+    } finally {
+      // Always restore the original getContext — if the constructor threw before
+      // calling getContext, every other <canvas> on the page would otherwise stay
+      // permanently hijacked.
+      if (savedGetContext) {
+        HTMLCanvasElement.prototype.getContext = savedGetContext
+      }
+    }
     // Props that are not part of constructor options
     if (viewState.padding) {
       map.setPadding(viewState.padding)
@@ -530,6 +543,17 @@ export default class Maplibre {
     return applyViewStateToTransform(tr, this.props) as TransformLike
   }
 
+  /** Surface a non-fatal warning via the consumer's onWarning callback,
+   * falling back to console.warn when none is provided. */
+  private _warn(error: Error) {
+    const cb = this.props.onWarning
+    if (cb) {
+      cb({ type: 'error', target: this._map, originalEvent: null, error })
+    } else {
+      console.warn(error)
+    }
+  }
+
   private _queryRenderedFeatures(point: Point) {
     const map = this._map
     const { interactiveLayerIds = [] } = this.props
@@ -537,8 +561,14 @@ export default class Maplibre {
       return map.queryRenderedFeatures(point, {
         layers: interactiveLayerIds.filter(map.getLayer.bind(map)),
       })
-    } catch {
-      // May fail if style is not loaded
+    } catch (err) {
+      // queryRenderedFeatures runs on the hover hot-path and throws
+      // transiently before the style finishes loading. Warn once per
+      // instance to avoid console spam, and surface via onWarning if set.
+      if (!this._warnedQueryFeatures) {
+        this._warnedQueryFeatures = true
+        this._warn(err instanceof Error ? err : new Error(String(err)))
+      }
       return []
     }
   }

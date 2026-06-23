@@ -12,6 +12,7 @@ import { useContext, useEffect, useMemo, useState, useRef, memo, useId } from 'r
 import { MapContext } from './map'
 import assert from '../utils/assert'
 import { deepEqual } from '../utils/deep-equal'
+import { emitWarning } from '../utils/warn'
 
 import type { FilterSpecification, MapLayerMouseEvent } from 'maplibre-gl'
 
@@ -176,12 +177,18 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
   if (layout !== prevPropsWithFilter.layout) {
     const prevLayout = prevPropsWithFilter.layout || {}
     for (const key in layout) {
-      if (!deepEqual(layout[key], prevLayout[key])) {
+      if (
+        Object.prototype.hasOwnProperty.call(layout, key) &&
+        !deepEqual(layout[key], prevLayout[key])
+      ) {
         map.setLayoutProperty(id, key, layout[key])
       }
     }
     for (const key in prevLayout) {
-      if (!Object.prototype.hasOwnProperty.call(layout, key)) {
+      if (
+        Object.prototype.hasOwnProperty.call(prevLayout, key) &&
+        !Object.prototype.hasOwnProperty.call(layout, key)
+      ) {
         map.setLayoutProperty(id, key, undefined)
       }
     }
@@ -189,12 +196,18 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
   if (paint !== prevPropsWithFilter.paint) {
     const prevPaint = prevPropsWithFilter.paint || {}
     for (const key in paint) {
-      if (!deepEqual(paint[key], prevPaint[key])) {
+      if (
+        Object.prototype.hasOwnProperty.call(paint, key) &&
+        !deepEqual(paint[key], prevPaint[key])
+      ) {
         map.setPaintProperty(id, key, paint[key])
       }
     }
     for (const key in prevPaint) {
-      if (!Object.prototype.hasOwnProperty.call(paint, key)) {
+      if (
+        Object.prototype.hasOwnProperty.call(prevPaint, key) &&
+        !Object.prototype.hasOwnProperty.call(paint, key)
+      ) {
         map.setPaintProperty(id, key, undefined)
       }
     }
@@ -270,7 +283,11 @@ function createLayer(map: MapInstance, id: string, props: LayerProps): void {
  * ```
  */
 function _Layer(props: LayerProps) {
-  const map = useContext(MapContext).map.getMap()
+  const context = useContext(MapContext)
+  if (!context) {
+    throw new Error('<Layer> must be used within a Map component')
+  }
+  const map = context.map.getMap()
   const propsRef = useRef(props)
   const [, setStyleLoaded] = useState(0)
 
@@ -442,7 +459,7 @@ function _Layer(props: LayerProps) {
     try {
       updateLayer(map, id, props, propsRef.current)
     } catch (error) {
-      console.warn(error)
+      emitWarning(context.onWarning, error)
     }
   } else {
     createLayer(map, id, props)
