@@ -233,24 +233,104 @@ describe('MinimapControl', () => {
       consoleSpy.mockRestore()
     })
 
-    test('removes script tags from SVG', () => {
+    test('removes script tags from SVG', async () => {
       const maliciousSVG = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("xss")</script><circle cx="12" cy="12" r="10"/></svg>'
 
       const minimap = new Minimap({
         toggleButton: { icon: maliciousSVG }
       })
 
-      expect(minimap).toBeDefined()
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      await waitFor(() => {
+        expect(container.querySelector('button')).not.toBeNull()
+      })
+
+      const button = container.querySelector('button')
+      const svg = button.querySelector('svg')
+
+      expect(svg).toBeDefined()
+      expect(svg.querySelector('script')).toBeNull()
+      expect(svg.querySelector('circle')).not.toBeNull()
     })
 
-    test('removes event handlers from SVG', () => {
+    test('removes event handlers from SVG', async () => {
       const maliciousSVG = '<svg xmlns="http://www.w3.org/2000/svg" onclick="alert(\'xss\')"><circle cx="12" cy="12" r="10"/></svg>'
 
       const minimap = new Minimap({
         toggleButton: { icon: maliciousSVG }
       })
 
-      expect(minimap).toBeDefined()
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      await waitFor(() => {
+        expect(container.querySelector('button')).not.toBeNull()
+      })
+
+      const button = container.querySelector('button')
+      const svg = button.querySelector('svg')
+
+      expect(svg).toBeDefined()
+      expect(svg.getAttribute('onclick')).toBeNull()
+    })
+
+    test('removes foreignObject and other unsafe tags from SVG', async () => {
+      const maliciousSVG = '<svg><foreignObject><body><img src=x onerror=alert(1)></body></foreignObject><path d="M10 10 h 80 v 80 h -80 Z" /></svg>'
+
+      const minimap = new Minimap({
+        toggleButton: { icon: maliciousSVG }
+      })
+
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      await waitFor(() => {
+        expect(container.querySelector('button')).not.toBeNull()
+      })
+
+      const button = container.querySelector('button')
+      const svg = button.querySelector('svg')
+
+      expect(svg).toBeDefined()
+      expect(svg.querySelector('foreignObject')).toBeNull()
+      expect(svg.querySelector('body')).toBeNull()
+      expect(svg.querySelector('img')).toBeNull()
+      expect(svg.querySelector('path')).not.toBeNull()
     })
   })
 

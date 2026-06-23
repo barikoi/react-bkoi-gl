@@ -163,22 +163,106 @@ function getRandomUUID(): string {
   })
 }
 
+const ALLOWED_TAGS = new Set([
+  'svg',
+  'g',
+  'path',
+  'rect',
+  'circle',
+  'ellipse',
+  'line',
+  'polyline',
+  'polygon',
+  'text',
+  'tspan',
+  'defs',
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'clipPath',
+  'mask',
+  'symbol',
+  'marker',
+  'pattern',
+  'desc',
+  'title',
+])
+
+function sanitizeElement(el: Element): void {
+  // Sanitize attributes
+  const attributes = Array.from(el.attributes)
+  for (const attr of attributes) {
+    const name = attr.name.toLowerCase()
+    const value = attr.value
+
+    // Drop all event handlers
+    if (name.startsWith('on')) {
+      el.removeAttribute(attr.name)
+      continue
+    }
+
+    // Drop dangerous values in href / xlink:href
+    if (name === 'href' || name === 'xlink:href') {
+      const normalizedValue = value.trim().toLowerCase()
+      // Only allow local IDs (#...) or http/https URLs
+      if (
+        !normalizedValue.startsWith('#') &&
+        !normalizedValue.startsWith('http://') &&
+        !normalizedValue.startsWith('https://')
+      ) {
+        el.removeAttribute(attr.name)
+      }
+    }
+  }
+
+  // Sanitize child elements
+  const childNodes = Array.from(el.childNodes)
+  for (const child of childNodes) {
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      const childEl = child as Element
+      const tagName = childEl.tagName.toLowerCase()
+      if (!ALLOWED_TAGS.has(tagName)) {
+        el.removeChild(childEl)
+      } else {
+        sanitizeElement(childEl)
+      }
+    } else if (child.nodeType !== Node.TEXT_NODE && child.nodeType !== Node.CDATA_SECTION_NODE) {
+      el.removeChild(child)
+    }
+  }
+}
+
+/**
+ * Safe wrapper around CSS.supports to prevent runtime crashes in environments
+ * that do not support it (e.g., Server-Side Rendering or Jest/jsdom).
+ */
+function supportsCSS(property: string, value: string): boolean {
+  if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function') {
+    try {
+      return CSS.supports(property, value)
+    } catch {
+      return false
+    }
+  }
+  return true
+}
+
 /**
  * Sanitize SVG string to prevent XSS attacks
  */
-function sanitizeSVG(svgString: string): string {
-  // Only allow valid SVG structure
-  const svgPattern = /^<svg[^>]*>[\s\S]*<\/svg>$/i
-  if (!svgPattern.test(svgString)) {
+function sanitizeSVG(svgString: string): SVGElement {
+  const parser = new DOMParser()
+  let doc = parser.parseFromString(svgString, 'image/svg+xml')
+  const parserError = doc.querySelector('parsererror')
+
+  if (parserError || !doc.documentElement || doc.documentElement.tagName.toLowerCase() !== 'svg') {
     console.warn('Invalid SVG format, using default icon')
-    return DEFAULT_ICON
+    doc = parser.parseFromString(DEFAULT_ICON, 'image/svg+xml')
   }
 
-  // Remove potentially dangerous elements and attributes
-  return svgString
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/javascript:/gi, '')
+  const svgElement = doc.documentElement
+  sanitizeElement(svgElement)
+  return svgElement as unknown as SVGElement
 }
 
 /**
@@ -210,6 +294,9 @@ class Minimap implements IControl {
   private toggleButtonCleanup?: () => void
   private isMinimized = false
   private resizeHandler?: () => void
+  private resizeTimeout?: ReturnType<typeof setTimeout>
+  private transitionTimeout?: ReturnType<typeof setTimeout>
+  private toggleButtonStyleEl?: HTMLStyleElement
 
   constructor(options: MinimapControlOptions = {}) {
     this.id = `minimap-${getRandomUUID()}`
@@ -292,7 +379,17 @@ class Minimap implements IControl {
       window.removeEventListener('resize', this.resizeHandler)
       this.resizeHandler = undefined
     }
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout)
+      this.resizeTimeout = undefined
+    }
+    if (this.transitionTimeout) {
+      clearTimeout(this.transitionTimeout)
+      this.transitionTimeout = undefined
+    }
     this.toggleButtonCleanup?.()
+    this.toggleButtonStyleEl?.remove()
+    this.toggleButtonStyleEl = undefined
     this.desync?.()
     this.container.remove()
   }
@@ -308,7 +405,7 @@ class Minimap implements IControl {
     }
 
     const styleEl = document.createElement('style')
-    styleEl.innerHTML = this.getContainerStyles()
+    styleEl.textContent = this.getContainerStyles()
     container.appendChild(styleEl)
 
     if (this.options.containerStyle) {
@@ -331,9 +428,21 @@ class Minimap implements IControl {
   private getContainerStyles(): string {
     const width = this.options.containerStyle?.width || DEFAULT_WIDTH
     const height = this.options.containerStyle?.height || DEFAULT_HEIGHT
-    const collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
-    const collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
-    const borderRadius = this.options.borderRadius || DEFAULT_BORDER_RADIUS
+
+    let collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
+    if (!supportsCSS('width', collapsedWidth)) {
+      collapsedWidth = DEFAULT_COLLAPSED_SIZE
+    }
+
+    let collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
+    if (!supportsCSS('height', collapsedHeight)) {
+      collapsedHeight = DEFAULT_COLLAPSED_SIZE
+    }
+
+    let borderRadius = this.options.borderRadius || DEFAULT_BORDER_RADIUS
+    if (!supportsCSS('border-radius', borderRadius)) {
+      borderRadius = DEFAULT_BORDER_RADIUS
+    }
 
     return `
       #${this.id}.custom-ctrl-minimap {
@@ -374,12 +483,12 @@ class Minimap implements IControl {
 
     const validated: Record<string, string> = {}
     if (style.width) {
-      validated.width = CSS.supports('width', style.width) ? style.width : defaults.width
+      validated.width = supportsCSS('width', style.width) ? style.width : defaults.width
     } else {
       validated.width = defaults.width
     }
     if (style.height) {
-      validated.height = CSS.supports('height', style.height) ? style.height : defaults.height
+      validated.height = supportsCSS('height', style.height) ? style.height : defaults.height
     } else {
       validated.height = defaults.height
     }
@@ -408,22 +517,34 @@ class Minimap implements IControl {
     const el = document.createElement('button')
     const elId = 'btn-' + getRandomUUID()
 
-    el.innerHTML = sanitizeSVG(this.options.toggleButton?.icon || DEFAULT_ICON)
+    const iconNode = sanitizeSVG(this.options.toggleButton?.icon || DEFAULT_ICON)
+    el.replaceChildren(iconNode)
     el.setAttribute('id', elId)
     el.setAttribute('type', 'button')
-    el.setAttribute('aria-label', this.options.hideText || 'Hide minimap')
-    el.setAttribute('title', this.options.hideText || 'Hide minimap')
+    const initialText = this.isMinimized
+      ? this.options.showText || 'Show minimap'
+      : this.options.hideText || 'Hide minimap'
+    el.setAttribute('aria-label', initialText)
+    el.setAttribute('title', initialText)
+    el.setAttribute('aria-expanded', (!this.isMinimized).toString())
 
     if (this.options.toggleButton?.className) {
       const classes = this.options.toggleButton.className.split(' ')
       classes.forEach(cls => el.classList.add(cls))
     }
 
-    const iconBackgroundColor = this.options.toggleButton?.iconBackgroundColor || 'black'
-    const hoverColor = this.options.toggleButton?.hoverColor || '#e5e7e3'
+    let iconBackgroundColor = this.options.toggleButton?.iconBackgroundColor || 'black'
+    if (!supportsCSS('background-color', iconBackgroundColor)) {
+      iconBackgroundColor = 'black'
+    }
+
+    let hoverColor = this.options.toggleButton?.hoverColor || '#e5e7e3'
+    if (!supportsCSS('background-color', hoverColor)) {
+      hoverColor = '#e5e7e3'
+    }
 
     const styleEl = document.createElement('style')
-    styleEl.innerHTML = `
+    styleEl.textContent = `
       button#${elId} {
         border-radius: 0 !important;
         color: black;
@@ -457,21 +578,17 @@ class Minimap implements IControl {
 
     const clickHandler = () => {
       this.toggle()
-      const minimized = this.container.classList.contains('minimized')
-      const text = minimized
-        ? this.options.showText || 'Show minimap'
-        : this.options.hideText || 'Hide minimap'
-      el.setAttribute('aria-label', text)
-      el.setAttribute('title', text)
     }
 
     el.addEventListener('click', clickHandler)
+    this.toggleButtonStyleEl = styleEl
     document.head.appendChild(styleEl)
     this.container.appendChild(el)
 
     this.toggleButtonCleanup = () => {
       el.removeEventListener('click', clickHandler)
-      styleEl.remove()
+      this.toggleButtonStyleEl?.remove()
+      this.toggleButtonStyleEl = undefined
       this.container.removeChild(el)
     }
   }
@@ -524,10 +641,11 @@ class Minimap implements IControl {
 
     updateSize()
 
-    let resizeTimeout: ReturnType<typeof setTimeout>
     this.resizeHandler = () => {
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(updateSize, RESIZE_DEBOUNCE_MS)
+      if (this.resizeTimeout) {
+        clearTimeout(this.resizeTimeout)
+      }
+      this.resizeTimeout = setTimeout(updateSize, RESIZE_DEBOUNCE_MS)
     }
 
     window.addEventListener('resize', this.resizeHandler)
@@ -557,9 +675,23 @@ class Minimap implements IControl {
 
     this.options.onToggle?.(this.isMinimized)
 
-    setTimeout(() => {
+    const buttonEl = this.container.querySelector('button')
+    if (buttonEl) {
+      const text = this.isMinimized
+        ? this.options.showText || 'Show minimap'
+        : this.options.hideText || 'Hide minimap'
+      buttonEl.setAttribute('aria-label', text)
+      buttonEl.setAttribute('title', text)
+      buttonEl.setAttribute('aria-expanded', (!this.isMinimized).toString())
+    }
+
+    if (this.transitionTimeout) {
+      clearTimeout(this.transitionTimeout)
+    }
+    this.transitionTimeout = setTimeout(() => {
       this.map.resize()
       this.setParentBounds()
+      this.transitionTimeout = undefined
     }, TRANSITION_DURATION_MS)
   }
 

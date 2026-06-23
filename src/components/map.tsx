@@ -54,17 +54,25 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   const [mapInstance, setMapInstance] = useState<Maplibre>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  const propsRef = useRef(props)
+  propsRef.current = props
+
+  const prevPropsRef = useRef<MapProps>(props)
+
   const { current: contextValue } = useRef<MapContextValue>({
     mapLib: null,
     map: null,
   })
 
   useEffect(() => {
-    const mapLib = props.mapLib
+    const initialMapLib = propsRef.current.mapLib
+    const initialId = propsRef.current.id
+    const initialReuseMaps = propsRef.current.reuseMaps
+
     let isMounted = true
     let maplibre: Maplibre | null = null
 
-    Promise.resolve(mapLib || import('maplibre-gl'))
+    Promise.resolve(initialMapLib || import('maplibre-gl'))
       .then((module: MapLib | { default: MapLib }) => {
         if (!isMounted) {
           return
@@ -77,15 +85,15 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
           throw new Error('Invalid mapLib')
         }
 
-        setGlobals(mapboxgl, props)
-        if (props.reuseMaps) {
-          maplibre = Maplibre.reuse(props, containerRef.current)
+        setGlobals(mapboxgl, propsRef.current)
+        if (initialReuseMaps) {
+          maplibre = Maplibre.reuse(propsRef.current, containerRef.current)
         }
         if (!maplibre) {
           maplibre = new Maplibre(
             mapboxgl.Map as any,
             {
-              ...props,
+              ...propsRef.current,
               attributionControl: false,
             } as MapOptions & MapOptionsInternal & MaplibreProps,
             containerRef.current
@@ -96,10 +104,10 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
           contextValue.mapLib = mapboxgl
           setMapInstance(maplibre)
         }
-        mountedMapsContext?.onMapMount(contextValue.map, props.id)
+        mountedMapsContext?.onMapMount(contextValue.map, propsRef.current.id || initialId)
       })
       .catch(error => {
-        const { onError } = props
+        const { onError } = propsRef.current
         if (onError) {
           onError({
             type: 'error',
@@ -115,8 +123,8 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
     return () => {
       isMounted = false
       if (maplibre) {
-        mountedMapsContext?.onMapUnmount(props.id)
-        if (props.reuseMaps) {
+        mountedMapsContext?.onMapUnmount(propsRef.current.id || initialId)
+        if (initialReuseMaps) {
           maplibre.recycle()
         } else {
           maplibre.destroy()
@@ -126,9 +134,29 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   }, [])
 
   useIsomorphicLayoutEffect(() => {
-    if (mapInstance) {
-      mapInstance.setProps(props)
+    if (mapInstance && prevPropsRef.current) {
+      const prevProps = prevPropsRef.current
+      let propsChanged = false
+
+      const keysToCompare = Object.keys(props).filter(key => key !== 'children' && key !== 'mapLib')
+      const prevKeys = Object.keys(prevProps).filter(key => key !== 'children' && key !== 'mapLib')
+
+      if (keysToCompare.length !== prevKeys.length) {
+        propsChanged = true
+      } else {
+        for (const key of keysToCompare) {
+          if (props[key] !== prevProps[key]) {
+            propsChanged = true
+            break
+          }
+        }
+      }
+
+      if (propsChanged) {
+        mapInstance.setProps(props)
+      }
     }
+    prevPropsRef.current = props
   })
 
   useImperativeHandle(ref, () => contextValue.map, [mapInstance])

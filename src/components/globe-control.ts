@@ -74,14 +74,48 @@ class GlobeControlImpl implements IControl {
   }
 
   private _createButton(): HTMLButtonElement {
-    const button =
-      (this._options.buttonElement as HTMLButtonElement) || document.createElement('button')
+    let button = this._options.buttonElement as HTMLButtonElement
 
-    if (!this._options.buttonElement) {
-      button.className = this._options.buttonClassName || 'maplibregl-ctrl-globe'
-      button.type = 'button'
-      button.title = this._options.buttonTitle || 'Toggle Globe View'
+    if (button) {
+      const tagName = button.tagName.toLowerCase()
+      const role = button.getAttribute('role')
+      const isButton = tagName === 'button' || role === 'button'
+
+      if (!isButton) {
+        console.warn(
+          'GlobeControl: Refusing non-button custom element. custom element must be a <button> or have role="button".'
+        )
+        button = document.createElement('button')
+      }
+    } else {
+      button = document.createElement('button')
+    }
+
+    // Unconditionally set / ensure accessibility properties
+    const tagName = button.tagName.toLowerCase()
+    if (tagName === 'button') {
+      if (!button.getAttribute('type')) {
+        button.setAttribute('type', 'button')
+      }
+    } else {
+      if (!button.getAttribute('role')) {
+        button.setAttribute('role', 'button')
+      }
+      if (!button.getAttribute('tabindex')) {
+        button.setAttribute('tabindex', '0')
+      }
+    }
+
+    if (!button.getAttribute('aria-label')) {
       button.setAttribute('aria-label', 'Toggle Globe View')
+    }
+    if (!button.getAttribute('title')) {
+      button.setAttribute('title', this._options.buttonTitle || 'Toggle Globe View')
+    }
+
+    // For default button (or refused custom buttons), apply styles and SVG content
+    if (!this._options.buttonElement || button !== this._options.buttonElement) {
+      button.className = this._options.buttonClassName || 'maplibregl-ctrl-globe'
       button.innerHTML = this._isGlobe ? MAP_SVG : GLOBE_SVG
 
       // Apply custom styles
@@ -108,9 +142,15 @@ class GlobeControlImpl implements IControl {
 
     this._isGlobe = !this._isGlobe
 
-    // Update button icon
-    this._button.innerHTML = this._isGlobe ? MAP_SVG : GLOBE_SVG
-    this._button.title = this._isGlobe ? 'Switch to Map View' : 'Switch to Globe View'
+    // Update button icon if it's default
+    if (!this._options.buttonElement || this._button !== this._options.buttonElement) {
+      this._button.innerHTML = this._isGlobe ? MAP_SVG : GLOBE_SVG
+    }
+
+    // Update title and aria-label unconditionally
+    const labelText = this._isGlobe ? 'Switch to Map View' : 'Switch to Globe View'
+    this._button.setAttribute('aria-label', labelText)
+    this._button.title = labelText
 
     // Set projection
     try {
@@ -129,7 +169,12 @@ class GlobeControlImpl implements IControl {
     try {
       const currentProjection = (map as any).getProjection?.()
       this._isGlobe = currentProjection?.type === 'globe'
-      this._button.innerHTML = this._isGlobe ? MAP_SVG : GLOBE_SVG
+      if (!this._options.buttonElement || this._button !== this._options.buttonElement) {
+        this._button.innerHTML = this._isGlobe ? MAP_SVG : GLOBE_SVG
+      }
+      const labelText = this._isGlobe ? 'Switch to Map View' : 'Switch to Globe View'
+      this._button.setAttribute('aria-label', labelText)
+      this._button.title = labelText
     } catch {
       // Globe projection not available, default to map view
       this._isGlobe = false

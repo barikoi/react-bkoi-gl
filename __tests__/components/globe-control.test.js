@@ -125,4 +125,111 @@ describe('GlobeControl', () => {
     expect(capturedControl.setGlobe).toBeDefined()
     expect(typeof capturedControl.setGlobe).toBe('function')
   })
+
+  test('custom button element accessibility hardening', () => {
+    const useControl = require('../../src/components/use-control').useControl
+    let capturedControl
+
+    useControl.mockImplementation((createControl, options) => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    const customButton = document.createElement('button')
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl buttonElement={customButton} />
+      </MapContext.Provider>
+    )
+
+    // Should set type="button" on custom button
+    expect(customButton.getAttribute('type')).toBe('button')
+    // Should set aria-label and title
+    expect(customButton.getAttribute('aria-label')).toBe('Toggle Globe View')
+    expect(customButton.getAttribute('title')).toBe('Toggle Globe View')
+  })
+
+  test('custom non-button element with role="button" gets tabindex="0"', () => {
+    const useControl = require('../../src/components/use-control').useControl
+    let capturedControl
+
+    useControl.mockImplementation((createControl, options) => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    const customDiv = document.createElement('div')
+    customDiv.setAttribute('role', 'button')
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl buttonElement={customDiv} />
+      </MapContext.Provider>
+    )
+
+    expect(customDiv.getAttribute('role')).toBe('button')
+    expect(customDiv.getAttribute('tabindex')).toBe('0')
+    expect(customDiv.getAttribute('aria-label')).toBe('Toggle Globe View')
+  })
+
+  test('invalid custom element is refused and falls back to default button', () => {
+    const useControl = require('../../src/components/use-control').useControl
+    let capturedControl
+
+    useControl.mockImplementation((createControl, options) => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const customDiv = document.createElement('div') // no role="button"
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl buttonElement={customDiv} />
+      </MapContext.Provider>
+    )
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Refusing non-button custom element')
+    )
+    expect(capturedControl._button).not.toBe(customDiv)
+    expect(capturedControl._button.tagName.toLowerCase()).toBe('button')
+    expect(capturedControl._button.getAttribute('type')).toBe('button')
+
+    consoleSpy.mockRestore()
+  })
+
+  test('updates aria-label and title dynamically on toggle', () => {
+    const useControl = require('../../src/components/use-control').useControl
+    let capturedControl
+
+    useControl.mockImplementation((createControl, options) => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl />
+      </MapContext.Provider>
+    )
+
+    // Call onAdd to associate the map
+    capturedControl.onAdd(mockMapInstance)
+
+    // Initial state (mercator flat map)
+    expect(capturedControl._button.getAttribute('aria-label')).toBe('Switch to Globe View')
+    expect(capturedControl._button.getAttribute('title')).toBe('Switch to Globe View')
+
+    // Toggle to Globe
+    capturedControl.setGlobe(true)
+    expect(capturedControl._button.getAttribute('aria-label')).toBe('Switch to Map View')
+    expect(capturedControl._button.getAttribute('title')).toBe('Switch to Map View')
+
+    // Toggle back to Mercator
+    capturedControl.setGlobe(false)
+    expect(capturedControl._button.getAttribute('aria-label')).toBe('Switch to Globe View')
+    expect(capturedControl._button.getAttribute('title')).toBe('Switch to Globe View')
+  })
 })
