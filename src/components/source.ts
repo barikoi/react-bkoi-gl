@@ -18,7 +18,6 @@ import {
   cloneElement,
   memo,
   useId,
-  forwardRef,
   useImperativeHandle,
 } from 'react'
 import { MapContext } from './map'

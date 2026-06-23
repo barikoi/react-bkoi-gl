@@ -9,10 +9,8 @@
  */
 
 import * as React from 'react'
-import { useContext, useEffect, useMemo, useRef, useState, memo } from 'react'
+import { useContext, useEffect, useMemo, useRef, memo } from 'react'
 import { MapContext } from './map'
-
-import type { Map as MapInstance } from '../types/lib'
 import type { MapInternalProperties, SourceWithOptionalMethods } from '../types/internal'
 
 /**
@@ -182,7 +180,7 @@ function _CanvasSource(props: CanvasSourceProps) {
     const updateSource = () => {
       if (!source) return
 
-      const { coordinates, canvas } = props
+      const { coordinates } = props
       const prevProps = propsRef.current
 
       // Update coordinates if changed

@@ -1,5 +1,4 @@
-import * as React from 'react'
-import { useEffect, memo } from 'react'
+import { memo } from 'react'
 import {
   Map,
   type IControl,

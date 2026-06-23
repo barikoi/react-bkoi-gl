@@ -20,7 +20,9 @@
     "types": ["geojson"],
 
     /* Add this line to bypass the DTS build crash */
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+
+    "skipLibCheck": true,
   },
   "include": [
     "src/**/*",

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useMemo, memo, useRef, useState, useContext } from 'react'
+import { useEffect, useMemo, memo, useRef, useContext } from 'react'
 import MapboxDraw from 'maplibre-gl-draw'
 import { MapContext } from './map'
 
