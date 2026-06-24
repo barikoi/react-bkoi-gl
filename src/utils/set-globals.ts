@@ -1,4 +1,5 @@
 import type { MapLib } from '../types/lib'
+import { logger } from './logger'
 
 export type GlobalSettings = {
   /** The maximum number of images (raster tiles, sprites, icons) to load in parallel.
@@ -24,12 +25,12 @@ const validateUrl = (url: string, settingName: string): boolean => {
   try {
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      console.warn(`${settingName}: Only http/https protocols are allowed, got: ${parsed.protocol}`)
+      logger.warn(`${settingName}: Only http/https protocols are allowed, got: ${parsed.protocol}`)
       return false
     }
     return true
   } catch {
-    console.warn(`${settingName}: Invalid URL format: ${url}`)
+    logger.warn(`${settingName}: Invalid URL format: ${url}`)
     return false
   }
 }
@@ -63,7 +64,7 @@ export default function setGlobals(mapLib: GlobalSettingsMapLib, props: GlobalSe
         pluginUrl,
         (error?: Error) => {
           if (error) {
-            console.error(error)
+            logger.error(error)
           }
         },
         lazy

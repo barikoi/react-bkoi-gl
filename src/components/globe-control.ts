@@ -10,6 +10,7 @@
 
 import { useEffect, memo, useRef } from 'react'
 import { useControl } from './use-control'
+import { logger } from '../utils/logger'
 
 import type { ControlPosition, IControl, Map as MapInstance } from '../types/lib'
 
@@ -37,15 +38,16 @@ export type GlobeControlProps = GlobeControlOptions & {
 /**
  * Default button SVG icons
  */
-const GLOBE_SVG = `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2">
-  <circle cx="12" cy="12" r="9" fill="none"/>
-  <path d="M12 21a9 9-9 0 0-9 9-9 0 0 9h0c2.2a8.2 2.3 5.1 5.8-5.5c-.4-.4-.5-.9-.5-1.5v-1.3c0-2.3 1.8-4.2 4-4.5V5.5c-1.8.5-3.5 2-4.5 2.8 0 5.2 2.3 5.2 5 0z"/>
-  <path d="M12 3c-2.8 0-5.2 2.3-5.2 5h2c0-1.5.1-1.1.5-1.5L5.8 9 2.3 5.1 8.2 2c.4 0 .9-.5 1.5-.5h1.3c2.3 0 4.2-1.8 4.5-4h-2c0 1.5-1.8 3.5-4 4.5V21c2.8 0 5.2-2.3 5.2-5h-2c0 1.5-.1 1.1-.5 1.5L18.2 15 14.8l2.7-5.1c-.4 0-.9.5-1.5.5h-1.3c-2.3 0-4.2 1.8-4.5 4h2c0-1.5 1.8-3.5 4-4.5V3z"/>
+const GLOBE_SVG = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/>
+  <line x1="2" y1="12" x2="22" y2="12"/>
+  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
 </svg>`
 
-const MAP_SVG = `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2">
-  <rect x="3" y="3" width="18" height="18" rx="2" fill="none"/>
-  <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+const MAP_SVG = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+  <line x1="8" y1="2" x2="8" y2="18"/>
+  <line x1="16" y1="6" x2="16" y2="22"/>
 </svg>`
 
 /**
@@ -82,7 +84,7 @@ class GlobeControlImpl implements IControl {
       const isButton = tagName === 'button' || role === 'button'
 
       if (!isButton) {
-        console.warn(
+        logger.warn(
           'GlobeControl: Refusing non-button custom element. custom element must be a <button> or have role="button".'
         )
         button = document.createElement('button')
@@ -158,7 +160,7 @@ class GlobeControlImpl implements IControl {
       ;(this._map as any).setProjection(projection)
       this._onProjectionChange?.(this._isGlobe)
     } catch (error) {
-      console.warn('GlobeControl: setProjection not available', error)
+      logger.warn('GlobeControl: setProjection not available', error)
     }
   }
 

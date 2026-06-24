@@ -7,6 +7,7 @@ import {
   type StyleSpecification,
 } from 'maplibre-gl'
 import { useControl } from './use-control'
+import { logger } from '../utils/logger'
 
 type MapLibreMap = Map
 
@@ -201,6 +202,12 @@ function sanitizeElement(el: Element): void {
       continue
     }
 
+    // Drop style attribute to prevent CSS exfiltration/injection
+    if (name === 'style') {
+      el.removeAttribute(attr.name)
+      continue
+    }
+
     // Drop dangerous values in href / xlink:href
     if (name === 'href' || name === 'xlink:href') {
       const normalizedValue = value.trim().toLowerCase()
@@ -237,6 +244,16 @@ function sanitizeElement(el: Element): void {
  * that do not support it (e.g., Server-Side Rendering or Jest/jsdom).
  */
 function supportsCSS(property: string, value: string): boolean {
+  if (
+    value.includes(';') ||
+    value.includes('{') ||
+    value.includes('}') ||
+    value.includes('\\') ||
+    /url\s*\(/i.test(value)
+  ) {
+    return false
+  }
+
   if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function') {
     try {
       return CSS.supports(property, value)
@@ -256,7 +273,7 @@ function sanitizeSVG(svgString: string): SVGElement {
   const parserError = doc.querySelector('parsererror')
 
   if (parserError || !doc.documentElement || doc.documentElement.tagName.toLowerCase() !== 'svg') {
-    console.warn('Invalid SVG format, using default icon')
+    logger.warn('Invalid SVG format, using default icon')
     doc = parser.parseFromString(DEFAULT_ICON, 'image/svg+xml')
   }
 
@@ -297,6 +314,7 @@ class Minimap implements IControl {
   private resizeTimeout?: ReturnType<typeof setTimeout>
   private transitionTimeout?: ReturnType<typeof setTimeout>
   private toggleButtonStyleEl?: HTMLStyleElement
+  private liveRegion?: HTMLElement
 
   constructor(options: MinimapControlOptions = {}) {
     this.id = `minimap-${getRandomUUID()}`
@@ -426,8 +444,15 @@ class Minimap implements IControl {
   }
 
   private getContainerStyles(): string {
-    const width = this.options.containerStyle?.width || DEFAULT_WIDTH
-    const height = this.options.containerStyle?.height || DEFAULT_HEIGHT
+    let width = this.options.containerStyle?.width || DEFAULT_WIDTH
+    if (!supportsCSS('width', width)) {
+      width = DEFAULT_WIDTH
+    }
+
+    let height = this.options.containerStyle?.height || DEFAULT_HEIGHT
+    if (!supportsCSS('height', height)) {
+      height = DEFAULT_HEIGHT
+    }
 
     let collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
     if (!supportsCSS('width', collapsedWidth)) {
@@ -585,11 +610,31 @@ class Minimap implements IControl {
     document.head.appendChild(styleEl)
     this.container.appendChild(el)
 
+    // Create visually-hidden live region for status announcements
+    const liveRegion = document.createElement('div')
+    liveRegion.setAttribute('aria-live', 'polite')
+    liveRegion.setAttribute('aria-atomic', 'true')
+    // CSS to make it visually hidden but readable by screen readers
+    liveRegion.style.position = 'absolute'
+    liveRegion.style.width = '1px'
+    liveRegion.style.height = '1px'
+    liveRegion.style.padding = '0'
+    liveRegion.style.margin = '-1px'
+    liveRegion.style.overflow = 'hidden'
+    liveRegion.style.clip = 'rect(0, 0, 0, 0)'
+    liveRegion.style.border = '0'
+    this.liveRegion = liveRegion
+    this.container.appendChild(liveRegion)
+
     this.toggleButtonCleanup = () => {
       el.removeEventListener('click', clickHandler)
       this.toggleButtonStyleEl?.remove()
       this.toggleButtonStyleEl = undefined
       this.container.removeChild(el)
+      if (this.liveRegion) {
+        this.container.removeChild(this.liveRegion)
+        this.liveRegion = undefined
+      }
     }
   }
 
@@ -683,6 +728,10 @@ class Minimap implements IControl {
       buttonEl.setAttribute('aria-label', text)
       buttonEl.setAttribute('title', text)
       buttonEl.setAttribute('aria-expanded', (!this.isMinimized).toString())
+    }
+
+    if (this.liveRegion) {
+      this.liveRegion.textContent = this.isMinimized ? 'Minimap collapsed' : 'Minimap expanded'
     }
 
     if (this.transitionTimeout) {

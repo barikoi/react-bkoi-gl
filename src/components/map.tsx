@@ -13,6 +13,7 @@ import type { MapOptionsInternal } from '../types/internal'
 import type { ErrorEvent } from '../types/events'
 import { LogoControl } from './logo-control'
 import { AttributionControl } from './attribution-control'
+import { logger } from '../utils/logger'
 
 export type MapContextValue = {
   mapLib: MapLib
@@ -116,7 +117,7 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
             error,
           })
         } else {
-          console.error(error)
+          logger.error(error)
         }
       })
 
@@ -138,16 +139,22 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
       const prevProps = prevPropsRef.current
       let propsChanged = false
 
-      const keysToCompare = Object.keys(props).filter(key => key !== 'children' && key !== 'mapLib')
-      const prevKeys = Object.keys(prevProps).filter(key => key !== 'children' && key !== 'mapLib')
-
-      if (keysToCompare.length !== prevKeys.length) {
-        propsChanged = true
-      } else {
-        for (const key of keysToCompare) {
+      for (const key in props) {
+        if (key !== 'children' && key !== 'mapLib') {
           if (props[key] !== prevProps[key]) {
             propsChanged = true
             break
+          }
+        }
+      }
+
+      if (!propsChanged) {
+        for (const key in prevProps) {
+          if (key !== 'children' && key !== 'mapLib') {
+            if (!(key in props)) {
+              propsChanged = true
+              break
+            }
           }
         }
       }
@@ -157,7 +164,7 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
       }
     }
     prevPropsRef.current = props
-  })
+  }, [mapInstance, props])
 
   useImperativeHandle(ref, () => contextValue.map, [mapInstance])
 
@@ -178,6 +185,10 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   // Propagate the warning handler to children via the (stable) context value.
   contextValue.onWarning = props.onWarning
 
+  // The outer container holds the MapLibre map. MapLibre automatically assigns
+  // role="region" and aria-label="Map" to the internal canvas element.
+  // Note: For keyboard accessibility (arrow keys for panning, +/- for zooming),
+  // the `keyboard` option must remain enabled (defaults to true).
   return (
     <div id={props.id} ref={containerRef} style={style}>
       {mapInstance && (
@@ -196,4 +207,12 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
   )
 }
 
+/**
+ * Interactive Map component using MapLibre GL.
+ *
+ * @remarks
+ * For keyboard navigation and accessibility, the `keyboard` prop must be set to `true` (which is default).
+ * If explicitly disabled (e.g. `keyboard={false}`), keyboard access (such as panning/zooming via arrow keys)
+ * will be unavailable to screen reader and keyboard-only users.
+ */
 export const Map: React.FC<MapProps> = React.forwardRef(_Map)

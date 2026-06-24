@@ -1,8 +1,9 @@
 import type { ErrorEvent } from '../types/events'
+import { logger } from './logger'
 
 /**
  * Surface a non-fatal warning. Routes through the consumer's `onWarning`
- * callback when provided, otherwise falls back to `console.warn`.
+ * callback when provided, otherwise falls back to `logger.warn`.
  *
  * @param onWarning - The consumer-supplied warning handler (from `<Map>`), if any.
  * @param error - The warning value; coerced to an `Error`.
@@ -16,6 +17,6 @@ export function emitWarning(
   if (onWarning) {
     onWarning({ type: 'error', target: null, originalEvent: null, error: err })
   } else {
-    console.warn(err)
+    logger.warn(err)
   }
 }

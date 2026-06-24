@@ -3,6 +3,7 @@ import { useEffect, memo } from 'react'
 import { applyReactStyle } from '../utils/apply-react-style'
 import { useControl } from './use-control'
 import { useMap } from './use-map'
+import { logger } from '../utils/logger'
 
 import type { ControlPosition, AttributionControlOptions } from '../types/lib'
 
@@ -34,7 +35,7 @@ function _AttributionControl(props: AttributionControlProps) {
       setTimeout(() => {
         const inner = ctrl._container.querySelector('.maplibregl-ctrl-attrib-inner')
 
-        if (inner) {
+        if (inner instanceof HTMLElement) {
           // Use DOM APIs instead of innerHTML for security
           inner.textContent = ''
 
@@ -53,6 +54,10 @@ function _AttributionControl(props: AttributionControlProps) {
           inner.appendChild(document.createTextNode(' © '))
           inner.appendChild(
             createLink('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright')
+          )
+        } else {
+          logger.warn(
+            'AttributionControl: .maplibregl-ctrl-attrib-inner element not found in control container. Legally-required attribution styling was not applied.'
           )
         }
       }, 0)

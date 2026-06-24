@@ -50,6 +50,8 @@ export type { MapLayerMouseEvent } from 'maplibre-gl'
 export type { DrawControlProps, DrawControlOptions } from './components/draw-control'
 export type { GlobeControlProps, GlobeControlOptions } from './components/globe-control'
 
+export { logger, setLogger, type Logger } from './utils/logger'
+
 // Types
 export * from './types/common'
 export * from './types/events'

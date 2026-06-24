@@ -164,6 +164,48 @@ describe('MinimapControl', () => {
       expect(onToggle).toHaveBeenCalled()
     })
 
+    test('manages aria-live status node to announce minimize/expand', async () => {
+      const minimap = new Minimap()
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      // Wait for the toggle button and live region to be created asynchronously
+      await waitFor(() => {
+        expect(container.querySelector('button')).not.toBeNull()
+      })
+
+      // Locate the live region
+      const liveRegion = container.querySelector('[aria-live="polite"]')
+      expect(liveRegion).not.toBeNull()
+      expect(liveRegion.getAttribute('aria-atomic')).toBe('true')
+
+      // Initial value should be empty
+      expect(liveRegion.textContent).toBe('')
+
+      // Toggle to minimize
+      minimap.toggle()
+      expect(liveRegion.textContent).toBe('Minimap collapsed')
+
+      // Toggle back to expanded
+      minimap.toggle()
+      expect(liveRegion.textContent).toBe('Minimap expanded')
+
+      // Cleanup removes the live region
+      minimap.onRemove()
+      expect(container.querySelector('[aria-live="polite"]')).toBeNull()
+    })
+
     test('onRemove cleans up resources', () => {
       const minimap = new Minimap()
       const parentMap = {
@@ -332,6 +374,40 @@ describe('MinimapControl', () => {
       expect(svg.querySelector('img')).toBeNull()
       expect(svg.querySelector('path')).not.toBeNull()
     })
+
+    test('removes style attributes from SVG elements', async () => {
+      const maliciousSVG = '<svg><rect width="100" height="100" style="fill:url(http://attacker/x)" /></svg>'
+
+      const minimap = new Minimap({
+        toggleButton: { icon: maliciousSVG }
+      })
+
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      await waitFor(() => {
+        expect(container.querySelector('button')).not.toBeNull()
+      })
+
+      const button = container.querySelector('button')
+      const svg = button.querySelector('svg')
+
+      expect(svg).toBeDefined()
+      const rect = svg.querySelector('rect')
+      expect(rect).not.toBeNull()
+      expect(rect.getAttribute('style')).toBeNull()
+    })
   })
 
   describe('MinimapControl component', () => {
@@ -444,6 +520,96 @@ describe('MinimapControl', () => {
 
       const minimap = new Minimap(props)
       expect(minimap).toBeDefined()
+    })
+  })
+
+  describe('security and style sanitization', () => {
+    test('neutralizes </style> payload via textContent to prevent markup breakout', () => {
+      const maliciousPayload = '</style><script id="malicious-script">console.log("xss")</script>'
+      const minimap = new Minimap({
+        borderRadius: maliciousPayload,
+        collapsedWidth: maliciousPayload,
+        collapsedHeight: maliciousPayload,
+        containerStyle: {
+          width: maliciousPayload,
+          height: maliciousPayload,
+        },
+        toggleButton: {
+          iconBackgroundColor: maliciousPayload,
+          hoverColor: maliciousPayload,
+        }
+      })
+
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+      document.body.appendChild(container)
+
+      // Verify that no script tag from the payload was created in the document or container
+      const scriptElement = document.getElementById('malicious-script')
+      expect(scriptElement).toBeNull()
+      expect(container.querySelector('script')).toBeNull()
+
+      // Clean up
+      minimap.onRemove()
+    })
+
+    test('neutralizes semicolon and url() injection payloads by reverting to default styles', () => {
+      const maliciousPayload = '100px; background: url(http://attacker.com/exfil)'
+      const minimap = new Minimap({
+        borderRadius: maliciousPayload,
+        collapsedWidth: maliciousPayload,
+        collapsedHeight: maliciousPayload,
+        containerStyle: {
+          width: maliciousPayload,
+          height: maliciousPayload,
+        },
+        toggleButton: {
+          iconBackgroundColor: maliciousPayload,
+          hoverColor: maliciousPayload,
+        }
+      })
+
+      const parentMap = {
+        getZoom: () => 10,
+        getCenter: () => ({ toArray: () => [90, 23] }),
+        getBearing: () => 0,
+        getPitch: () => 0,
+        getStyle: () => ({}),
+        on: jest.fn(),
+        off: jest.fn(),
+        getCanvas: () => ({ width: 800, height: 600 }),
+        unproject: (p) => ({ toArray: () => p }),
+      }
+
+      const container = minimap.onAdd(parentMap)
+
+      // The style element textContent should not contain the malicious payload
+      const styleEl = container.querySelector('style')
+      expect(styleEl).not.toBeNull()
+
+      const styleText = styleEl.textContent
+      expect(styleText).not.toContain(maliciousPayload)
+
+      // It should fall back to defaults
+      expect(styleText).toContain('width: 400px') // DEFAULT_WIDTH
+      expect(styleText).toContain('height: 300px') // DEFAULT_HEIGHT
+      expect(styleText).toContain('width: 29px') // DEFAULT_COLLAPSED_SIZE
+      expect(styleText).toContain('height: 29px') // DEFAULT_COLLAPSED_SIZE
+      expect(styleText).toContain('border-radius: 3px') // DEFAULT_BORDER_RADIUS
+
+      // Clean up
+      minimap.onRemove()
     })
   })
 })

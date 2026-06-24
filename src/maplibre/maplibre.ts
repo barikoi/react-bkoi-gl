@@ -1,6 +1,7 @@
 import { transformToViewState, applyViewStateToTransform } from '../utils/transform'
 import { normalizeStyle } from '../utils/style-utils'
 import { deepEqual } from '../utils/deep-equal'
+import { logger } from '../utils/logger'
 
 import type { TransformLike, MapInternalProperties, MapWithProjection } from '../types/internal'
 import type {
@@ -232,13 +233,19 @@ export default class Maplibre {
     }
     // Step 2: replace the internal container with new container from the react component
     const mapInternal = map as unknown as MapInternalProperties
-    mapInternal._container = container
+    if (mapInternal && '_container' in mapInternal) {
+      mapInternal._container = container
+    }
 
     // With maplibre-gl as mapLib, map uses ResizeObserver to observe when its container resizes.
     // When reusing the saved map, we need to disconnect the observer and observe the new container.
     // Step 3: telling the ResizeObserver to disconnect and observe the new container
-    const resizeObserver = mapInternal._resizeObserver
-    if (resizeObserver) {
+    const resizeObserver = mapInternal?._resizeObserver
+    if (
+      resizeObserver &&
+      typeof resizeObserver.disconnect === 'function' &&
+      typeof resizeObserver.observe === 'function'
+    ) {
       resizeObserver.disconnect()
       resizeObserver.observe(container)
     }
@@ -267,7 +274,9 @@ export default class Maplibre {
 
     // Force reload
     const mapInternalForUpdate = map as unknown as MapInternalProperties
-    mapInternalForUpdate._update()
+    if (mapInternalForUpdate && typeof mapInternalForUpdate._update === 'function') {
+      mapInternalForUpdate._update()
+    }
     return that
   }
 
@@ -363,22 +372,22 @@ export default class Maplibre {
   // render cycle, which is managed by Mapbox's animation loop.
   // This removes the synchronization issue caused by requestAnimationFrame.
   redraw() {
-    const map = this._map as unknown as {
-      style: unknown
-      _frame: { cancel: () => void } | null
-      _render: () => void
-    }
+    const map = this._map as unknown as MapInternalProperties
     // map._render will throw error if style does not exist
     // https://github.com/mapbox/mapbox-gl-js/blob/fb9fc316da14e99ff4368f3e4faa3888fb43c513
     //   /src/ui/map.js#L1834
-    if (map.style) {
-      // cancel the scheduled update
-      if (map._frame) {
-        map._frame.cancel()
-        map._frame = null
+    if (map && map.style) {
+      if (typeof map._render === 'function') {
+        // cancel the scheduled update
+        if (map._frame && typeof map._frame.cancel === 'function') {
+          map._frame.cancel()
+          map._frame = null
+        }
+        // the order is important - render() may schedule another update
+        map._render()
+      } else if (typeof this._map.triggerRepaint === 'function') {
+        this._map.triggerRepaint()
       }
-      // the order is important - render() may schedule another update
-      map._render()
     }
   }
 
@@ -471,7 +480,7 @@ export default class Maplibre {
     const currProps = this._styleComponents
     const mapWithProjection = map as unknown as MapWithProjection
     // We can safely manipulate map style once it's loaded
-    if (map.style._loaded) {
+    if (map.isStyleLoaded()) {
       if (light && !deepEqual(light, currProps.light)) {
         currProps.light = light
         map.setLight(light)
@@ -519,7 +528,7 @@ export default class Maplibre {
     if (cb) {
       cb(e)
     } else if (e.type === 'error') {
-      console.error((e as ErrorEvent).error)
+      logger.error((e as ErrorEvent).error)
     }
   }
 
@@ -550,7 +559,7 @@ export default class Maplibre {
     if (cb) {
       cb({ type: 'error', target: this._map, originalEvent: null, error })
     } else {
-      console.warn(error)
+      logger.warn(error)
     }
   }
 
