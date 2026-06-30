@@ -134,37 +134,44 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
     }
   }, [])
 
-  useIsomorphicLayoutEffect(() => {
-    if (mapInstance && prevPropsRef.current) {
-      const prevProps = prevPropsRef.current
-      let propsChanged = false
+  // Keep latest props in a ref so this effect doesn't re-subscribe every render.
+  const latestPropsRef = useRef(props)
+  latestPropsRef.current = props
 
-      for (const key in props) {
+  useIsomorphicLayoutEffect(() => {
+    if (!mapInstance) return
+    const prevProps = prevPropsRef.current
+    const currentProps = latestPropsRef.current
+    if (!prevProps) {
+      prevPropsRef.current = currentProps
+      return
+    }
+
+    let propsChanged = false
+    for (const key in currentProps) {
+      if (key !== 'children' && key !== 'mapLib') {
+        if (currentProps[key] !== prevProps[key]) {
+          propsChanged = true
+          break
+        }
+      }
+    }
+    if (!propsChanged) {
+      for (const key in prevProps) {
         if (key !== 'children' && key !== 'mapLib') {
-          if (props[key] !== prevProps[key]) {
+          if (!(key in currentProps)) {
             propsChanged = true
             break
           }
         }
       }
-
-      if (!propsChanged) {
-        for (const key in prevProps) {
-          if (key !== 'children' && key !== 'mapLib') {
-            if (!(key in props)) {
-              propsChanged = true
-              break
-            }
-          }
-        }
-      }
-
-      if (propsChanged) {
-        mapInstance.setProps(props)
-      }
     }
-    prevPropsRef.current = props
-  }, [mapInstance, props])
+
+    if (propsChanged) {
+      mapInstance.setProps(currentProps)
+    }
+    prevPropsRef.current = currentProps
+  }, [mapInstance])
 
   useImperativeHandle(ref, () => contextValue.map, [mapInstance])
 

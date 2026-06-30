@@ -1,12 +1,11 @@
 <h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com/npm/npm-intro">Docs</a></h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl" alt="npm downloads"></a>
-  <a href="https://bundlephobia.com/package/react-bkoi-gl"><img src="https://img.shields.io/bundlephobia/min/react-bkoi-gl" alt="Bundle Size"></a>
+  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/node/v/react-bkoi-gl" alt="Node.js Version"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>
+  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl.svg?label=downloads" alt="npm weekly downloads"></a>
+  <a href="https://github.com/barikoi/react-bkoi-gl/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/react-bkoi-gl.svg?label=license" alt="license"></a>
 </p>
 
 ## Description
@@ -28,7 +27,7 @@ Powered by <a href="https://barikoi.com/">Barikoi - Maps for Businesses</a>
 
 ## Installation
 
-Using `react-bkoi-gl` requires `react >= 18` (the library uses the `useId` and `useSyncExternalStore` React 18 APIs). `maplibre-gl` is an optional peer dependency — install it yourself, or pass a custom `mapLib` to `<Map>`.
+Using `react-bkoi-gl` requires `react >= 18` (the library uses the `useId` and `useSyncExternalStore` React 18 APIs). Map rendering is bundled — no separate map engine install needed.
 
 ```bash
 npm install react-bkoi-gl
@@ -98,6 +97,76 @@ function App() {
 
 ---
 
+## Requirements
+
+| Requirement | Version |
+|-------------|---------|
+| `react`, `react-dom` | `>=18.0.0` (uses `useId`, `useSyncExternalStore`) |
+| Node | `>=18.18.0` (build/dev only) |
+
+Map rendering is bundled — no separate map engine install needed.
+
+---
+
+## Next.js & SSR
+
+`react-bkoi-gl` renders into a `<canvas>` and must run client-side. In Next.js App Router, mark consumer components with `"use client"`:
+
+```tsx
+// app/MapView.tsx
+"use client";
+
+import { Map } from "react-bkoi-gl";
+import "react-bkoi-gl/styles";
+
+export default function MapView() {
+  return (
+    <Map
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${process.env.NEXT_PUBLIC_BARIKOI_API_KEY}`}
+      initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
+      style={{ width: "100%", height: "100vh" }}
+    />
+  );
+}
+```
+
+The library uses `useId`, `useSyncExternalStore`, and `useLayoutEffect` — all client-only hooks. SSR will warn or crash without the directive.
+
+For Pages Router, dynamic-import with `ssr: false`:
+
+```tsx
+import dynamic from "next/dynamic";
+const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
+```
+
+---
+
+## Logging
+
+All `console.warn` / `console.error` calls route through an injectable `logger`, so you can capture warnings in production or feed them to your telemetry provider.
+
+```tsx
+import { setLogger } from "react-bkoi-gl";
+
+setLogger({
+  warn: (msg, ...args) => Sentry.captureMessage(String(msg)),
+  error: (err, ...args) => Sentry.captureException(err),
+});
+```
+
+Non-fatal warnings (transient rendering errors before the style finishes loading, etc.) are also surfaced via the `<Map onWarning={...}>` prop when you want per-instance handling.
+
+---
+
+## Accessibility
+
+- The map canvas gets `role="region"` and `aria-label="Map"` automatically.
+- For keyboard navigation (arrow keys to pan, `+`/`-` to zoom), keep the `keyboard` prop enabled (default: `true`).
+- `GlobeControl`, `MinimapControl`, `NavigationControl`, etc. set `type="button"`, `aria-label`, and `title` automatically. Custom elements passed to `GlobeControl` via `buttonElement` must be `<button>` or have `role="button"`, otherwise they are refused with a console warning.
+- `MinimapControl` announces collapse/expand state via a visually-hidden `aria-live="polite"` region.
+
+---
+
 ## Components
 
 Build maps by composing the `Map` component with layers, sources, UI controls, and hooks.
@@ -146,7 +215,6 @@ The core component that renders a Barikoi map. All other components must be chil
 | `mapStyle` | `string \| StyleSpecification` | Required | Map style URL or style object |
 | `initialViewState` | `object` | - | Initial view state (longitude, latitude, zoom, etc.) |
 | `viewState` | `object` | - | Controlled view state |
-| `mapLib` | `MapLib \| Promise<MapLib>` | - | Custom map library instance |
 | `reuseMaps` | `boolean` | `false` | Reuse map instances for performance |
 | `id` | `string` | - | Container element ID |
 | `style` | `CSSProperties` | - | Container CSS styles |
@@ -156,6 +224,9 @@ The core component that renders a Barikoi map. All other components must be chil
 | `onMoveEnd` | `(e: ViewStateChangeEvent) => void` | - | Move end handler |
 | `onZoomEnd` | `(e: ViewStateChangeEvent) => void` | - | Zoom end handler |
 | `onError` | `(e: ErrorEvent) => void` | - | Error handler |
+| `onWarning` | `(e: ErrorEvent) => void` | - | Non-fatal warning handler (e.g. transient `queryRenderedFeatures` errors before style load). Falls back to `console.warn` when omitted. |
+| `showBarikoiLogo` | `boolean` | `true` | Render the Barikoi logo control (bottom-left). |
+| `showAttribution` | `boolean` | `true` | Render the attribution control (bottom-right). Attribution is required by the OSM/MapLibre license terms — keep this enabled unless you provide attribution elsewhere. |
 
 And all [MapLibre Map options](https://maplibre.org/maplibre-gl-js/docs/API/types/MapOptions/).
 

@@ -60,15 +60,21 @@ export default function setGlobals(mapLib: GlobalSettingsMapLib, props: GlobalSe
       typeof RTLTextPlugin === 'string' ? { pluginUrl: RTLTextPlugin } : RTLTextPlugin
 
     if (validateUrl(pluginUrl, 'RTLTextPlugin')) {
-      mapLib.setRTLTextPlugin?.(
-        pluginUrl,
-        (error?: Error) => {
-          if (error) {
-            logger.error(error)
-          }
-        },
-        lazy
-      )
+      if (typeof mapLib.setRTLTextPlugin !== 'function') {
+        logger.warn(
+          `RTLTextPlugin was configured but the provided mapLib does not expose setRTLTextPlugin. Right-to-left scripts (Arabic, Hebrew) will not render correctly.`
+        )
+      } else {
+        mapLib.setRTLTextPlugin(
+          pluginUrl,
+          (error?: Error) => {
+            if (error) {
+              logger.error(error)
+            }
+          },
+          lazy
+        )
+      }
     }
   }
   if (maxParallelImageRequests !== undefined) {

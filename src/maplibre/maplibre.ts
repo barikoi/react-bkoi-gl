@@ -265,8 +265,9 @@ export default class Maplibre {
       }
     }
 
-    // Simulate load event
-    if (map.isStyleLoaded()) {
+    // Simulate load event. isStyleLoaded() throws if no style is set
+    // (deferred or errored), so guard with a style check first.
+    if (map.style && map.isStyleLoaded()) {
       map.fire('load')
     } else {
       map.once('style.load', () => map.fire('load'))
@@ -479,8 +480,9 @@ export default class Maplibre {
     const map = this._map
     const currProps = this._styleComponents
     const mapWithProjection = map as unknown as MapWithProjection
-    // We can safely manipulate map style once it's loaded
-    if (map.isStyleLoaded()) {
+    // We can safely manipulate map style once it's loaded.
+    // isStyleLoaded() throws when no style is set, so guard explicitly.
+    if (map.style && map.isStyleLoaded()) {
       if (light && !deepEqual(light, currProps.light)) {
         currProps.light = light
         map.setLight(light)

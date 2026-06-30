@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "engines": {
     "node": ">=18.18.0"
   },
@@ -50,13 +50,7 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "react-dom": ">=18.0.0",
-    "maplibre-gl": ">=5.15.0 <6.0.0"
-  },
-  "peerDependenciesMeta": {
-    "maplibre-gl": {
-      "optional": true
-    }
+    "react-dom": ">=18.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

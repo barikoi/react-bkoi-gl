@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 30-06-2026
+
+### Added
+- **Injectable logger** (`logger`, `setLogger`, `Logger`) exported from the public surface — route warnings/errors to telemetry (Sentry, etc.) instead of `console`.
+- **`onWarning` prop** on `<Map>` for per-instance non-fatal warning handling (transient `queryRenderedFeatures` errors, etc.); falls back to `console.warn`.
+- **`showBarikoiLogo` / `showAttribution` props** on `<Map>` (default `true`) — opt out of the auto-included Logo/Attribution controls without the OSM/MapLibre license compliance caveats.
+- **Accessibility hardening** for `GlobeControl` and `MinimapControl`:
+  - `GlobeControl` forces `type="button"`, `aria-label`, `title`; custom `buttonElement` must be `<button>` or carry `role="button"`, otherwise refused with a warning; dynamic label on toggle.
+  - `MinimapControl` announces collapse/expand via a visually-hidden `aria-live="polite"` region; `aria-expanded` reflects state.
+- **SVG sanitization** in `MinimapControl` rewritten as DOMParser + allowlist walk (`ALLOWED_TAGS`, drop `on*` attrs, `style` attrs, restrict `href`/`xlink:href` to `#`/`http(s)://`); unsafe values rejected.
+- **CSS injection defense** — `MinimapControl` validates `borderRadius`, `containerStyle`, `toggleButton` colors via `CSS.supports` and rejects values containing `;`, `{`, `}`, `\`, or `url(`; style element uses `textContent` instead of `innerHTML` to neutralize `</style>` breakout.
+- **CSS build rewrite** — `scripts/build-styles.js` replaces regex-based `modify-css.js`; vendor CSS concatenated with a committed `styles/overrides.css`, no runtime mutation.
+- Tests: `globe-control` a11y, `minimap-control` security/sanitization, `logger`, `setGlobals`, and `Map` control-visibility coverage.
+
+### Changed
+- **React ≥18 peer dependency** (uses `useId`, `useSyncExternalStore`); `react` and `react-dom` now require `>=18.0.0`.
+- TypeScript `target`/`moduleResolution` upgraded (`es2022`, `bundler`); added `skipLibCheck`, `eslint-plugin-jsx-a11y`, `eslint-plugin-react-hooks`, `eslint-plugin-prettier`.
+- Map component props-diff effect no longer re-subscribes every render (deps reduced to `[mapInstance]`); uses `latestPropsRef`.
+- `<Layer>` and `<Source>` now throw with a clear message when rendered outside `<Map>` instead of silently failing.
+- README: removed bundlephobia badge, added interactive npm badges (version, downloads, license, React ≥18), new sections for **Requirements**, **Next.js & SSR**, **Logging**, **Accessibility**; dropped `mapLib` props row and "optional maplibre-gl peer" language.
+
+### Fixed
+- **`getContext` hijack leak** — `HTMLCanvasElement.prototype.getContext` is now restored in a `try/finally` around `new Map()`, so a constructor throw can no longer permanently break every other `<canvas>` on the page.
+- **`isStyleLoaded()` throw** — both call sites now guarded with `map.style &&` to avoid throwing when no style is set (deferred/error path).
+- **Silent RTL plugin failure** — `setGlobals` now `logger.warn`s when `RTLTextPlugin` is configured but the supplied `mapLib` lacks `setRTLTextPlugin`, instead of silently skipping (Arabic/Hebrew would not render).
+- **Prototype-polluted prop keys** — `<Layer>` and `<Source>` use `hasOwnProperty` guards before comparing `paint`/`layout`/source props.
+- **Attribution element type check** — `AttributionControl` uses `instanceof HTMLElement` instead of truthy check before applying required attribution styling; logs a warning if the legally-required element is missing.
+- **Redundant `maplibre-gl` peer dependency** removed from `package.json` (already shipped as a regular dependency).
+
+### Removed
+- `scripts/modify-css.js` (replaced by `scripts/build-styles.js`).
+- Unused React imports across `canvas-source`, `draw-control`, `minimap-control`, `source`.
+
+---
+
 ## [2.1.0] - 30-03-2026
 
 ### Added
