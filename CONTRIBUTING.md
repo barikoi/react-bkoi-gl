@@ -1,29 +1,35 @@
 # Contributing to react-bkoi-gl
 
-Thank you for your interest in contributing to **react-bkoi-gl**! This guide explains our development process and how to contribute effectively.
+Single source of truth for working on this library: setup, architecture,
+testing pitfalls, gotchas, and release checklist.
+
+For user-facing API docs see [README.md](./README.md). For version history
+see [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-1. **Setup:** Follow the [Development Environment](#-development-environment) setup section below.
-2. **Workflow:** 
-   - All work happens on the `dev` branch
-   - Write tests for new features/bugfixes
-   - Build and test locally using the tarball method
-   - Push directly to `dev` after verification
-3. **Merges:** Maintainers periodically merge `dev` into `main`
+1. **Setup:** see [Development Environment](#development-environment) below.
+2. **Workflow:**
+   - Work happens on the `dev` branch.
+   - Write tests for new features and bugfixes.
+   - Build and test locally using the [tarball method](#local-package-testing).
+   - Push to `dev` after hooks pass.
+3. **Merges:** maintainers periodically merge `dev` into `master`.
 
 ---
 
-## 🛠️ Development Environment
+## Development Environment
 
 ### Prerequisites
+
 - Node.js >= 18.18.0
-- npm (latest version)
+- npm (latest)
 - Git
 
-### Setup Steps
+### Setup
+
 ```bash
 git clone https://github.com/barikoi/react-bkoi-gl.git
 cd react-bkoi-gl
@@ -32,107 +38,224 @@ npm install
 
 ### Available Scripts
 
-| Script             | Description                                                                 |
-|--------------------|-------------------------------------------------|
-| `npm run typecheck`| Runs TypeScript validation                      |
-| `npm run clean`    | Removes and recreates the `dist/` directory     |
-| `npm run build`    | Build production bundle                         |
-| `npm run lint`     | Check code style with ESLint                    |
-| `npm test`         | Run type checking and all tests                 |
-| `npm run coverage` | Generate test coverage reports                  |
-
-For detailed technical documentation, see [DEVELOPMENT.md](./DEVELOPMENT.md).
+| Script | Description |
+|--------|-------------|
+| `npm run typecheck` | TypeScript validation (`tsc --noEmit`) |
+| `npm run clean` | Remove the `dist/` directory |
+| `npm run build` | Production bundle (tsup + `scripts/build-styles.js`) |
+| `npm run lint` | ESLint |
+| `npm test` | TypeScript validation + Jest test suite |
+| `npm run coverage` | Jest with coverage report |
 
 ### Project Structure
 
-```plaintext
-react-bkoi-gl/
-├── src/               # Source code
-│   ├── components/    # React components
-│   ├── maplibre/      # MapLibre utilities
-│   ├── types/         # TypeScript type definitions
-│   └── utils/         # Helper utilities
-├── __tests__/         # Test files
-│   ├── components/    # Component tests
-│   ├── maplibre/      # MapLibre tests
-│   ├── mocks/         # Test mocks
-│   └── utils/         # Utility tests
-├── scripts/           # Build and utility scripts
-├── dist/              # Build output (generated)
-├── coverage/          # Test coverage reports (generated)
-└── ...
+```
+src/
+  components/     # React components — Map, Layer, Source, controls, etc.
+  maplibre/       # MapLibre wrapper class, MapRef factory
+  types/          # TypeScript type definitions
+  utils/          # Helpers (logger, deep-equal, transform, etc.)
+__tests__/        # Jest tests, mirrors src/ layout
+  mocks/          # Load-bearing maplibre-gl and react-dom mocks
+scripts/          # Build scripts (build-styles.js)
+styles/           # Committed CSS overrides, concatenated into the bundle
+docs/audits/      # Historical code audit reports (not shipped)
 ```
 
 ### Git Hooks
 
-Hooks are automatically configured when you run `npm install`. They enforce code quality and commit standards:
+Hooks are configured automatically by `npm install` via Husky. Files live in
+`.husky/`.
 
-- **Pre-commit**: Runs linting and tests
-- **Commit-msg**: Validates commit message format
-- **Pre-push**: Runs full test suite
+- **pre-commit**: runs `lint-staged` (eslint --fix, prettier --write),
+  `npm run typecheck`, and `npm run test`. `npm run build` also runs on
+  `main`/`dev` branches.
+- **commit-msg**: enforces that `user.name` and `user.email` are set, appends
+  a `Signed-off-by` trailer via `git interpret-trailers`, and runs
+  `commitlint --edit` to validate the message format.
 
-Hook files are located in `.husky/` directory.
+Bypassing these checks is not supported — fix the underlying issue instead.
 
 ---
 
-## 🔧 Testing Workflow
+## Architecture
+
+The library is organized around a `Map` component that provides context to
+all child components.
+
+### Context Pattern
+
+- `MapContext`: provides `{ mapLib, map }` to all children — used by Marker,
+  Popup, Layer, Source, and controls.
+- `MountedMapsContext`: tracks all mounted maps by ID — used by `useMap()`.
+
+### MapRef Pattern
+
+The `MapRef` type (from `src/maplibre/create-ref.ts`) exposes most MapLibre
+map methods but explicitly skips methods that would break React bindings:
+`setMaxBounds`, `setMinZoom`, `setMaxZoom`, `setMinPitch`, `setMaxPitch`,
+`setRenderWorldCopies`, `setProjection`, `setStyle`, `addSource`,
+`removeSource`, `addLayer`, `removeLayer`, `setLayerZoomRange`, `setFilter`,
+`setPaintProperty`, `setLayoutProperty`, `setLight`, `setTerrain`, `setFog`,
+`remove`.
+
+Use `map.getMap()` to access the raw MapLibre instance when needed.
+
+### Component Lifecycle
+
+`Source`, `Layer`, `Marker`, `Popup`:
+
+1. Access the map via `useContext(MapContext)`.
+2. Create their MapLibre counterpart in `useMemo`.
+3. Add to map in `useEffect` (cleanup on unmount).
+4. Update props reactively via additional effects.
+
+### Public Surface
+
+Everything exported from `src/exports-maplibre-gl.ts` is public. Anything
+else is internal even if TypeScript visibility allows it. Notably public:
+`logger`, `setLogger`, `Logger` (injectable logger), all map components,
+hooks (`useMap`, `useControl`), and `MapRef`. Type re-exports live in
+`src/types/`. Add new exports only via `src/exports-maplibre-gl.ts` — no
+barrel files elsewhere.
+
+---
+
+## Testing Workflow
 
 ### Unit Tests
 
-- **Framework**: Jest with React Testing Library
-- **Location**: All tests are in `__tests__/` directory
-- **Coverage**: Run `npm run coverage` to generate reports
-- **Mocks**: Custom mocks for MapLibre GL and React DOM in `__tests__/mocks/`
+- **Framework**: Jest + React Testing Library + `ts-jest`.
+- **Location**: `__tests__/`, organized by component and utility.
+- **Mocks**: `__tests__/mocks/maplibre-gl.js` and
+  `__tests__/mocks/react-dom-mock.js` are load-bearing.
+- **Coverage**: run `npm run coverage` to generate a report in `coverage/`.
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run coverage
-
-# Run type checking
-npm run typecheck
+npm test               # typecheck + full Jest suite
+npm run coverage       # Jest with coverage
+npm run typecheck      # TypeScript only
+npx jest <pattern>     # subset of tests
 ```
+
+### Testing Pitfalls (read before writing tests)
+
+- **Component tests mock the whole `Maplibre` class**
+  (`jest.mock('../../src/maplibre/maplibre', () => class { ... })`). Changes
+  to the real `Maplibre.setProps`, `_updateStyleComponents`, or `_initialize`
+  are NOT exercised by `__tests__/components/*`. Test wrapper internals in
+  `__tests__/maplibre/maplibre.test.js` instead.
+- **Style readiness has two signals, depending on the file:**
+  - `src/maplibre/maplibre.ts` checks `map.style && map.isStyleLoaded()`.
+    Mock with `style: {}` and `isStyleLoaded: jest.fn()`. Do NOT use
+    `style._loaded` here — it's not read.
+  - `src/components/layer.ts` and `src/components/source.ts` read
+    `mapInternal.style._loaded` directly. In component tests, toggle
+    `mockMapInstance.style._loaded` to control readiness.
+- **`isStyleLoaded()` throws when no style is set.** The source guards with
+  `map.style && ...`; setting `map.style = undefined` short-circuits so
+  `isStyleLoaded` is never called.
+- **MapLibre private fields** (`_container`, `_resizeObserver`, `_update`,
+  `_render`, `_frame`) are accessed via `typeof` guards in `maplibre.ts`.
+  They drift across MapLibre versions — never assume they exist.
+- **`__tests__/mocks/maplibre-gl.js`** must be updated whenever the MapLibre
+  API surface used by source changes.
 
 ### Local Package Testing
 
-**⚠️ Do NOT use `npm link` for local testing.**
-
-Use the `.tgz` tarball method for reliable testing:
+**Do NOT use `npm link`.** Use the tarball method:
 
 1. **Build and pack:**
    ```bash
    npm run build
-   npm pack  # creates react-bkoi-gl-*.tgz
+   npm pack          # creates react-bkoi-gl-<version>.tgz
    ```
-
-2. **Test in another project:**
+2. **Install in another project:**
    ```bash
    npm install /absolute/path/to/react-bkoi-gl-*.tgz
    ```
+3. **Iterate:** rebuild, pack, and reinstall after each change.
 
-3. **Update and retest:**
-   After changes, rebuild, pack, and reinstall the new tarball.
-
-This method simulates a real npm install and ensures all dependencies resolve correctly.
+The tarball simulates a real npm install and ensures dependencies resolve
+correctly. `npm link` produces phantom-symbol bugs because of symlink
+resolution across `node_modules`.
 
 ### CI Pipeline
 
-- **Trigger**: Automatic on push to `dev` branch
-- **Steps**: Tests, coverage, and SonarQube analysis
-- **Notifications**: Discord webhook on success/failure
-- **Config**: See `.github/workflows/action.yaml`
+- **Trigger**: automatic on push to `dev` (see `.github/workflows/action.yaml`
+  for the current branch — temporary overrides apply while SonarQube is
+  undergoing maintenance).
+- **Steps**: install dependencies, run `npm run coverage`, run SonarQube
+  scan via `sonarsource/sonarqube-scan-action@v4`.
+- **Notifications**: Discord webhook on success, failure, and cancellation.
+- **Config**: `.github/workflows/action.yaml` and `sonar-project.properties`.
 
 ---
 
-## ✍️ Commit Guidelines
+## CSS Build
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/) specification and enforce it using:
-- [Husky](https://typicode.github.io/husky/) Git hooks
-- [commitlint](https://commitlint.js.org/) for validation
+`scripts/build-styles.js` concatenates vendor CSS in this order:
 
-### Commit Message Format
+1. `node_modules/maplibre-gl/dist/maplibre-gl.css`
+2. `node_modules/maplibre-gl-draw/dist/mapbox-gl-draw.css`
+3. `styles/overrides.css` (Barikoi branding)
+
+Output: `dist/styles/react-bkoi-gl.css` plus `dist/styles/index.d.ts` so
+`import "react-bkoi-gl/styles"` resolves.
+
+Overrides win by source order (equal specificity, later declaration wins).
+Edit `styles/overrides.css` — never patch vendor CSS at build time. The
+prior regex-based `modify-css.js` was replaced because mutating third-party
+CSS with regex is brittle and unauditable.
+
+---
+
+## Background: Mapbox → Maplibre Migration
+
+This library originally wrapped `mapbox-gl@1.13.1` (the last BSD-licensed
+release). When Mapbox GL JS moved to a proprietary license at v2, the
+project migrated to [Maplibre GL JS](https://maplibre.org/projects/maplibre-gl-js/)
+— the community fork of Mapbox GL v1, fully open-source and drop-in
+compatible for the v1 API surface.
+
+The migration shaped the current architecture:
+
+- `src/maplibre/` is decoupled from any specific map engine version.
+- `src/utils/set-globals.ts` invokes RTL plugin and worker config via
+  optional chaining on a `MapLib`-augmented type, so the wrapper tolerates
+  map engines that don't expose every setter.
+- `src/types/lib.ts` excludes engine-specific private fields. Access to
+  those in `maplibre.ts` is guarded with `typeof` checks because they drift
+  across MapLibre versions.
+
+---
+
+## Gotchas
+
+- **`isStyleLoaded()` throws when no style is set.** Always guard with
+  `map.style && map.isStyleLoaded()`.
+- **`keyboard` prop must stay `true` (default)** for a11y keyboard navigation
+  (arrow keys pan, +/- zoom).
+- **`<Layer>` and `<Source>` throw** when rendered outside `<Map>`. The
+  error message names the constraint.
+- **SVG content in `MinimapControl` `toggleButton.icon` is sanitized** via
+  DOMParser + allowlist walk. `style` attributes and unsafe
+  `href`/`xlink:href` values are stripped.
+- **CSS values in `MinimapControl` props** (`borderRadius`, `containerStyle`,
+  `toggleButton` colors) are validated via `CSS.supports`. Values containing
+  `;`, `{`, `}`, `\`, or `url(` are rejected and fall back to defaults.
+- **MapLibre GL is bundled as a regular dependency** (not a peer dep). End
+  users do not need to install it separately.
+- **React ≥18** is required (`useId`, `useSyncExternalStore`).
+
+---
+
+## Commit Guidelines
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/),
+enforced via Husky + commitlint (`commitlint.config.js`).
+
+### Format
 
 ```
 <type>(<scope>): <subject>
@@ -144,26 +267,17 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 
 ### Types
 
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, no logic change)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Build process or auxiliary tool changes
-- **perf**: Performance improvements
-- **ci**: CI configuration changes
+`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`
 
 ### Scopes (optional)
 
-- `map`, `marker`, `popup`, `layer`, `source`
-- `controls` (navigation, fullscreen, geolocate, etc.)
-- `hooks` (useMap, useControl)
-- `utils`, `types`, `tests`
+`map`, `marker`, `popup`, `layer`, `source`, `controls`, `hooks`, `utils`,
+`types`, `tests`
 
 ### Examples
 
-✅ **Good:**
+Good:
+
 ```
 feat(map): add support for custom map projections
 fix(marker): correct position calculation for rotated maps
@@ -172,117 +286,82 @@ docs: update installation instructions
 refactor(controls): simplify navigation control logic
 ```
 
-❌ **Bad:**
+Bad:
+
 ```
-update
-fixed bug
-updates marker
-Fixed marker position  # Wrong tense
-FEAT: new feature      # Wrong case
+update                       # no type
+fixed bug                    # wrong tense
+FEAT: new feature            # wrong case
 ```
 
-### Validation Process
+### Validation
 
-Your commits are automatically validated:
-
-1. **Pre-commit** (`git commit`): Runs linting
-2. **Commit-msg**: Validates commit message format
-3. **Pre-push** (`git push`): Runs full test suite
-
-**Note:** If any hook fails, fix the issues before proceeding. You cannot bypass these checks.
+Commits are checked at three points: `pre-commit` (lint-staged + typecheck +
+test), `commit-msg` (commitlint + Signed-off-by trailer + identity check),
+`pre-push` (full test suite). Failures must be fixed, not bypassed.
 
 ---
 
-## 📦 Release Process
+## Release Process
 
 ### Pre-Release Checklist
 
-1. **Verify all tests pass:**
+1. **Verify tests pass:**
    ```bash
    npm test
    npm run coverage
    ```
-
-2. **Check package configuration:**
+2. **Lint the package config:**
    ```bash
+   npm run build
    npx publint
    ```
-
-3. **Verify TypeScript types:**
+3. **Verify TypeScript types resolve correctly:**
    ```bash
    npx @arethetypeswrong/cli --pack .
    ```
-
-4. **Build the package:**
-   ```bash
-   npm run build
-   ```
-
-5. **Test tarball locally:**
-   ```bash
-   npm pack
-   # Test in another project as described in Testing Workflow
-   ```
-
-### Publishing Steps
-
-1. **Login to npm** (requires 2FA):
-   ```bash
-   npm login
-   ```
-
-2. **Update version:**
-   - Update `CHANGELOG.md` with new version and changes
-   - Bump version using npm:
-     ```bash
-     npm version patch  # for bug fixes (2.0.1 → 2.0.2)
-     npm version minor  # for new features (2.0.1 → 2.1.0)
-     npm version major  # for breaking changes (2.0.1 → 3.0.0)
-     ```
-
-3. **Run pre-release checks** (see above)
-
+   `@arethetypeswrong` will flag CSS subpath imports as unresolvable —
+   that's expected for a library shipping styles, not a real problem.
 4. **Build:**
    ```bash
    npm run build
    ```
+5. **Test the tarball locally** — see [Local Package Testing](#local-package-testing).
 
-5. **Publish to npm:**
+### Publishing Steps
+
+1. **Log in to npm** (requires 2FA):
+   ```bash
+   npm login
+   ```
+2. **Bump the version and update the changelog:**
+   - Add a `## [<new-version>] - <YYYY-MM-DD>` entry to `CHANGELOG.md`
+     following the Keep a Changelog format.
+   - Bump via npm:
+     ```bash
+     npm version patch   # bug fixes (2.2.0 → 2.2.1)
+     npm version minor   # new features (2.2.0 → 2.3.0)
+     npm version major   # breaking changes (2.2.0 → 3.0.0)
+     ```
+3. **Re-run the pre-release checks** (tests, build, publint,
+   `@arethetypeswrong`).
+4. **Publish:**
    ```bash
    npm publish --access public
    ```
-
-6. **Verify publication:**
-   - Check [npm package page](https://www.npmjs.com/package/react-bkoi-gl)
-   - Test installation: `npm install react-bkoi-gl@latest`
-
-7. **Create GitHub release:**
-   - Tag the release
-   - Copy CHANGELOG.md entry to release notes
-
-For detailed technical information, see [DEVELOPMENT.md](./DEVELOPMENT.md#-publishing-to-npm).
+5. **Verify publication:**
+   - [npm package page](https://www.npmjs.com/package/react-bkoi-gl)
+   - `npm install react-bkoi-gl@latest` in a fresh project.
+6. **Tag the release** on GitHub and copy the CHANGELOG entry into the
+   release notes.
 
 ---
 
-## 📚 Resources
+## Resources
 
-### Documentation
-- [Barikoi API Documentation](https://docs.barikoi.com/docs/maps-api)
-- [Component API Reference](https://docs.barikoi.com/npm/npm-intro)
-- [MapLibre GL JS Docs](https://maplibre.org/maplibre-gl-js-docs/)
-- [Development Guide](./DEVELOPMENT.md)
-
-### Tools & Libraries
-- [React Documentation](https://react.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Jest Testing Framework](https://jestjs.io/)
-- [React Testing Library](https://testing-library.com/react)
+- [README.md](./README.md) — user-facing API docs and examples
+- [CHANGELOG.md](./CHANGELOG.md) — version history
+- [Barikoi API docs](https://docs.barikoi.com/docs/maps-api)
+- [MapLibre GL JS](https://maplibre.org/maplibre-gl-js-docs/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
-
-### Support
 - [GitHub Issues](https://github.com/barikoi/react-bkoi-gl/issues)
-- [Barikoi Support](mailto:support@barikoi.com)
-
----
-
-**Thank you for contributing to react-bkoi-gl! 🎉**

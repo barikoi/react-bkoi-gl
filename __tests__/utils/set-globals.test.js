@@ -143,4 +143,23 @@ describe('setGlobals utility', () => {
     expect(mockMapLib.setWorkerCount).toHaveBeenCalledWith(4);
     expect(mockMapLib.setWorkerUrl).toHaveBeenCalledWith('https://example.com/worker.js');
   });
-}); 
+
+  test('warns when RTLTextPlugin is configured but mapLib lacks setRTLTextPlugin', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const mapLibWithoutRTL = {
+      getRTLTextPluginStatus: jest.fn().mockReturnValue('unavailable'),
+      // setRTLTextPlugin intentionally omitted
+      setMaxParallelImageRequests: jest.fn(),
+      setWorkerCount: jest.fn(),
+      setWorkerUrl: jest.fn()
+    };
+
+    setGlobals(mapLibWithoutRTL, {
+      RTLTextPlugin: 'https://example.com/rtl-plugin.js'
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('setRTLTextPlugin'));
+    warnSpy.mockRestore();
+  });
+});

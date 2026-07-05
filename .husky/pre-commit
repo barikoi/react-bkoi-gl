@@ -20,6 +20,14 @@ npx lint-staged ||
   exit 1
 )
 
+# Run npm audit for security vulnerabilities
+echo "🔒 Running npm audit for security vulnerabilities..."
+npm audit --audit-level=high ||
+(
+  echo '❌ npm audit failed. Please fix security vulnerabilities before committing.'
+  exit 1
+)
+
 # Run TypeScript type checking (uses your existing typecheck script)
 echo "🔍 Running TypeScript type checking..."
 npm run typecheck || {

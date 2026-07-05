@@ -113,7 +113,10 @@ describe('Maplibre Class', () => {
       getLayer: jest.fn().mockReturnValue(true),
       queryRenderedFeatures: jest.fn().mockReturnValue([]),
       remove: jest.fn(),
-      style: { _loaded: true },
+      // 2.2.0+: readiness is checked via map.style && map.isStyleLoaded().
+      // Keep style as a plain object (not undefined) so the guard passes;
+      // isStyleLoaded is mocked at the top of this object literal.
+      style: {},
       _render: jest.fn(),
       _update: jest.fn(),
       _frame: {
@@ -344,6 +347,38 @@ describe('Maplibre Class', () => {
       expect(mockMapInstance.setSky).toHaveBeenCalledWith({ type: 'atmosphere' });
       expect(mockMapInstance.setTerrain).toHaveBeenCalledWith({ source: 'terrain-source' });
       expect(mockMapInstance.setProjection).toHaveBeenCalledWith({ type: 'globe' });
+    });
+
+    test('_updateStyleComponents skips setters when isStyleLoaded returns false', () => {
+      mockMapInstance.isStyleLoaded.mockReturnValue(false);
+
+      maplibreInstance._updateStyleComponents({
+        light: { position: [4, 5, 6] },
+        projection: 'globe'
+      });
+
+      // Setters must not be called until the style is ready
+      expect(mockMapInstance.setLight).not.toHaveBeenCalled();
+      expect(mockMapInstance.setProjection).not.toHaveBeenCalled();
+    });
+
+    test('_updateStyleComponents does not throw when map.style is undefined', () => {
+      // Simulate deferred/error path: no style set at all.
+      // isStyleLoaded() would throw if the guard didn't short-circuit on map.style.
+      mockMapInstance.style = undefined;
+      mockMapInstance.isStyleLoaded = jest.fn(() => {
+        throw new Error('Style is not set');
+      });
+
+      expect(() => {
+        maplibreInstance._updateStyleComponents({
+          light: { position: [7, 8, 9] }
+        });
+      }).not.toThrow();
+
+      expect(mockMapInstance.setLight).not.toHaveBeenCalled();
+      // And isStyleLoaded was never called because map.style short-circuited
+      expect(mockMapInstance.isStyleLoaded).not.toHaveBeenCalled();
     });
   });
   
