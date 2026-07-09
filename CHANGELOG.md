@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 09-07-2026
+
+### Fixed
+- **Barikoi logo asset regression** — the 2.2.0 CSS build rewrite (commit `6167c19`) replaced the canonical Barikoi logo PNG with a corrupted variant (1 byte shorter, different pixel data), leaving the logo blank or broken for consumers upgrading from 2.1.0. Restored the canonical 2.1.0 PNG (Barikoi wordmark with green ô) in `styles/overrides.css`. `LogoControl` unchanged — the logo remains CSS-driven (empty `<a>` + `background-image`), single source of truth.
+
+---
+
 ## [2.2.0] - 30-06-2026
 
 ### Added
