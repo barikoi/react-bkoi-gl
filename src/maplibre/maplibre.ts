@@ -328,7 +328,7 @@ export default class Maplibre {
     }
 
     // add listeners
-    map.transformCameraUpdate = this._onCameraUpdate
+    map.setTransformCameraUpdate(this._onCameraUpdate)
     map.on('style.load', () => {
       // Map style has changed, this would have wiped out all settings from props
       const mapWithProjection = map as unknown as MapWithProjection
@@ -345,13 +345,13 @@ export default class Maplibre {
       this._updateStyleComponents(this.props)
     })
     for (const eventName in pointerEvents) {
-      map.on(eventName, this._onPointerEvent)
+      map.on(eventName as any, this._onPointerEvent)
     }
     for (const eventName in cameraEvents) {
-      map.on(eventName, this._onCameraEvent)
+      map.on(eventName as any, this._onCameraEvent)
     }
     for (const eventName in otherEvents) {
-      map.on(eventName, this._onEvent)
+      map.on(eventName as any, this._onEvent)
     }
     this._map = map
   }
@@ -401,7 +401,9 @@ export default class Maplibre {
     const { viewState } = nextProps
     if (viewState) {
       const map = this._map
-      if (viewState.width !== map.transform.width || viewState.height !== map.transform.height) {
+      // map.transform is not publicly typed in v6; use the canvas dimensions instead
+      const canvas = map.getCanvas()
+      if (viewState.width !== canvas.clientWidth || viewState.height !== canvas.clientHeight) {
         map.resize()
         return true
       }
@@ -417,7 +419,8 @@ export default class Maplibre {
    */
   private _updateViewState(nextProps: MaplibreProps): boolean {
     const map = this._map
-    const tr = map.transform
+    // map.transform is an internal property; cast via unknown for TransformLike access
+    const tr = (map as unknown as { transform: TransformLike }).transform
     const isMoving = map.isMoving()
 
     // Avoid manipulating the real transform when interaction/animation is ongoing
@@ -538,7 +541,9 @@ export default class Maplibre {
     if (this._internalUpdate) {
       return
     }
-    e.viewState = this._propsedCameraUpdate || transformToViewState(this._map.transform)
+    e.viewState =
+      this._propsedCameraUpdate ||
+      transformToViewState((this._map as unknown as { transform: TransformLike }).transform)
     const handlerName = cameraEvents[e.type] as keyof MapCallbacks
     const cb = this.props[handlerName] as ((e: ViewStateChangeEvent) => void) | undefined
     if (cb) {
@@ -551,7 +556,7 @@ export default class Maplibre {
       return tr
     }
     this._propsedCameraUpdate = transformToViewState(tr)
-    return applyViewStateToTransform(tr, this.props) as TransformLike
+    return applyViewStateToTransform(tr, this.props) as unknown as TransformLike
   }
 
   /** Surface a non-fatal warning via the consumer's onWarning callback,

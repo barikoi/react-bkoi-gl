@@ -261,19 +261,18 @@ describe('Marker Component', () => {
     dragendHandler(dragEndEvent);
     
     // Check that handlers were called with correct events
+    // Note: maplibre-gl v6 MarkerDragEvent no longer carries lngLat on the event.
+    // Callers should use marker.getLngLat() for position instead.
     expect(onDragStartMock).toHaveBeenCalledWith(expect.objectContaining({
       type: 'dragstart',
-      lngLat: mockLngLat
     }));
     
     expect(onDragMock).toHaveBeenCalledWith(expect.objectContaining({
       type: 'drag',
-      lngLat: mockLngLat
     }));
     
     expect(onDragEndMock).toHaveBeenCalledWith(expect.objectContaining({
       type: 'dragend',
-      lngLat: mockLngLat
     }));
   });
 

@@ -181,7 +181,7 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
         Object.prototype.hasOwnProperty.call(layout, key) &&
         !deepEqual(layout[key], prevLayout[key])
       ) {
-        map.setLayoutProperty(id, key, layout[key])
+        map.setLayoutProperty(id, key as any, layout[key])
       }
     }
     for (const key in prevLayout) {
@@ -189,7 +189,7 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
         Object.prototype.hasOwnProperty.call(prevLayout, key) &&
         !Object.prototype.hasOwnProperty.call(layout, key)
       ) {
-        map.setLayoutProperty(id, key, undefined)
+        map.setLayoutProperty(id, key as any, undefined)
       }
     }
   }
@@ -200,7 +200,7 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
         Object.prototype.hasOwnProperty.call(paint, key) &&
         !deepEqual(paint[key], prevPaint[key])
       ) {
-        map.setPaintProperty(id, key, paint[key])
+        map.setPaintProperty(id, key as any, paint[key])
       }
     }
     for (const key in prevPaint) {
@@ -208,7 +208,7 @@ function updateLayer(map: MapInstance, id: string, props: LayerProps, prevProps:
         Object.prototype.hasOwnProperty.call(prevPaint, key) &&
         !Object.prototype.hasOwnProperty.call(paint, key)
       ) {
-        map.setPaintProperty(id, key, undefined)
+        map.setPaintProperty(id, key as any, undefined)
       }
     }
   }

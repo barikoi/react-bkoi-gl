@@ -62,11 +62,12 @@ describe('Maplibre Class', () => {
         },
         appendChild: jest.fn()
       }),
-      getCanvas: jest.fn().mockReturnValue({ style: {} }),
+      getCanvas: jest.fn().mockReturnValue({ style: {}, clientWidth: 800, clientHeight: 600 }),
       jumpTo: jest.fn(),
       fitBounds: jest.fn(),
       resize: jest.fn(),
       setPadding: jest.fn(),
+      setTransformCameraUpdate: jest.fn(),
       transform: {
         width: 800,
         height: 600,

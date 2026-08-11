@@ -174,7 +174,7 @@ function _CanvasSource(props: CanvasSourceProps) {
         animate: animate || false,
       })
 
-      source = map.getSource(id) as maplibregl.CanvasSource
+      source = map.getSource(id) as unknown as maplibregl.CanvasSource
     }
 
     const updateSource = () => {
@@ -219,7 +219,7 @@ function _CanvasSource(props: CanvasSourceProps) {
   useEffect(() => {
     if (!map) return
 
-    const source = map.getSource(id) as maplibregl.CanvasSource | undefined
+    const source = map.getSource(id) as unknown as maplibregl.CanvasSource | undefined
     if (!source) return
 
     const { coordinates } = props

@@ -242,41 +242,43 @@ function _DrawControl(props: DrawControlProps) {
     }
 
     // Add event listeners
-    mapInstance.on('draw.create', handleCreate)
-    mapInstance.on('draw.update', handleUpdate)
-    mapInstance.on('draw.delete', handleDelete)
-    mapInstance.on('draw.selectionchange', handleSelectionChange)
-    mapInstance.on('draw.modechange', handleModeChange)
-    mapInstance.on('draw.combine', handleCombine)
-    mapInstance.on('draw.uncombine', handleUncombine)
-    mapInstance.on('draw.render', handleRender)
+
+    const mapAny = mapInstance as any
+    mapAny.on('draw.create', handleCreate)
+    mapAny.on('draw.update', handleUpdate)
+    mapAny.on('draw.delete', handleDelete)
+    mapAny.on('draw.selectionchange', handleSelectionChange)
+    mapAny.on('draw.modechange', handleModeChange)
+    mapAny.on('draw.combine', handleCombine)
+    mapAny.on('draw.uncombine', handleUncombine)
+    mapAny.on('draw.render', handleRender)
 
     // Cleanup function
     return () => {
       // Remove event listeners
       if (listenersRef.current.handleCreate) {
-        mapInstance.off('draw.create', listenersRef.current.handleCreate)
+        mapAny.off('draw.create', listenersRef.current.handleCreate)
       }
       if (listenersRef.current.handleUpdate) {
-        mapInstance.off('draw.update', listenersRef.current.handleUpdate)
+        mapAny.off('draw.update', listenersRef.current.handleUpdate)
       }
       if (listenersRef.current.handleDelete) {
-        mapInstance.off('draw.delete', listenersRef.current.handleDelete)
+        mapAny.off('draw.delete', listenersRef.current.handleDelete)
       }
       if (listenersRef.current.handleSelectionChange) {
-        mapInstance.off('draw.selectionchange', listenersRef.current.handleSelectionChange)
+        mapAny.off('draw.selectionchange', listenersRef.current.handleSelectionChange)
       }
       if (listenersRef.current.handleModeChange) {
-        mapInstance.off('draw.modechange', listenersRef.current.handleModeChange)
+        mapAny.off('draw.modechange', listenersRef.current.handleModeChange)
       }
       if (listenersRef.current.handleCombine) {
-        mapInstance.off('draw.combine', listenersRef.current.handleCombine)
+        mapAny.off('draw.combine', listenersRef.current.handleCombine)
       }
       if (listenersRef.current.handleUncombine) {
-        mapInstance.off('draw.uncombine', listenersRef.current.handleUncombine)
+        mapAny.off('draw.uncombine', listenersRef.current.handleUncombine)
       }
       if (listenersRef.current.handleRender) {
-        mapInstance.off('draw.render', listenersRef.current.handleRender)
+        mapAny.off('draw.render', listenersRef.current.handleRender)
       }
 
       // Remove control from map

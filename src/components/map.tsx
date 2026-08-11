@@ -81,7 +81,10 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
         if (!module) {
           throw new Error('Invalid mapLib')
         }
-        const mapboxgl = 'Map' in module ? module : module.default
+        // maplibre-gl v6 ships as ESM-only (named exports, no default export).
+        // Support both: named-export modules (v6) and legacy default-export bundles (v5/UMD).
+        const mapboxgl =
+          'Map' in module ? (module as MapLib) : (module as { default: MapLib }).default
         if (!mapboxgl.Map) {
           throw new Error('Invalid mapLib')
         }

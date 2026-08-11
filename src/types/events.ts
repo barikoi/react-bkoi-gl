@@ -13,7 +13,9 @@ import type {
   MapStyleDataEvent,
   MapSourceDataEvent,
   MapWheelEvent,
-  MapLibreZoomEvent as MapBoxZoomEvent,
+  MapBoxZoomEvent,
+  MarkerDragEvent,
+  PopupEvent,
 } from 'maplibre-gl'
 
 export type {
@@ -25,6 +27,8 @@ export type {
   MapSourceDataEvent,
   MapWheelEvent,
   MapBoxZoomEvent,
+  MarkerDragEvent,
+  PopupEvent,
 }
 
 interface MapEvent<SourceT, OriginalEventT = undefined> {
@@ -111,17 +115,7 @@ export type MapCallbacks = {
   onSourceData?: (e: MapSourceDataEvent) => void
 }
 
-export type PopupEvent = {
-  type: 'open' | 'close'
-  target: Popup
-}
-
 export type MarkerEvent<OriginalEventT = undefined> = MapEvent<Marker, OriginalEventT>
-
-export type MarkerDragEvent = MarkerEvent & {
-  type: 'dragstart' | 'drag' | 'dragend'
-  lngLat: LngLat
-}
 
 export type GeolocateEvent = MapEvent<GeolocateControl>
 

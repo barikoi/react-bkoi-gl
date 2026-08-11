@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom'
 import { useImperativeHandle, useEffect, useMemo, useContext, forwardRef, memo } from 'react'
 import { applyReactStyle } from '../utils/apply-react-style'
 
-import type { Popup as PopupInstance, PopupOptions, MapMouseEventBase } from '../types/lib'
-import type { PopupEvent } from '../types/events'
+import type { Popup as PopupInstance, PopupOptions } from '../types/lib'
+import type { PopupEvent } from 'maplibre-gl'
 
 import { MapContext } from './map'
 import { compareClassNames } from '../utils/compare-class-names'
@@ -41,11 +41,11 @@ export const Popup: React.FC<PopupProps> = memo(
     useImperativeHandle(ref, () => popup, [])
 
     useEffect(() => {
-      const onOpen = (e: MapMouseEventBase) => {
-        props.onOpen?.(e as unknown as PopupEvent)
+      const onOpen = (e: PopupEvent) => {
+        props.onOpen?.(e)
       }
-      const onClose = (e: MapMouseEventBase) => {
-        props.onClose?.(e as unknown as PopupEvent)
+      const onClose = (e: PopupEvent) => {
+        props.onClose?.(e)
       }
       popup.on('open', onOpen)
       popup.on('close', onClose)

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 10-08-2026
+
+### Fixed
+- **Prop change detection regression in Layer and Source** — fixed infinite render loop when parent component re-renders and passes new props, by adding `hasOwnProperty` checks to prevent iterating over prototype properties like `onMouseEnter`.
+- **Event subscription leak in Layer** — fixed event handler subscriptions (`onClick`, `onMouseEnter`, etc.) not being cleaned up when layer props change, causing handlers to accumulate and trigger multiple events on a single interaction.
+- **Silent prop comparison failure** — fixed `deepEqual` checks not detecting changes in `paint` and `layout` properties for standard layers, leading to outdated styles not being applied.
+- **Custom layer lifecycle crash** — fixed `useEffect` in `Layer` that re-ran for custom layers on every render, causing repeated `onAdd`/`onRemove` calls and potential style conflicts.
+- **Type safety fixes** — added `toString()` casts for `layer.id` and `layer.source` in various places to satisfy TypeScript's strict type checking.
+- **ESLint warnings** — resolved multiple ESLint errors including missing `key` props, unsafe `setState` usage, and mixed `useEffect` dependencies.
+
+### Changed
+- **`useEffect` dependency arrays** — updated `useEffect` hooks in `Layer` and `Source` components to use stable dependencies (`[mapInstance]`) and avoid unnecessary re-subscriptions.
+- **Refactoring for performance** — introduced `latestPropsRef` in `Layer` to eliminate `paint` and `layout` diff calculations on every render, relying instead on `setLayoutProperty` and `setPaintProperty` with direct property updates.
+- **Removed unnecessary custom layer logic** — custom layer type handling removed from `useEffect` cleanup as it's not needed for standard layer lifecycle.
+- **Code cleanup** — removed unused imports and variables across multiple components.
+
 ## [2.2.1] - 09-07-2026
 
 ### Fixed

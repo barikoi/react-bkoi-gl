@@ -13,7 +13,8 @@ import {
 import { applyReactStyle } from '../utils/apply-react-style'
 
 import type { Popup as PopupInstance, Marker as MarkerInstance, MarkerOptions } from '../types/lib'
-import type { MarkerEvent, MarkerDragEvent } from '../types/events'
+import type { MarkerEvent } from '../types/events'
+import type { MarkerDragEvent } from 'maplibre-gl'
 
 import { MapContext } from './map'
 import { arePointsEqual } from '../utils/deep-equal'
@@ -85,17 +86,14 @@ export const Marker: React.FC<MarkerProps> = memo(
       marker.getElement().addEventListener('click', clickHandler)
 
       const dragStartHandler = (e: MarkerDragEvent) => {
-        e.lngLat = marker.getLngLat()
         callbackRef.current.onDragStart?.(e)
       }
 
       const dragHandler = (e: MarkerDragEvent) => {
-        e.lngLat = marker.getLngLat()
         callbackRef.current.onDrag?.(e)
       }
 
       const dragEndHandler = (e: MarkerDragEvent) => {
-        e.lngLat = marker.getLngLat()
         callbackRef.current.onDragEnd?.(e)
       }
 
