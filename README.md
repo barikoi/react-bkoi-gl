@@ -139,6 +139,67 @@ import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
 ```
 
+### Next.js + Turbopack: Worker URL fix (maplibre-gl v6)
+
+> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 2.2.0 (maplibre-gl v6).
+
+MapLibre GL v6 spawns a Web Worker to process vector tiles. It auto-detects the worker URL from `import.meta.url`, but **Turbopack provides a non-https `import.meta.url`** at compile time, so the auto-detection returns `""` → worker fails silently → **blank map, no errors**.
+
+**Fix — two steps:**
+
+**1. Copy the worker files into `public/`** (run once, or as `postinstall`):
+
+```js
+// scripts/copy-maplibre-worker.mjs
+import { copyFileSync, mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+
+const require = createRequire(import.meta.url);
+const dist = path.join(path.dirname(require.resolve("maplibre-gl/package.json")), "dist");
+const dest = new URL("../public/maplibre/", import.meta.url).pathname;
+
+mkdirSync(dest, { recursive: true });
+for (const f of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {
+  copyFileSync(path.join(dist, f), path.join(dest, f));
+  console.log(`Copied ${f}`);
+}
+```
+
+Add to `package.json`:
+```json
+{
+  "scripts": {
+    "postinstall": "node scripts/copy-maplibre-worker.mjs"
+  }
+}
+```
+
+**2. Call `setWorkerUrl` before your first `<Map>`** (module-level, in a `"use client"` file):
+
+```tsx
+"use client";
+
+import { Map } from "react-bkoi-gl";
+import "react-bkoi-gl/styles";
+import { setWorkerUrl } from "maplibre-gl";
+
+// Point maplibre at the stable public path we copied in step 1.
+setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
+
+export default function MapView() {
+  return (
+    <Map
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${process.env.NEXT_PUBLIC_BARIKOI_API_KEY}`}
+      initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
+      style={{ width: "100%", height: "100vh" }}
+    />
+  );
+}
+```
+
+> This is a [known Turbopack limitation](https://github.com/maplibre/maplibre-gl-js/issues/8126) — `import.meta.url` inside bundled modules does not resolve to an `https://` URL at runtime. The same workaround applies to other Turbopack/webpack-based bundlers.
+
 ---
 
 ## Logging
