@@ -158,7 +158,6 @@ function _CanvasSource(props: CanvasSourceProps) {
     if (!map) return undefined
 
     const mapInternal = map as unknown as MapInternalProperties
-    let source: maplibregl.CanvasSource | null = null
 
     const addSource = () => {
       if (!mapInternal.style || !mapInternal.style._loaded) return
@@ -173,21 +172,6 @@ function _CanvasSource(props: CanvasSourceProps) {
         canvas,
         animate: animate || false,
       })
-
-      source = map.getSource(id) as unknown as maplibregl.CanvasSource
-    }
-
-    const updateSource = () => {
-      if (!source) return
-
-      const { coordinates } = props
-      const prevProps = propsRef.current
-
-      // Update coordinates if changed
-      if (JSON.stringify(coordinates) !== JSON.stringify(prevProps.coordinates)) {
-        const sourceWithMethods = source as unknown as SourceWithOptionalMethods
-        sourceWithMethods.setCoordinates?.(coordinates)
-      }
     }
 
     // Wait for style to load

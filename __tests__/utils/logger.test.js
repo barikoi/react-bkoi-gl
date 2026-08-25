@@ -7,8 +7,8 @@ describe('logger', () => {
   beforeEach(() => {
     originalWarn = console.warn
     originalError = console.error
-    console.warn = jest.fn()
-    console.error = jest.fn()
+    console.warn = vi.fn()
+    console.error = vi.fn()
   })
 
   afterEach(() => {
@@ -27,8 +27,8 @@ describe('logger', () => {
   })
 
   test('can configure custom logger', () => {
-    const customWarn = jest.fn()
-    const customError = jest.fn()
+    const customWarn = vi.fn()
+    const customError = vi.fn()
 
     setLogger({
       warn: customWarn,

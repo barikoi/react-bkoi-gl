@@ -7,12 +7,12 @@ import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as useControlModule from '../../src/components/use-control';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 // Spy on useControl instead of completely mocking it
-jest.spyOn(useControlModule, 'useControl');
+vi.spyOn(useControlModule, 'useControl');
 
 describe('ScaleControl Component', () => {
   let mockMap;
@@ -21,20 +21,20 @@ describe('ScaleControl Component', () => {
   let mockScaleControlInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock control instance
     mockScaleControlInstance = {
       _container: document.createElement('div'),
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('bottom-left'),
-      setUnit: jest.fn(),
+      remove: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('bottom-left'),
+      setUnit: vi.fn(),
       options: {}
     };
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      ScaleControl: jest.fn().mockImplementation(options => {
+      ScaleControl: vi.fn().mockImplementation(function (options) {
         // Store the options for later verification
         mockScaleControlInstance.options = options || {};
         return mockScaleControlInstance;
@@ -43,12 +43,12 @@ describe('ScaleControl Component', () => {
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockScaleControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({})
     };
     
     // Create context value

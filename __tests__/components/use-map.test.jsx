@@ -7,7 +7,7 @@ import { MapContext } from '../../src/components/map';
 const originalConsoleError = console.error;
 
 beforeAll(() => {
-  console.error = jest.fn((...args) => {
+  console.error = vi.fn((...args) => {
     const firstArg = args[0];
     
     // Check if the first argument is a string before using includes
@@ -65,7 +65,7 @@ describe('MapProvider and useMap', () => {
   });
   
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
   
   test('MapProvider renders children correctly', () => {
@@ -77,7 +77,7 @@ describe('MapProvider and useMap', () => {
       </MapProvider>
     );
     
-    expect(getByTestId('test-child')).toBeInTheDocument();
+    expect(getByTestId('test-child')).toBeTruthy();
   });
   
   test('MapProvider initializes with empty maps collection', () => {
@@ -171,7 +171,7 @@ describe('MapProvider and useMap', () => {
   
   test('onMapMount throws error when trying to use reserved ID "current"', async () => {
     const context = {
-      onMapMount: jest.fn((map, id) => {
+      onMapMount: vi.fn((map, id) => {
         if (id === "current") {
           throw new Error("'current' cannot be used as map id");
         }
@@ -188,7 +188,7 @@ describe('MapProvider and useMap', () => {
     const existingMaps = { [uniqueId]: mockMapInstance };
     
     const context = {
-      onMapMount: jest.fn((map, id) => {
+      onMapMount: vi.fn((map, id) => {
         if (existingMaps[id]) {
           throw new Error(`Multiple maps with the same id: ${id}`);
         }

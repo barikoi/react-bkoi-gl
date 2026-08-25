@@ -2,47 +2,51 @@
 import React from 'react';
 import { render, screen, act, waitFor, fireEvent } from '@testing-library/react';
 import { Map } from '../../src/components/map';
+import Maplibre from '../../src/maplibre/maplibre';
+import { LogoControl } from '../../src/components/logo-control';
+import { AttributionControl } from '../../src/components/attribution-control';
 import createRef from '../../src/maplibre/create-ref';
 import setGlobals from '../../src/utils/set-globals';
 import { MountedMapsContext } from '../../src/components/use-map';
 
 // Mock the dependent components
-jest.mock('../../src/components/logo-control', () => ({
-  LogoControl: jest.fn(() => <div data-testid="logo-control">Barikoi Logo</div>)
+vi.mock('../../src/components/logo-control', () => ({
+  LogoControl: vi.fn(() => <div data-testid="logo-control">Barikoi Logo</div>)
 }));
 
-jest.mock('../../src/components/attribution-control', () => ({
-  AttributionControl: jest.fn(() => <div data-testid="attribution-control">Attribution</div>)
+vi.mock('../../src/components/attribution-control', () => ({
+  AttributionControl: vi.fn(() => <div data-testid="attribution-control">Attribution</div>)
 }));
 
 // Mock createRef utility
-jest.mock('../../src/maplibre/create-ref', () => {
+vi.mock('../../src/maplibre/create-ref', () => {
   return {
     __esModule: true,
-    default: jest.fn()
+    default: vi.fn()
   };
 });
 
 // Mock setGlobals utility
-jest.mock('../../src/utils/set-globals', () => {
-  return jest.fn();
-});
+vi.mock('../../src/utils/set-globals', () => ({
+  __esModule: true,
+  default: vi.fn()
+}));
 
 // Mock Maplibre class
-jest.mock('../../src/maplibre/maplibre', () => {
+vi.mock('../../src/maplibre/maplibre', () => {
   return {
     __esModule: true,
     default: class MockMaplibre {
       static savedMaps = [];
-      static reuse = jest.fn();
+      static reuse = vi.fn();
       
       constructor() {
         this.map = mockMapInstance;
-        this.setProps = jest.fn();
-        this.destroy = jest.fn(() => {
+        this.setProps = vi.fn();
+        this.destroy = vi.fn(() => {
           mockMapInstance.remove();
         });
-        this.recycle = jest.fn();
+        this.recycle = vi.fn();
       }
     }
   };
@@ -50,59 +54,59 @@ jest.mock('../../src/maplibre/maplibre', () => {
 
 // Create mock for maplibre-gl
 const mockMapInstance = {
-  on: jest.fn(),
-  off: jest.fn(),
-  once: jest.fn((event, callback) => {
+  on: vi.fn(),
+  off: vi.fn(),
+  once: vi.fn((event, callback) => {
     if (event === 'load') {
       // Simulate synchronous load for testing
       setTimeout(callback, 0);
     }
   }),
-  getCenter: jest.fn(() => ({ lng: 0, lat: 0 })),
-  getZoom: jest.fn(() => 0),
-  getBearing: jest.fn(() => 0),
-  getPitch: jest.fn(() => 0),
-  remove: jest.fn(),
-  getCanvas: jest.fn(() => ({
+  getCenter: vi.fn(() => ({ lng: 0, lat: 0 })),
+  getZoom: vi.fn(() => 0),
+  getBearing: vi.fn(() => 0),
+  getPitch: vi.fn(() => 0),
+  remove: vi.fn(),
+  getCanvas: vi.fn(() => ({
     style: {}
   })),
-  getContainer: jest.fn(() => ({
-    appendChild: jest.fn(),
-    querySelector: jest.fn().mockReturnValue({
-      remove: jest.fn()
+  getContainer: vi.fn(() => ({
+    appendChild: vi.fn(),
+    querySelector: vi.fn().mockReturnValue({
+      remove: vi.fn()
     })
   })),
-  isMoving: jest.fn(() => false),
-  jumpTo: jest.fn(),
+  isMoving: vi.fn(() => false),
+  jumpTo: vi.fn(),
   transform: {},
   style: { _loaded: true },
   
   // Add handler properties
-  boxZoom: { enable: jest.fn(), disable: jest.fn() },
-  scrollZoom: { enable: jest.fn(), disable: jest.fn() },
-  dragRotate: { enable: jest.fn(), disable: jest.fn() },
-  dragPan: { enable: jest.fn(), disable: jest.fn() },
-  keyboard: { enable: jest.fn(), disable: jest.fn() },
-  doubleClickZoom: { enable: jest.fn(), disable: jest.fn() },
-  touchZoomRotate: { enable: jest.fn(), disable: jest.fn() },
+  boxZoom: { enable: vi.fn(), disable: vi.fn() },
+  scrollZoom: { enable: vi.fn(), disable: vi.fn() },
+  dragRotate: { enable: vi.fn(), disable: vi.fn() },
+  dragPan: { enable: vi.fn(), disable: vi.fn() },
+  keyboard: { enable: vi.fn(), disable: vi.fn() },
+  doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
+  touchZoomRotate: { enable: vi.fn(), disable: vi.fn() },
   
   // Add method to query layers
-  getLayer: jest.fn(() => true),
-  queryRenderedFeatures: jest.fn(() => []),
+  getLayer: vi.fn(() => true),
+  queryRenderedFeatures: vi.fn(() => []),
   
   // Add setter methods for style components
-  setLight: jest.fn(),
-  setProjection: jest.fn(),
-  setSky: jest.fn(),
-  setTerrain: jest.fn(),
-  setStyle: jest.fn(),
+  setLight: vi.fn(),
+  setProjection: vi.fn(),
+  setSky: vi.fn(),
+  setTerrain: vi.fn(),
+  setStyle: vi.fn(),
   attributionControl: false,
 };
 
 // Mock Map class
-const MockMap = jest.fn().mockImplementation(() => mockMapInstance);
+const MockMap = vi.fn().mockImplementation(() => mockMapInstance);
 
-jest.mock('maplibre-gl', () => {
+vi.mock('maplibre-gl', () => {
   return {
     Map: MockMap,
     LngLat: class MockLngLat {
@@ -111,14 +115,14 @@ jest.mock('maplibre-gl', () => {
         this.lat = lat;
       }
     },
-    LogoControl: jest.fn(),
-    AttributionControl: jest.fn()
+    LogoControl: vi.fn(),
+    AttributionControl: vi.fn()
   };
 }, { virtual: true });
 
 describe('Map Component', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Set up createRef mock
     createRef.mockImplementation(() => ({
@@ -139,7 +143,7 @@ describe('Map Component', () => {
     );
 
     // Check if container div is rendered
-    expect(container.querySelector('#test-map')).toBeInTheDocument();
+    expect(container.querySelector('#test-map')).toBeTruthy();
     
     // Style should be applied
     const mapContainer = container.querySelector('#test-map');
@@ -160,7 +164,7 @@ describe('Map Component', () => {
 
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.queryByTestId('test-child')).toBeInTheDocument();
+      expect(screen.queryByTestId('test-child')).toBeTruthy();
     });
     
     const child = screen.getByTestId('test-child');
@@ -174,12 +178,12 @@ describe('Map Component', () => {
 
     // Wait for the map to load and controls to be added
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Check if our mocked components are in the document
-    expect(screen.getByTestId('logo-control')).toBeInTheDocument();
-    expect(screen.getByTestId('attribution-control')).toBeInTheDocument();
+    expect(screen.getByTestId('logo-control')).toBeTruthy();
+    expect(screen.getByTestId('attribution-control')).toBeTruthy();
   });
   
   test('properly passes MapContext value to children', async () => {
@@ -199,7 +203,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('context-consumer')).toBeInTheDocument();
+      expect(screen.getByTestId('context-consumer')).toBeTruthy();
     });
     
     // Verify that MapContext was properly set up
@@ -217,7 +221,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Verify that setGlobals was called with our mockMapLib
@@ -237,7 +241,7 @@ describe('Map Component', () => {
     
     // Wait for the promise and map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Verify that setGlobals was called with our mockMapLib
@@ -247,7 +251,7 @@ describe('Map Component', () => {
   test('handles error during initialization', async () => {
     // Mock console.error to keep the test output clean
     const originalConsoleError = console.error;
-    console.error = jest.fn();
+    console.error = vi.fn();
     
     // Create a promise that rejects
     const mapLibPromise = Promise.reject(new Error('Failed to load map library'));
@@ -270,7 +274,7 @@ describe('Map Component', () => {
     const mapLibPromise = Promise.reject(new Error('Failed to load map library'));
     
     // Create a custom error handler
-    const onError = jest.fn();
+    const onError = vi.fn();
     
     act(() => {
       render(<Map id="test-map" mapLib={mapLibPromise} onError={onError} />);
@@ -294,7 +298,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Reset the mock to ensure we're only tracking calls after unmount
@@ -310,8 +314,8 @@ describe('Map Component', () => {
   });
   
   test('reuses map instance when reuseMaps is true', async () => {
-    // Get the mocked Maplibre
-    const MaplibreMock = jest.requireMock('../../src/maplibre/maplibre').default;
+    // The statically imported Maplibre IS the vi.mock factory's class
+    const MaplibreMock = Maplibre;
     
     // Setup the mock to return a map instance
     const mockMaplibreInstance = new MaplibreMock();
@@ -323,7 +327,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Check if reuse was called
@@ -333,7 +337,7 @@ describe('Map Component', () => {
   test('handles invalid mapLib gracefully', async () => {
     // Mock console.error to keep the test output clean
     const originalConsoleError = console.error;
-    console.error = jest.fn();
+    console.error = vi.fn();
     
     // Set up a promise that resolves to null
     const nullMapLibPromise = Promise.resolve(null);
@@ -375,7 +379,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Check if the ref has the map instance
@@ -386,8 +390,8 @@ describe('Map Component', () => {
   
   test('notifies MountedMapsContext of mount and unmount', async () => {
     // Create mock context handlers
-    const onMapMount = jest.fn();
-    const onMapUnmount = jest.fn();
+    const onMapMount = vi.fn();
+    const onMapUnmount = vi.fn();
     
     let renderedComponent;
     
@@ -401,7 +405,7 @@ describe('Map Component', () => {
     
     // Wait for the map to load
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
     
     // Check if onMapMount was called
@@ -419,10 +423,7 @@ describe('Map Component', () => {
   });
   
   test('controls logo and attribution visibility via props', async () => {
-    const { LogoControl } = jest.requireMock('../../src/components/logo-control');
-    const { AttributionControl } = jest.requireMock('../../src/components/attribution-control');
-
-    // --- Both controls hidden when explicitly disabled ---
+    // LogoControl / AttributionControl are the hoisted vi.mock factories' vi.fn components
     LogoControl.mockClear();
     AttributionControl.mockClear();
 
@@ -437,12 +438,12 @@ describe('Map Component', () => {
 
     // Wait until the map has mounted its children (mapInstance is set).
     await waitFor(() => {
-      expect(screen.getByTestId('map-loaded-marker')).toBeInTheDocument();
+      expect(screen.getByTestId('map-loaded-marker')).toBeTruthy();
     });
 
     // Controls must not be rendered — nor even invoked — when disabled.
-    expect(screen.queryByTestId('logo-control')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('attribution-control')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('logo-control')).not.toBeTruthy();
+    expect(screen.queryByTestId('attribution-control')).not.toBeTruthy();
     expect(LogoControl).not.toHaveBeenCalled();
     expect(AttributionControl).not.toHaveBeenCalled();
 
@@ -457,9 +458,9 @@ describe('Map Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('logo-control')).toBeInTheDocument();
+      expect(screen.getByTestId('logo-control')).toBeTruthy();
     });
-    expect(screen.getByTestId('attribution-control')).toBeInTheDocument();
+    expect(screen.getByTestId('attribution-control')).toBeTruthy();
     expect(LogoControl).toHaveBeenCalled();
     expect(AttributionControl).toHaveBeenCalled();
 

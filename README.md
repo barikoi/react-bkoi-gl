@@ -2,9 +2,13 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
+  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml/badge.svg?branch=master" alt="CI"></a>
+  <a href="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbarikoi%2Freact-bkoi-gl%2Fmaster%2Fcoverage.json"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbarikoi%2Freact-bkoi-gl%2Fmaster%2Fcoverage.json" alt="coverage"></a>
+  <a href="https://www.npmjs.com/package/maplibre-gl"><img src="https://img.shields.io/npm/v/maplibre-gl?label=maplibre-gl" alt="maplibre-gl version"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl.svg?label=downloads" alt="npm weekly downloads"></a>
+  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/node/v/react-bkoi-gl?label=node" alt="node"></a>
   <a href="https://github.com/barikoi/react-bkoi-gl/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/react-bkoi-gl.svg?label=license" alt="license"></a>
 </p>
 
@@ -141,7 +145,7 @@ const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
 
 ### Next.js + Turbopack: Worker URL fix (maplibre-gl v6)
 
-> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 2.2.0 (maplibre-gl v6).
+> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 3.0.0 (maplibre-gl v6).
 
 MapLibre GL v6 spawns a Web Worker to process vector tiles. It auto-detects the worker URL from `import.meta.url`, but **Turbopack provides a non-https `import.meta.url`** at compile time, so the auto-detection returns `""` → worker fails silently → **blank map, no errors**.
 
@@ -154,10 +158,11 @@ MapLibre GL v6 spawns a Web Worker to process vector tiles. It auto-detects the 
 import { copyFileSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const dist = path.join(path.dirname(require.resolve("maplibre-gl/package.json")), "dist");
-const dest = new URL("../public/maplibre/", import.meta.url).pathname;
+const dest = fileURLToPath(new URL("../public/maplibre/", import.meta.url));
 
 mkdirSync(dest, { recursive: true });
 for (const f of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) {

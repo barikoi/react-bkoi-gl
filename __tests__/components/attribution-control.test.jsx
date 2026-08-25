@@ -1,19 +1,20 @@
 // Jest-based tests for AttributionControl component
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { AttributionControl } from '../../src/components/attribution-control';
 import { MapContext } from '../../src/components/map';
 import { MountedMapsContext } from '../../src/components/use-map';
+import { logger } from '../../src/utils/logger';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as useControlModule from '../../src/components/use-control';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 // Spy on useControl instead of completely mocking it
-jest.spyOn(useControlModule, 'useControl');
+vi.spyOn(useControlModule, 'useControl');
 
 describe('AttributionControl Component', () => {
   let mockMap;
@@ -23,13 +24,13 @@ describe('AttributionControl Component', () => {
   let mountedMapsContextValue;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock control instance with querySelector support
     mockAttributionControlInstance = {
       _container: document.createElement('div'),
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('bottom-right')
+      remove: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('bottom-right')
     };
     
     // Add inner element for attribution content
@@ -39,7 +40,7 @@ describe('AttributionControl Component', () => {
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      AttributionControl: jest.fn().mockImplementation(options => {
+      AttributionControl: vi.fn().mockImplementation(function (options) {
         // Store the options for later verification
         mockAttributionControlInstance.options = options || {};
         return mockAttributionControlInstance;
@@ -48,15 +49,15 @@ describe('AttributionControl Component', () => {
     
     // Create mock map with load event support
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockAttributionControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({}),
-      loaded: jest.fn().mockReturnValue(true),
-      once: jest.fn(),
-      off: jest.fn()
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({}),
+      loaded: vi.fn().mockReturnValue(true),
+      once: vi.fn(),
+      off: vi.fn()
     };
     
     // Create context value
@@ -68,8 +69,8 @@ describe('AttributionControl Component', () => {
     // Create mounted maps context value
     mountedMapsContextValue = {
       maps: { default: mockMap },
-      onMapMount: jest.fn(),
-      onMapUnmount: jest.fn()
+      onMapMount: vi.fn(),
+      onMapUnmount: vi.fn()
     };
 
     // Mock the useControl hook to return our mocked instance
@@ -134,7 +135,7 @@ describe('AttributionControl Component', () => {
     const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
     
     positions.forEach(position => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       
       render(
         <MountedMapsContext.Provider value={mountedMapsContextValue}>
@@ -166,7 +167,7 @@ describe('AttributionControl Component', () => {
       expect.objectContaining({ compact: true })
     );
     
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Test with compact disabled
     render(
@@ -212,8 +213,8 @@ describe('AttributionControl Component', () => {
     };
     
     // Set up the mock to return different instances for different calls
-    mockMapLib.AttributionControl.mockImplementationOnce(() => firstControlInstance)
-      .mockImplementationOnce(() => secondControlInstance);
+    mockMapLib.AttributionControl.mockImplementationOnce(function () { return firstControlInstance })
+      .mockImplementationOnce(function () { return secondControlInstance });
     
     render(
       <MountedMapsContext.Provider value={mountedMapsContextValue}>
@@ -267,5 +268,108 @@ describe('AttributionControl Component', () => {
     );
     
     expect(useControlModule.useControl).toHaveBeenCalled();
+  });
+
+  describe('attribution content rewrite', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const getInner = () =>
+      mockAttributionControlInstance._container &&
+      mockAttributionControlInstance._container.querySelector('.maplibregl-ctrl-attrib-inner');
+
+    const renderControl = () =>
+      render(
+        <MountedMapsContext.Provider value={mountedMapsContextValue}>
+          <MapContext.Provider value={mapContextValue}>
+            <AttributionControl position="bottom-right" />
+          </MapContext.Provider>
+        </MountedMapsContext.Provider>
+      );
+
+    test('rewrites attribution with Barikoi/OpenMapTiles/OSM links once loaded', () => {
+      vi.useFakeTimers();
+
+      renderControl();
+
+      // loaded() === true -> onLoad() -> setTimeout(0)
+      expect(mockMap.loaded).toHaveBeenCalled();
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const inner = getInner();
+      expect(inner).not.toBeNull();
+
+      const links = inner.querySelectorAll('a');
+      expect(links).toHaveLength(3);
+      expect(links[0].textContent).toBe('Barikoi');
+      expect(links[0].getAttribute('href')).toBe('https://barikoi.com');
+      expect(links[1].textContent).toBe('OpenMapTiles');
+      expect(links[1].getAttribute('href')).toBe('https://openmaptiles.org');
+      expect(links[2].textContent).toBe('OpenStreetMap contributors');
+      expect(links[2].getAttribute('href')).toBe('https://www.openstreetmap.org/copyright');
+
+      for (const link of links) {
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+      }
+
+      expect(inner.textContent).toContain('©');
+    });
+
+    test('warns when .maplibregl-ctrl-attrib-inner is missing', () => {
+      vi.useFakeTimers();
+      const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+
+      // Strip the inner element so querySelector finds nothing
+      mockAttributionControlInstance._container.innerHTML = '';
+
+      renderControl();
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('maplibregl-ctrl-attrib-inner')
+      );
+      warnSpy.mockRestore();
+    });
+
+    test('defers rewrite to the map load event when not yet loaded', () => {
+      vi.useFakeTimers();
+      mockMap.loaded.mockReturnValue(false);
+
+      renderControl();
+
+      expect(mockMap.once).toHaveBeenCalledWith('load', expect.any(Function));
+
+      // Nothing rewritten before the load event fires
+      act(() => {
+        vi.runAllTimers();
+      });
+      expect(getInner().children).toHaveLength(0);
+
+      // Fire the load event
+      const onLoad = mockMap.once.mock.calls[0][1];
+      act(() => {
+        onLoad();
+        vi.runAllTimers();
+      });
+
+      expect(getInner().querySelectorAll('a')).toHaveLength(3);
+    });
+
+    test('unsubscribes from the load event on unmount', () => {
+      vi.useFakeTimers();
+      mockMap.loaded.mockReturnValue(false);
+
+      const { unmount } = renderControl();
+      unmount();
+
+      expect(mockMap.off).toHaveBeenCalledWith('load', expect.any(Function));
+    });
   });
 }); 

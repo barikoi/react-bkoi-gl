@@ -8,35 +8,35 @@ describe('createRef', () => {
   beforeEach(() => {
     // Create a mock map instance with various methods
     mockMapInstance = {
-      setMaxBounds: jest.fn(),
-      setMinZoom: jest.fn(),
-      setMaxZoom: jest.fn(),
-      setStyle: jest.fn(),
-      addSource: jest.fn(),
-      removeSource: jest.fn(),
-      addLayer: jest.fn(),
-      removeLayer: jest.fn(),
-      setPaintProperty: jest.fn(),
-      setLayerZoomRange: jest.fn(),
-      remove: jest.fn(),
+      setMaxBounds: vi.fn(),
+      setMinZoom: vi.fn(),
+      setMaxZoom: vi.fn(),
+      setStyle: vi.fn(),
+      addSource: vi.fn(),
+      removeSource: vi.fn(),
+      addLayer: vi.fn(),
+      removeLayer: vi.fn(),
+      setPaintProperty: vi.fn(),
+      setLayerZoomRange: vi.fn(),
+      remove: vi.fn(),
       
       // Non-skipped methods that should be included
-      getCenter: jest.fn(),
-      getZoom: jest.fn(),
-      getBearing: jest.fn(),
-      getPitch: jest.fn(),
-      flyTo: jest.fn(),
-      easeTo: jest.fn(),
-      jumpTo: jest.fn(),
-      fitBounds: jest.fn(),
+      getCenter: vi.fn(),
+      getZoom: vi.fn(),
+      getBearing: vi.fn(),
+      getPitch: vi.fn(),
+      flyTo: vi.fn(),
+      easeTo: vi.fn(),
+      jumpTo: vi.fn(),
+      fitBounds: vi.fn(),
       
       // Private methods that should be excluded
-      _update: jest.fn(),
-      _render: jest.fn(),
+      _update: vi.fn(),
+      _render: vi.fn(),
       
       // Event methods that should be excluded
-      fire: jest.fn(),
-      setEventedParent: jest.fn(),
+      fire: vi.fn(),
+      setEventedParent: vi.fn(),
     };
     
     // Create mock Maplibre instance
@@ -111,17 +111,17 @@ describe('createRef', () => {
   test('handles inheritance by including methods from prototype chain', () => {
     // Create a prototype chain
     const baseProto = {
-      baseMethod: jest.fn()
+      baseMethod: vi.fn()
     };
     
     const derivedProto = Object.create(baseProto);
-    derivedProto.derivedMethod = jest.fn();
+    derivedProto.derivedMethod = vi.fn();
     
     // Create a map instance with prototype chain
     const mapWithProto = Object.create(derivedProto);
     
     // Add methods directly to the instance
-    mapWithProto.instanceMethod = jest.fn();
+    mapWithProto.instanceMethod = vi.fn();
     
     // Add the methods we want to check for
     for (const key in mockMapInstance) {

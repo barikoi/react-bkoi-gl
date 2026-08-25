@@ -3,7 +3,6 @@ import type { Point, LngLat, MapGeoJSONFeature, ViewState } from './common'
 import type {
   Map,
   Marker,
-  Popup,
   GeolocateControl,
   MapLibreEvent,
   MapMouseEvent as _MapMouseEvent,

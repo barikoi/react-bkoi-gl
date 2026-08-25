@@ -6,8 +6,8 @@ import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 describe('TerrainControl Component', () => {
@@ -17,28 +17,28 @@ describe('TerrainControl Component', () => {
   let mockTerrainControlInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock control instance
     mockTerrainControlInstance = {
       _container: document.createElement('div'),
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('top-right')
+      remove: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right')
     };
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      TerrainControl: jest.fn().mockImplementation(() => mockTerrainControlInstance)
+      TerrainControl: vi.fn().mockImplementation(function () { return mockTerrainControlInstance })
     };
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockTerrainControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({})
     };
     
     // Create context value

@@ -6,8 +6,8 @@ import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 describe('LogoControl Component', () => {
@@ -16,7 +16,7 @@ describe('LogoControl Component', () => {
   let mapContextValue;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock mapLib (not used in new implementation, but still required by context)
     mockMapLib = {};
@@ -26,16 +26,17 @@ describe('LogoControl Component', () => {
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn((ctrl) => addedControls.has(ctrl)),
-      addControl: jest.fn((ctrl) => {
+      hasControl: vi.fn((ctrl) => addedControls.has(ctrl)),
+      addControl: vi.fn(function (ctrl) {
         addedControls.add(ctrl);
         // Simulate MapLibre calling onAdd when control is added
         if (ctrl.onAdd) {
           ctrl.onAdd(mockMap);
         }
       }),
-      removeControl: jest.fn((ctrl) => addedControls.delete(ctrl)),
-      getMap: jest.fn().mockReturnValue({})
+      removeControl: vi.fn((ctrl) => addedControls.delete(ctrl)),
+      getMap: vi.fn().mockReturnValue({}),
+      getContainer: vi.fn().mockReturnValue(document.createElement('div'))
     };
     
     // Create context value
@@ -118,5 +119,75 @@ describe('LogoControl Component', () => {
     
     // Control removed from map
     expect(mockMap.removeControl).toHaveBeenCalledWith(addedControl);
+  });
+
+  test('creates a Barikoi anchor with correct attributes', () => {
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <LogoControl position="bottom-left" />
+      </MapContext.Provider>
+    );
+
+    const control = mockMap.addControl.mock.calls[0][0];
+    const anchor = control.onAdd(mockMap);
+
+    expect(anchor).toBeInstanceOf(HTMLAnchorElement);
+    expect(anchor.className).toBe('maplibregl-ctrl-logo');
+    expect(anchor.getAttribute('href')).toBe('https://www.barikoi.com');
+    expect(anchor.getAttribute('target')).toBe('_blank');
+    expect(anchor.getAttribute('alt')).toBe('Barikoi');
+    expect(anchor.getAttribute('aria-label')).toBe('Barikoi logo');
+    expect(anchor.getAttribute('rel')).toBe('noopener nofollow');
+  });
+
+  test('removes a pre-existing Barikoi logo before adding its own', () => {
+    const mapContainer = document.createElement('div');
+    const staleLogo = document.createElement('a');
+    staleLogo.className = 'maplibregl-ctrl-logo';
+    staleLogo.setAttribute('href', 'https://www.barikoi.com');
+    mapContainer.appendChild(staleLogo);
+    mockMap.getContainer.mockReturnValue(mapContainer);
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <LogoControl position="bottom-left" />
+      </MapContext.Provider>
+    );
+
+    // The stale logo was removed from the map container
+    expect(staleLogo.parentNode).toBeNull();
+    expect(mapContainer.querySelector('a.maplibregl-ctrl-logo')).toBeNull();
+  });
+
+  test('keeps unrelated anchors untouched when removing stale logos', () => {
+    const mapContainer = document.createElement('div');
+    const other = document.createElement('a');
+    other.className = 'maplibregl-ctrl-logo';
+    other.setAttribute('href', 'https://example.com'); // different href — not a Barikoi logo
+    mapContainer.appendChild(other);
+    mockMap.getContainer.mockReturnValue(mapContainer);
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <LogoControl position="bottom-left" />
+      </MapContext.Provider>
+    );
+
+    expect(other.parentNode).toBe(mapContainer);
+  });
+
+  test('onRemove clears the container reference', () => {
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <LogoControl position="bottom-left" />
+      </MapContext.Provider>
+    );
+
+    const control = mockMap.addControl.mock.calls[0][0];
+    control.onAdd(mockMap);
+    expect(control._container).toBeDefined();
+
+    control.onRemove();
+    expect(control._container).toBeUndefined();
   });
 }); 

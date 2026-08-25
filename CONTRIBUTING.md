@@ -44,8 +44,8 @@ npm install
 | `npm run clean` | Remove the `dist/` directory |
 | `npm run build` | Production bundle (tsup + `scripts/build-styles.js`) |
 | `npm run lint` | ESLint |
-| `npm test` | TypeScript validation + Jest test suite |
-| `npm run coverage` | Jest with coverage report |
+| `npm test` | TypeScript validation + Vitest suite |
+| `npm run coverage` | Vitest with coverage report |
 
 ### Project Structure
 
@@ -55,7 +55,7 @@ src/
   maplibre/       # MapLibre wrapper class, MapRef factory
   types/          # TypeScript type definitions
   utils/          # Helpers (logger, deep-equal, transform, etc.)
-__tests__/        # Jest tests, mirrors src/ layout
+__tests__/        # Vitest tests, mirrors src/ layout
   mocks/          # Load-bearing maplibre-gl and react-dom mocks
 scripts/          # Build scripts (build-styles.js)
 styles/           # Committed CSS overrides, concatenated into the bundle
@@ -125,29 +125,35 @@ barrel files elsewhere.
 
 ### Unit Tests
 
-- **Framework**: Jest + React Testing Library + `ts-jest`.
+- **Framework**: Vitest (unit, jsdom, mocked maplibre-gl) + React Testing Library;
+  Vitest browser mode (real maplibre-gl in headless Chromium via Playwright)
+  for `__tests__/browser/` specs — same setup as react-map-gl.
+- **Projects**: `unit` (jsdom, `__tests__/**/*test*`) and `browser`
+  (`__tests__/browser/**/*.spec.*`, real WebGL rendering, offline inline styles).
+  Run one: `npm run test:unit` / `npm run test:browser`; browsers:
+  `npm run playwright:install` (once per machine/CI).
 - **Location**: `__tests__/`, organized by component and utility.
 - **Mocks**: `__tests__/mocks/maplibre-gl.js` and
   `__tests__/mocks/react-dom-mock.js` are load-bearing.
 - **Coverage**: run `npm run coverage` to generate a report in `coverage/`.
 
 ```bash
-npm test               # typecheck + full Jest suite
-npm run coverage       # Jest with coverage
+npm test               # typecheck + full Vitest suite
+npm run coverage       # Vitest with coverage
 npm run typecheck      # TypeScript only
-npx jest <pattern>     # subset of tests
+npx vitest run <pattern> # subset of tests
 ```
 
 ### Testing Pitfalls (read before writing tests)
 
 - **Component tests mock the whole `Maplibre` class**
-  (`jest.mock('../../src/maplibre/maplibre', () => class { ... })`). Changes
+  (`vi.mock('../../src/maplibre/maplibre', () => class { ... })`). Changes
   to the real `Maplibre.setProps`, `_updateStyleComponents`, or `_initialize`
   are NOT exercised by `__tests__/components/*`. Test wrapper internals in
   `__tests__/maplibre/maplibre.test.js` instead.
 - **Style readiness has two signals, depending on the file:**
   - `src/maplibre/maplibre.ts` checks `map.style && map.isStyleLoaded()`.
-    Mock with `style: {}` and `isStyleLoaded: jest.fn()`. Do NOT use
+    Mock with `style: {}` and `isStyleLoaded: vi.fn()`. Do NOT use
     `style._loaded` here — it's not read.
   - `src/components/layer.ts` and `src/components/source.ts` read
     `mapInternal.style._loaded` directly. In component tests, toggle
@@ -182,13 +188,18 @@ resolution across `node_modules`.
 
 ### CI Pipeline
 
-- **Trigger**: automatic on push to `dev` (see `.github/workflows/action.yaml`
-  for the current branch — temporary overrides apply while SonarQube is
-  undergoing maintenance).
-- **Steps**: install dependencies, run `npm run coverage`, run SonarQube
-  scan via `sonarsource/sonarqube-scan-action@v4`.
-- **Notifications**: Discord webhook on success, failure, and cancellation.
-- **Config**: `.github/workflows/action.yaml` and `sonar-project.properties`.
+Single workflow: `.github/workflows/ci.yaml`, **master only** (pushes to
+`master` and PRs targeting `master`):
+
+- Node 20 + 22 matrix running typecheck → lint → build → `vitest run --coverage`.
+- On `master` pushes, the `coverage-badge` job regenerates `coverage.json`
+  (`scripts/make-coverage-badge.mjs`) and commits it if changed — the README
+  coverage badge reads that file via the shields.io endpoint.
+- No secrets required.
+- SonarQube (`.github/workflows/action.yaml`) is separate, temporarily
+  disabled (branch `down`) while the SonarQube server is under maintenance.
+- `package-lock.json` is gitignored by policy — CI installs with `npm install`,
+  resolving from the exact version pins in `package.json`.
 
 ---
 
@@ -330,30 +341,29 @@ test), `commit-msg` (commitlint + Signed-off-by trailer + identity check),
 
 ### Publishing Steps
 
-1. **Log in to npm** (requires 2FA):
-   ```bash
-   npm login
-   ```
-2. **Bump the version and update the changelog:**
-   - Add a `## [<new-version>] - <YYYY-MM-DD>` entry to `CHANGELOG.md`
-     following the Keep a Changelog format.
-   - Bump via npm:
+Publishing is **manual** — CI never publishes.
+
+1. Prepare the release on a branch:
+   - `package.json` `version` matches the top `## [x.y.z] - <date>` entry in
+     `CHANGELOG.md` (real date, not `unreleased`).
+   - Dry-run the notes extraction to preview release notes:
      ```bash
-     npm version patch   # bug fixes (2.2.0 → 2.2.1)
-     npm version minor   # new features (2.2.0 → 2.3.0)
-     npm version major   # breaking changes (2.2.0 → 3.0.0)
+     node scripts/extract-changelog.mjs
      ```
-3. **Re-run the pre-release checks** (tests, build, publint,
-   `@arethetypeswrong`).
-4. **Publish:**
+2. Merge into `master` — CI runs the full gate (typecheck, lint, build,
+   tests with coverage).
+3. Publish from your machine (requires `npm login` + 2FA):
    ```bash
-   npm publish --access public
+   npm publish --access public   # prepublishOnly gate runs automatically
+   ```
+4. Tag and create the GitHub Release, pasting the CHANGELOG section as notes
+   (`node scripts/extract-changelog.mjs` prints it):
+   ```bash
+   git tag vX.Y.Z && git push origin vX.Y.Z
    ```
 5. **Verify publication:**
    - [npm package page](https://www.npmjs.com/package/react-bkoi-gl)
    - `npm install react-bkoi-gl@latest` in a fresh project.
-6. **Tag the release** on GitHub and copy the CHANGELOG entry into the
-   release notes.
 
 ---
 

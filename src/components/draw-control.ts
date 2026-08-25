@@ -76,7 +76,6 @@ const defaultDrawOptions: DrawControlOptions = {
 function _DrawControl(props: DrawControlProps) {
   const {
     position,
-    style,
     onDrawCreate,
     onDrawDelete,
     onDrawUpdate,

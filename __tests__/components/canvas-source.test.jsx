@@ -6,8 +6,8 @@ import { MapContext } from '../../src/components/map'
 import { Layer } from '../../src/components/layer'
 
 // Mock the Layer component
-jest.mock('../../src/components/layer', () => ({
-  Layer: jest.fn(props => <div data-testid="mocked-layer" data-source={props.source} />),
+vi.mock('../../src/components/layer', () => ({
+  Layer: vi.fn(props => <div data-testid="mocked-layer" data-source={props.source} />),
 }))
 
 describe('CanvasSource', () => {
@@ -26,16 +26,16 @@ describe('CanvasSource', () => {
   ]
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     mockMapInstance = {
-      on: jest.fn(),
-      off: jest.fn(),
-      addSource: jest.fn(),
-      removeSource: jest.fn(),
-      getSource: jest.fn(() => null),
-      getLayer: jest.fn(() => null),
-      getStyle: jest.fn(() => ({ layers: [] })),
+      on: vi.fn(),
+      off: vi.fn(),
+      addSource: vi.fn(),
+      removeSource: vi.fn(),
+      getSource: vi.fn(() => null),
+      getLayer: vi.fn(() => null),
+      getStyle: vi.fn(() => ({ layers: [] })),
       style: { _loaded: true },
     }
 
@@ -149,7 +149,7 @@ describe('CanvasSource', () => {
 
   test('removes dependent layers when source is removed', () => {
     // Add removeLayer to mock
-    mockMapInstance.removeLayer = jest.fn()
+    mockMapInstance.removeLayer = vi.fn()
     // Mock source as existing so cleanup runs
     mockMapInstance.getSource.mockReturnValue({ type: 'canvas' })
     mockMapInstance.getStyle.mockReturnValue({

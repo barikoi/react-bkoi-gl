@@ -4,41 +4,41 @@ import { MinimapControl, Minimap } from '../../src/components/minimap-control'
 import { MapContext } from '../../src/components/map'
 
 // Mock maplibre-gl Map
-jest.mock('maplibre-gl', () => {
+vi.mock('maplibre-gl', () => {
   const createMockMap = () => ({
-    addControl: jest.fn(),
-    removeControl: jest.fn(),
-    hasControl: jest.fn(() => false),
-    on: jest.fn(),
-    off: jest.fn(),
-    getCanvas: jest.fn(() => ({ style: {}, width: 800, height: 600 })),
-    getZoom: jest.fn(() => 10),
-    getCenter: jest.fn(() => ({ lng: 90, lat: 23, toArray: () => [90, 23] })),
-    getBearing: jest.fn(() => 0),
-    getPitch: jest.fn(() => 0),
-    getStyle: jest.fn(() => ({})),
-    jumpTo: jest.fn(),
-    resize: jest.fn(),
-    once: jest.fn((event, callback) => {
+    addControl: vi.fn(),
+    removeControl: vi.fn(),
+    hasControl: vi.fn(function () { return false }),
+    on: vi.fn(),
+    off: vi.fn(),
+    getCanvas: vi.fn(() => ({ style: {}, width: 800, height: 600 })),
+    getZoom: vi.fn(() => 10),
+    getCenter: vi.fn(() => ({ lng: 90, lat: 23, toArray: () => [90, 23] })),
+    getBearing: vi.fn(() => 0),
+    getPitch: vi.fn(() => 0),
+    getStyle: vi.fn(() => ({})),
+    jumpTo: vi.fn(),
+    resize: vi.fn(),
+    once: vi.fn((event, callback) => {
       if (event === 'load' || event === 'style.load') {
         // Call callback asynchronously to simulate real behavior
         setTimeout(callback, 0)
       }
     }),
-    getSource: jest.fn(),
-    addSource: jest.fn(),
-    addLayer: jest.fn(),
-    unproject: jest.fn((point) => ({ toArray: () => [point[0], point[1]] })),
-    remove: jest.fn(),
+    getSource: vi.fn(),
+    addSource: vi.fn(),
+    addLayer: vi.fn(),
+    unproject: vi.fn((point) => ({ toArray: () => [point[0], point[1]] })),
+    remove: vi.fn(),
   })
 
   return {
-    Map: jest.fn(() => createMockMap()),
-    NavigationControl: jest.fn(),
-    ScaleControl: jest.fn(),
-    FullscreenControl: jest.fn(),
-    GeolocateControl: jest.fn(),
-    AttributionControl: jest.fn(),
+    Map: vi.fn(function () { return createMockMap() }),
+    NavigationControl: vi.fn(),
+    ScaleControl: vi.fn(),
+    FullscreenControl: vi.fn(),
+    GeolocateControl: vi.fn(),
+    AttributionControl: vi.fn(),
   }
 })
 
@@ -49,35 +49,35 @@ describe('MinimapControl', () => {
   let addedControls
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     // Track added controls
     addedControls = new Set()
 
     // Create mock mapLib
     mockMapLib = {
-      Map: jest.fn(),
+      Map: vi.fn(),
     }
 
     // Create mock map with MapRef interface
     mockMap = {
-      hasControl: jest.fn().mockImplementation((ctrl) => addedControls.has(ctrl)),
-      addControl: jest.fn().mockImplementation((ctrl) => addedControls.add(ctrl)),
-      removeControl: jest.fn().mockImplementation((ctrl) => addedControls.delete(ctrl)),
-      on: jest.fn(),
-      off: jest.fn(),
-      getCanvas: jest.fn(() => ({ style: {}, width: 800, height: 600 })),
-      getZoom: jest.fn(() => 10),
-      getCenter: jest.fn(() => ({ lng: 90, lat: 23, toArray: () => [90, 23] })),
-      getBearing: jest.fn(() => 0),
-      getPitch: jest.fn(() => 0),
-      getStyle: jest.fn(() => ({})),
-      jumpTo: jest.fn(),
-      resize: jest.fn(),
-      once: jest.fn(),
-      getSource: jest.fn(),
-      unproject: jest.fn((point) => ({ toArray: () => [point[0], point[1]] })),
-      getMap: jest.fn().mockReturnThis(),
+      hasControl: vi.fn().mockImplementation((ctrl) => addedControls.has(ctrl)),
+      addControl: vi.fn().mockImplementation((ctrl) => addedControls.add(ctrl)),
+      removeControl: vi.fn().mockImplementation((ctrl) => addedControls.delete(ctrl)),
+      on: vi.fn(),
+      off: vi.fn(),
+      getCanvas: vi.fn(() => ({ style: {}, width: 800, height: 600 })),
+      getZoom: vi.fn(() => 10),
+      getCenter: vi.fn(() => ({ lng: 90, lat: 23, toArray: () => [90, 23] })),
+      getBearing: vi.fn(() => 0),
+      getPitch: vi.fn(() => 0),
+      getStyle: vi.fn(() => ({})),
+      jumpTo: vi.fn(),
+      resize: vi.fn(),
+      once: vi.fn(),
+      getSource: vi.fn(),
+      unproject: vi.fn((point) => ({ toArray: () => [point[0], point[1]] })),
+      getMap: vi.fn().mockReturnThis(),
     }
 
     // Create context value
@@ -111,8 +111,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -130,8 +130,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -144,7 +144,7 @@ describe('MinimapControl', () => {
     })
 
     test('onToggle callback is called', () => {
-      const onToggle = jest.fn()
+      const onToggle = vi.fn()
       const minimap = new Minimap({ onToggle })
       const parentMap = {
         getZoom: () => 10,
@@ -152,8 +152,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -172,8 +172,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -214,8 +214,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -233,7 +233,7 @@ describe('MinimapControl', () => {
   describe('SVG sanitization', () => {
     test('accepts valid custom SVG icon', () => {
       const validSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>'
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       const minimap = new Minimap({
         toggleButton: { icon: validSVG }
@@ -247,7 +247,7 @@ describe('MinimapControl', () => {
 
     test('falls back to default icon for invalid SVG', async () => {
       const invalidSVG = '<div>not an svg</div>'
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       const minimap = new Minimap({
         toggleButton: { icon: invalidSVG }
@@ -259,8 +259,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -288,8 +288,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -321,8 +321,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -353,8 +353,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -388,8 +388,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -442,7 +442,7 @@ describe('MinimapControl', () => {
     })
 
     test('supports toggleable option', () => {
-      const onToggle = jest.fn()
+      const onToggle = vi.fn()
 
       render(
         <MapContext.Provider value={mapContextValue}>
@@ -546,8 +546,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }
@@ -586,8 +586,8 @@ describe('MinimapControl', () => {
         getBearing: () => 0,
         getPitch: () => 0,
         getStyle: () => ({}),
-        on: jest.fn(),
-        off: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
         getCanvas: () => ({ width: 800, height: 600 }),
         unproject: (p) => ({ toArray: () => p }),
       }

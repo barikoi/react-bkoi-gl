@@ -7,17 +7,18 @@ import { MapContext } from '../../src/components/map';
 import assert from '../../src/utils/assert';
 
 // Mock the assert function to prevent errors with source type changes
-jest.mock('../../src/utils/assert', () => {
-  return jest.fn((condition, message) => {
+vi.mock('../../src/utils/assert', () => ({
+  __esModule: true,
+  default: vi.fn((condition, message) => {
     if (!condition) {
       throw new Error(message);
     }
-  });
-});
+  })
+}));
 
 // Mock the Layer component
-jest.mock('../../src/components/layer', () => ({
-  Layer: jest.fn(props => <div data-testid="mocked-layer" />)
+vi.mock('../../src/components/layer', () => ({
+  Layer: vi.fn(props => <div data-testid="mocked-layer" />)
 }));
 
 describe('Source Component', () => {
@@ -27,33 +28,33 @@ describe('Source Component', () => {
   let forceUpdateCallback;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
+    vi.clearAllMocks();
+    vi.useFakeTimers();
     forceUpdateCallback = null;
     
     // Create mock map instance
     mockMapInstance = {
-      on: jest.fn((event, callback) => {
+      on: vi.fn((event, callback) => {
         if (event === 'styledata') {
           forceUpdateCallback = callback;
         }
       }),
-      off: jest.fn(),
-      getSource: jest.fn(() => null),
-      addSource: jest.fn(),
-      removeSource: jest.fn(),
-      getStyle: jest.fn(() => ({
+      off: vi.fn(),
+      getSource: vi.fn(() => null),
+      addSource: vi.fn(),
+      removeSource: vi.fn(),
+      getStyle: vi.fn(() => ({
         layers: [
           { id: 'layer1', source: 'test-source' },
           { id: 'layer2', source: 'other-source' },
         ]
       })),
-      removeLayer: jest.fn(),
+      removeLayer: vi.fn(),
       style: { _loaded: true }
     };
 
     mockMap = {
-      getMap: jest.fn(() => mockMapInstance)
+      getMap: vi.fn(function () { return mockMapInstance })
     };
 
     mapContextValue = {
@@ -62,7 +63,7 @@ describe('Source Component', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test('creates a new source with given props', () => {
@@ -83,7 +84,7 @@ describe('Source Component', () => {
     
     // Run the styledata callback to trigger source creation
     forceUpdateCallback();
-    jest.runAllTimers();
+    vi.runAllTimers();
 
     // Should call addSource with the correct props
     expect(mockMapInstance.addSource).toHaveBeenCalledWith(
@@ -98,7 +99,7 @@ describe('Source Component', () => {
   test('updates an existing geojson source', () => {
     // Mock an existing source
     const mockGeoJSONSource = {
-      setData: jest.fn()
+      setData: vi.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
@@ -143,7 +144,7 @@ describe('Source Component', () => {
   test('updates an existing image source', () => {
     // Mock an existing source
     const mockImageSource = {
-      updateImage: jest.fn()
+      updateImage: vi.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
@@ -185,7 +186,7 @@ describe('Source Component', () => {
   test('updates an existing video source with coordinates', () => {
     // Mock an existing source
     const mockVideoSource = {
-      setCoordinates: jest.fn()
+      setCoordinates: vi.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
@@ -224,7 +225,7 @@ describe('Source Component', () => {
   test('updates an existing video source with url', () => {
     // Mock an existing source
     const mockVideoSource = {
-      setUrl: jest.fn()
+      setUrl: vi.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
@@ -261,7 +262,7 @@ describe('Source Component', () => {
   test('updates an existing raster source with tiles', () => {
     // Mock an existing source
     const mockRasterSource = {
-      setTiles: jest.fn()
+      setTiles: vi.fn()
     };
     
     mockMapInstance.getSource.mockImplementation((id) => {
@@ -304,7 +305,7 @@ describe('Source Component', () => {
       return null;
     });
     
-    console.warn = jest.fn(); // Silence console warnings
+    console.warn = vi.fn(); // Silence console warnings
 
     // First render 
     const { rerender } = render(
@@ -347,7 +348,7 @@ describe('Source Component', () => {
       return null;
     });
     
-    console.warn = jest.fn(); // Silence console warnings
+    console.warn = vi.fn(); // Silence console warnings
     
     // First render 
     const { rerender } = render(
@@ -396,7 +397,7 @@ describe('Source Component', () => {
     
     // Run the styledata callback
     forceUpdateCallback();
-    jest.runAllTimers();
+    vi.runAllTimers();
     
     // Should not call addSource
     expect(mockMapInstance.addSource).not.toHaveBeenCalled();
@@ -439,7 +440,7 @@ describe('Source Component', () => {
 
     // Run the styledata callback
     forceUpdateCallback();
-    jest.runAllTimers();
+    vi.runAllTimers();
 
     // Should call addSource with a generated ID
     expect(mockMapInstance.addSource).toHaveBeenCalledWith(

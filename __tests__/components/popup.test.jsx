@@ -6,14 +6,14 @@ import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 // Mock for the createPortal function in react-dom
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  createPortal: jest.fn((children, container) => {
+vi.mock('react-dom', async () => ({
+  ...(await vi.importActual('react-dom')),
+  createPortal: vi.fn((children, container) => {
     return <div data-testid="mock-portal">{children}</div>;
   })
 }));
@@ -26,34 +26,34 @@ describe('Popup Component', () => {
 
   beforeEach(() => {
     // Reset any mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create a mock popup instance
     mockPopupInstance = {
-      setLngLat: jest.fn().mockReturnThis(),
-      setDOMContent: jest.fn().mockReturnThis(),
-      addTo: jest.fn().mockReturnThis(),
-      on: jest.fn(),
-      off: jest.fn(),
-      once: jest.fn(),
-      remove: jest.fn(),
-      isOpen: jest.fn().mockReturnValue(true),
-      getLngLat: jest.fn().mockReturnValue({ lng: 0, lat: 0 }),
-      getElement: jest.fn().mockReturnValue(document.createElement('div')),
-      setOffset: jest.fn(),
-      setMaxWidth: jest.fn(),
-      toggleClassName: jest.fn(),
+      setLngLat: vi.fn().mockReturnThis(),
+      setDOMContent: vi.fn().mockReturnThis(),
+      addTo: vi.fn().mockReturnThis(),
+      on: vi.fn(),
+      off: vi.fn(),
+      once: vi.fn(),
+      remove: vi.fn(),
+      isOpen: vi.fn().mockReturnValue(true),
+      getLngLat: vi.fn().mockReturnValue({ lng: 0, lat: 0 }),
+      getElement: vi.fn().mockReturnValue(document.createElement('div')),
+      setOffset: vi.fn(),
+      setMaxWidth: vi.fn(),
+      toggleClassName: vi.fn(),
       options: {}
     };
 
     // Create mock mapLib with Popup constructor
     mockMapLib = {
-      Popup: jest.fn().mockImplementation(() => mockPopupInstance)
+      Popup: vi.fn().mockImplementation(function () { return mockPopupInstance })
     };
 
     // Create mock map
     mockMap = {
-      getMap: jest.fn().mockReturnValue({})
+      getMap: vi.fn().mockReturnValue({})
     };
 
     // Create the context value
@@ -64,14 +64,14 @@ describe('Popup Component', () => {
 
     // Mock document.createElement
     const originalCreateElement = document.createElement.bind(document);
-    document.createElement = jest.fn((tagName) => {
+    document.createElement = vi.fn((tagName) => {
       return originalCreateElement(tagName);
     });
   });
 
   afterEach(() => {
     // Restore document.createElement
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test('renders a popup with correct props', () => {
@@ -108,8 +108,8 @@ describe('Popup Component', () => {
   });
 
   test('registers event handlers correctly', () => {
-    const onOpen = jest.fn();
-    const onClose = jest.fn();
+    const onOpen = vi.fn();
+    const onClose = vi.fn();
 
     render(
       <MapContext.Provider value={mapContextValue}>

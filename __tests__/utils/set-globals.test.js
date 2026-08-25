@@ -8,21 +8,21 @@ describe('setGlobals utility', () => {
   beforeEach(() => {
     // Create mock mapLib with RTL plugin functionality
     mockMapLib = {
-      getRTLTextPluginStatus: jest.fn().mockReturnValue('unavailable'),
-      setRTLTextPlugin: jest.fn((url, callback, lazy) => {
+      getRTLTextPluginStatus: vi.fn().mockReturnValue('unavailable'),
+      setRTLTextPlugin: vi.fn((url, callback, lazy) => {
         if (url === 'error-url') {
           callback(new Error('Plugin error'));
         } else {
           callback();
         }
       }),
-      setMaxParallelImageRequests: jest.fn(),
-      setWorkerCount: jest.fn(),
-      setWorkerUrl: jest.fn()
+      setMaxParallelImageRequests: vi.fn(),
+      setWorkerCount: vi.fn(),
+      setWorkerUrl: vi.fn()
     };
     
     // Spy on console.error
-    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
   
   afterEach(() => {
@@ -145,14 +145,14 @@ describe('setGlobals utility', () => {
   });
 
   test('warns when RTLTextPlugin is configured but mapLib lacks setRTLTextPlugin', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const mapLibWithoutRTL = {
-      getRTLTextPluginStatus: jest.fn().mockReturnValue('unavailable'),
+      getRTLTextPluginStatus: vi.fn().mockReturnValue('unavailable'),
       // setRTLTextPlugin intentionally omitted
-      setMaxParallelImageRequests: jest.fn(),
-      setWorkerCount: jest.fn(),
-      setWorkerUrl: jest.fn()
+      setMaxParallelImageRequests: vi.fn(),
+      setWorkerCount: vi.fn(),
+      setWorkerUrl: vi.fn()
     };
 
     setGlobals(mapLibWithoutRTL, {
@@ -161,5 +161,68 @@ describe('setGlobals utility', () => {
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('setRTLTextPlugin'));
     warnSpy.mockRestore();
+  });
+});
+describe('URL validation', () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  const makeMapLib = () => ({
+    getRTLTextPluginStatus: vi.fn().mockReturnValue('unavailable'),
+    setRTLTextPlugin: vi.fn(),
+    setMaxParallelImageRequests: vi.fn(),
+    setWorkerCount: vi.fn(),
+    setWorkerUrl: vi.fn()
+  });
+
+  test('rejects RTLTextPlugin URLs with non-http protocols', () => {
+    const mapLib = makeMapLib();
+
+    setGlobals(mapLib, { RTLTextPlugin: 'javascript:alert(1)' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Only http/https protocols are allowed')
+    );
+    expect(mapLib.setRTLTextPlugin).not.toHaveBeenCalled();
+  });
+
+  test('rejects malformed RTLTextPlugin URLs', () => {
+    const mapLib = makeMapLib();
+
+    setGlobals(mapLib, { RTLTextPlugin: 'not a url' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid URL format')
+    );
+    expect(mapLib.setRTLTextPlugin).not.toHaveBeenCalled();
+  });
+
+  test('rejects workerUrl with non-http protocol and skips setWorkerUrl', () => {
+    const mapLib = makeMapLib();
+
+    setGlobals(mapLib, { workerUrl: 'ftp://example.com/worker.js' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('workerUrl')
+    );
+    expect(mapLib.setWorkerUrl).not.toHaveBeenCalled();
+  });
+
+  test('rejects malformed workerUrl and skips setWorkerUrl', () => {
+    const mapLib = makeMapLib();
+
+    setGlobals(mapLib, { workerUrl: '' });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid URL format')
+    );
+    expect(mapLib.setWorkerUrl).not.toHaveBeenCalled();
   });
 });

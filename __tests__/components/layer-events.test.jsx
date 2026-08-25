@@ -5,34 +5,35 @@ import { Layer } from '../../src/components/layer'
 import { MapContext } from '../../src/components/map'
 
 // Mock the assert function
-jest.mock('../../src/utils/assert', () => {
-  return jest.fn((condition, message) => {
+vi.mock('../../src/utils/assert', () => ({
+  __esModule: true,
+  default: vi.fn((condition, message) => {
     if (!condition) {
       throw new Error(message)
     }
   })
-})
+}))
 
 describe('Layer Events', () => {
   let mockMapInstance
   let mapContextValue
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     mockMapInstance = {
-      on: jest.fn(),
-      off: jest.fn(),
-      addLayer: jest.fn(),
-      removeLayer: jest.fn(),
-      getLayer: jest.fn(() => null),
-      getSource: jest.fn(() => null),
-      setLayoutProperty: jest.fn(),
-      setPaintProperty: jest.fn(),
-      setFilter: jest.fn(),
-      setLayerZoomRange: jest.fn(),
-      moveLayer: jest.fn(),
-      getCanvas: jest.fn(() => ({ style: {} })),
+      on: vi.fn(),
+      off: vi.fn(),
+      addLayer: vi.fn(),
+      removeLayer: vi.fn(),
+      getLayer: vi.fn(() => null),
+      getSource: vi.fn(() => null),
+      setLayoutProperty: vi.fn(),
+      setPaintProperty: vi.fn(),
+      setFilter: vi.fn(),
+      setLayerZoomRange: vi.fn(),
+      moveLayer: vi.fn(),
+      getCanvas: vi.fn(() => ({ style: {} })),
       style: { _loaded: true },
     }
 
@@ -41,13 +42,13 @@ describe('Layer Events', () => {
         getMap: () => mockMapInstance,
       },
       mapLib: {
-        Map: jest.fn(),
+        Map: vi.fn(),
       },
     }
   })
 
   test('registers click event handler when onClick is provided', () => {
-    const onClick = jest.fn()
+    const onClick = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -59,7 +60,7 @@ describe('Layer Events', () => {
   })
 
   test('registers mouseenter event handler when onMouseEnter is provided', () => {
-    const onMouseEnter = jest.fn()
+    const onMouseEnter = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -71,7 +72,7 @@ describe('Layer Events', () => {
   })
 
   test('registers mouseleave event handler when onMouseLeave is provided', () => {
-    const onMouseLeave = jest.fn()
+    const onMouseLeave = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -83,7 +84,7 @@ describe('Layer Events', () => {
   })
 
   test('registers mousemove event handler when onMouseMove is provided', () => {
-    const onMouseMove = jest.fn()
+    const onMouseMove = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -95,7 +96,7 @@ describe('Layer Events', () => {
   })
 
   test('registers mousedown event handler when onMouseDown is provided', () => {
-    const onMouseDown = jest.fn()
+    const onMouseDown = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -107,7 +108,7 @@ describe('Layer Events', () => {
   })
 
   test('registers mouseup event handler when onMouseUp is provided', () => {
-    const onMouseUp = jest.fn()
+    const onMouseUp = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -136,7 +137,7 @@ describe('Layer Events', () => {
   })
 
   test('cleanup removes event handlers on unmount', () => {
-    const onClick = jest.fn()
+    const onClick = vi.fn()
 
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>
@@ -150,9 +151,9 @@ describe('Layer Events', () => {
   })
 
   test('removes all event handlers on unmount', () => {
-    const onClick = jest.fn()
-    const onMouseEnter = jest.fn()
-    const onMouseLeave = jest.fn()
+    const onClick = vi.fn()
+    const onMouseEnter = vi.fn()
+    const onMouseLeave = vi.fn()
 
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>

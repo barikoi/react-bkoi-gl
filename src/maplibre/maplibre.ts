@@ -1,4 +1,9 @@
-import { transformToViewState, applyViewStateToTransform } from '../utils/transform'
+import {
+  transformToViewState,
+  applyViewStateToTransform,
+  mapToViewState,
+  viewStateChanges,
+} from '../utils/transform'
 import { normalizeStyle } from '../utils/style-utils'
 import { deepEqual } from '../utils/deep-equal'
 import { logger } from '../utils/logger'
@@ -265,13 +270,10 @@ export default class Maplibre {
       }
     }
 
-    // Simulate load event. isStyleLoaded() throws if no style is set
-    // (deferred or errored), so guard with a style check first.
-    if (map.style && map.isStyleLoaded()) {
-      map.fire('load')
-    } else {
-      map.once('style.load', () => map.fire('load'))
-    }
+    // No synthetic load event: maplibre-gl fires 'load' naturally once the
+    // style and initial render complete (react-map-gl relies on the same
+    // behavior). Firing one ourselves double-triggers consumer onLoad
+    // callbacks in real browsers.
 
     // Force reload
     const mapInternalForUpdate = map as unknown as MapInternalProperties
@@ -419,14 +421,13 @@ export default class Maplibre {
    */
   private _updateViewState(nextProps: MaplibreProps): boolean {
     const map = this._map
-    // map.transform is an internal property; cast via unknown for TransformLike access
-    const tr = (map as unknown as { transform: TransformLike }).transform
     const isMoving = map.isMoving()
 
-    // Avoid manipulating the real transform when interaction/animation is ongoing
-    // as it would interfere with Mapbox's handlers
+    // Avoid manipulating the camera when interaction/animation is ongoing
+    // as it would interfere with MapLibre's handlers
     if (!isMoving) {
-      const changes: Record<string, unknown> = applyViewStateToTransform(tr, nextProps)
+      // maplibre-gl v6: `map.transform` is internal — compare against public getters
+      const changes: Record<string, unknown> = viewStateChanges(map, nextProps)
       if (Object.keys(changes).length > 0) {
         this._internalUpdate = true
         map.jumpTo(changes)
@@ -541,9 +542,7 @@ export default class Maplibre {
     if (this._internalUpdate) {
       return
     }
-    e.viewState =
-      this._propsedCameraUpdate ||
-      transformToViewState((this._map as unknown as { transform: TransformLike }).transform)
+    e.viewState = this._propsedCameraUpdate || mapToViewState(this._map)
     const handlerName = cameraEvents[e.type] as keyof MapCallbacks
     const cb = this.props[handlerName] as ((e: ViewStateChangeEvent) => void) | undefined
     if (cb) {

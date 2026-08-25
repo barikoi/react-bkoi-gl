@@ -174,7 +174,11 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
       mapInstance.setProps(currentProps)
     }
     prevPropsRef.current = currentProps
-  }, [mapInstance])
+    // No dependency array: this effect must run after every render to diff
+    // props and forward changes to the Maplibre instance (it subscribes to
+    // nothing, so re-running is cheap; the latestPropsRef keeps it from
+    // re-subscribing the map itself).
+  })
 
   useImperativeHandle(ref, () => contextValue.map, [mapInstance])
 

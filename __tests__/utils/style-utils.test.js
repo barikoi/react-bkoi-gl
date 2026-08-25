@@ -20,7 +20,7 @@ describe('normalizeStyle function', () => {
 
   test('converts immutable style to plain object', () => {
     const immutableStyle = {
-      toJS: jest.fn().mockReturnValue({ 
+      toJS: vi.fn().mockReturnValue({ 
         version: 8, 
         sources: {},
         layers: []

@@ -1,20 +1,24 @@
 import * as React from 'react'
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import { DrawControl } from '../../src/components/draw-control'
+import MapboxDrawMock from 'maplibre-gl-draw'
 import { MapContext } from '../../src/components/map'
 
-// Mock maplibre-gl-draw
-jest.mock('maplibre-gl-draw', () => {
-  return jest.fn().mockImplementation((options) => ({
-    options,
-    getMode: jest.fn(() => 'simple_select'),
-    on: jest.fn(),
-    off: jest.fn(),
-    getDefaultPosition: jest.fn().mockReturnValue('top-right'),
-    _container: document.createElement('div'),
-    remove: jest.fn()
-  }))
-})
+// Mock maplibre-gl-draw (default-exported class)
+vi.mock('maplibre-gl-draw', () => ({
+  __esModule: true,
+  default: vi.fn().mockImplementation(function (options) {
+    return {
+      options,
+      getMode: vi.fn(() => 'simple_select'),
+      on: vi.fn(),
+      off: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right'),
+      _container: document.createElement('div'),
+      remove: vi.fn()
+    }
+  })
+}))
 
 describe('DrawControl', () => {
   let mockMap
@@ -24,7 +28,7 @@ describe('DrawControl', () => {
   let addedControls
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     // Track added controls
     addedControls = new Set()
@@ -32,12 +36,12 @@ describe('DrawControl', () => {
     // Create mock draw control instance
     mockDrawControlInstance = {
       options: {},
-      getMode: jest.fn(() => 'simple_select'),
-      on: jest.fn(),
-      off: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('top-right'),
+      getMode: vi.fn(() => 'simple_select'),
+      on: vi.fn(),
+      off: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right'),
       _container: document.createElement('div'),
-      remove: jest.fn()
+      remove: vi.fn()
     }
 
     // Create mock mapLib with MapboxDraw constructor
@@ -45,15 +49,15 @@ describe('DrawControl', () => {
 
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation((ctrl) => addedControls.has(ctrl)),
-      addControl: jest.fn().mockImplementation((ctrl) => addedControls.add(ctrl)),
-      removeControl: jest.fn().mockImplementation((ctrl) => addedControls.delete(ctrl)),
-      on: jest.fn(),
-      off: jest.fn(),
-      getCanvas: jest.fn(() => ({ style: {} })),
-      getZoom: jest.fn(() => 10),
-      getCenter: jest.fn(() => ({ lng: 90, lat: 23 })),
-      getMap: jest.fn().mockReturnThis()
+      hasControl: vi.fn().mockImplementation((ctrl) => addedControls.has(ctrl)),
+      addControl: vi.fn().mockImplementation((ctrl) => addedControls.add(ctrl)),
+      removeControl: vi.fn().mockImplementation((ctrl) => addedControls.delete(ctrl)),
+      on: vi.fn(),
+      off: vi.fn(),
+      getCanvas: vi.fn(() => ({ style: {} })),
+      getZoom: vi.fn(() => 10),
+      getCenter: vi.fn(() => ({ lng: 90, lat: 23 })),
+      getMap: vi.fn().mockReturnThis()
     }
 
     // Create context value
@@ -62,9 +66,10 @@ describe('DrawControl', () => {
       mapLib: mockMapLib
     }
 
-    // Reset the mock implementation to return our instance
-    const MapboxDraw = require('maplibre-gl-draw')
-    MapboxDraw.mockImplementation((options) => {
+    // Reset the mock implementation to return our instance (regular function:
+    // `new` on a vi.fn delegates construction to the implementation)
+    const MapboxDraw = MapboxDrawMock
+    MapboxDraw.mockImplementation(function (options) {
       mockDrawControlInstance.options = options
       return mockDrawControlInstance
     })
@@ -103,7 +108,7 @@ describe('DrawControl', () => {
         </MapContext.Provider>
       )
 
-      const MapboxDraw = require('maplibre-gl-draw')
+      const MapboxDraw = MapboxDrawMock
       expect(MapboxDraw).toHaveBeenCalledWith(
         expect.objectContaining({
           displayControlsDefault: true,
@@ -128,7 +133,7 @@ describe('DrawControl', () => {
         </MapContext.Provider>
       )
 
-      const MapboxDraw = require('maplibre-gl-draw')
+      const MapboxDraw = MapboxDrawMock
       // Deep merge: user controls are merged with default controls
       expect(MapboxDraw).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -146,9 +151,9 @@ describe('DrawControl', () => {
   describe('event handlers', () => {
     test('registers event handlers when provided', () => {
       const props = {
-        onDrawCreate: jest.fn(),
-        onDrawDelete: jest.fn(),
-        onDrawUpdate: jest.fn(),
+        onDrawCreate: vi.fn(),
+        onDrawDelete: vi.fn(),
+        onDrawUpdate: vi.fn(),
       }
 
       render(
@@ -164,7 +169,7 @@ describe('DrawControl', () => {
     })
 
     test('calls onDrawCreate when draw.create event fires', () => {
-      const onDrawCreate = jest.fn()
+      const onDrawCreate = vi.fn()
 
       let drawCreateHandler
       mockMap.on.mockImplementation((event, handler) => {
@@ -190,14 +195,14 @@ describe('DrawControl', () => {
 
     test('registers all event types', () => {
       const props = {
-        onDrawCreate: jest.fn(),
-        onDrawDelete: jest.fn(),
-        onDrawUpdate: jest.fn(),
-        onDrawSelectionChange: jest.fn(),
-        onDrawModeChange: jest.fn(),
-        onDrawCombine: jest.fn(),
-        onDrawUncombine: jest.fn(),
-        onDrawRender: jest.fn(),
+        onDrawCreate: vi.fn(),
+        onDrawDelete: vi.fn(),
+        onDrawUpdate: vi.fn(),
+        onDrawSelectionChange: vi.fn(),
+        onDrawModeChange: vi.fn(),
+        onDrawCombine: vi.fn(),
+        onDrawUncombine: vi.fn(),
+        onDrawRender: vi.fn(),
       }
 
       render(
@@ -237,7 +242,7 @@ describe('DrawControl', () => {
 
     test('removes event listeners on unmount', () => {
       const props = {
-        onDrawCreate: jest.fn(),
+        onDrawCreate: vi.fn(),
       }
 
       const { unmount } = render(
@@ -249,6 +254,96 @@ describe('DrawControl', () => {
       unmount()
 
       expect(mockMap.off).toHaveBeenCalled()
+    })
+  })
+
+  describe('draw event handlers', () => {
+    const drawEvents = [
+      ['draw.create', 'onDrawCreate'],
+      ['draw.update', 'onDrawUpdate'],
+      ['draw.delete', 'onDrawDelete'],
+      ['draw.selectionchange', 'onDrawSelectionChange'],
+      ['draw.modechange', 'onDrawModeChange'],
+      ['draw.combine', 'onDrawCombine'],
+      ['draw.uncombine', 'onDrawUncombine'],
+      ['draw.render', 'onDrawRender'],
+    ]
+
+    const getRegisteredHandlers = () =>
+      Object.fromEntries(mockMap.on.mock.calls.map(([event, handler]) => [event, handler]))
+
+    test.each(drawEvents)('wires %s to the %s callback', (event, callbackName) => {
+      const callbacks = { [callbackName]: vi.fn() }
+
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <DrawControl position="top-right" {...callbacks} />
+        </MapContext.Provider>
+      )
+
+      const handlers = getRegisteredHandlers()
+      expect(handlers[event]).toBeInstanceOf(Function)
+
+      act(() => {
+        handlers[event]({ type: event })
+      })
+
+      expect(callbacks[callbackName]).toHaveBeenCalledTimes(1)
+      expect(callbacks[callbackName]).toHaveBeenCalledWith(
+        expect.objectContaining({ type: event })
+      )
+    })
+
+    test('resets the canvas cursor after geometry-affecting events in simple_select mode', () => {
+      // Pin a stable canvas — getCanvas() returns a fresh object per call otherwise
+      const canvas = { style: { cursor: 'crosshair' } }
+      mockMap.getCanvas.mockReturnValue(canvas)
+
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <DrawControl position="top-right" onDrawCreate={vi.fn()} />
+        </MapContext.Provider>
+      )
+
+      const handlers = getRegisteredHandlers()
+      act(() => {
+        handlers['draw.create']({ type: 'draw.create' })
+      })
+
+      // getMode() -> 'simple_select' -> cursor reset to ''
+      expect(mockDrawControlInstance.getMode).toHaveBeenCalled()
+      expect(canvas.style.cursor).toBe('')
+    })
+
+    test('unsubscribes every draw event with the registered handler on unmount', () => {
+      const { unmount } = render(
+        <MapContext.Provider value={mapContextValue}>
+          <DrawControl position="top-right" />
+        </MapContext.Provider>
+      )
+
+      const registered = getRegisteredHandlers()
+      expect(Object.keys(registered)).toHaveLength(drawEvents.length)
+
+      unmount()
+
+      for (const [event] of drawEvents) {
+        expect(mockMap.off).toHaveBeenCalledWith(event, registered[event])
+      }
+      expect(mockMap.off).toHaveBeenCalledTimes(drawEvents.length)
+    })
+  })
+
+  describe('context guard', () => {
+    test('throws when rendered outside a Map', () => {
+      // Silence React's error boundary logging for the expected throw
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => {
+        render(<DrawControl position="top-right" />)
+      }).toThrow('DrawControl must be used within a Map component')
+
+      spy.mockRestore()
     })
   })
 })

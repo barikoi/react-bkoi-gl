@@ -7,12 +7,12 @@ import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as useControlModule from '../../src/components/use-control';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 // Spy on useControl instead of completely mocking it
-jest.spyOn(useControlModule, 'useControl');
+vi.spyOn(useControlModule, 'useControl');
 
 describe('GeolocateControl Component', () => {
   let mockMap;
@@ -21,22 +21,22 @@ describe('GeolocateControl Component', () => {
   let mockGeolocateControlInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock control instance
     mockGeolocateControlInstance = {
       _container: document.createElement('div'),
-      _setupUI: jest.fn(),
-      remove: jest.fn(),
-      on: jest.fn(),
-      off: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('top-right'),
-      trigger: jest.fn()
+      _setupUI: vi.fn(),
+      remove: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right'),
+      trigger: vi.fn()
     };
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      GeolocateControl: jest.fn().mockImplementation((options) => {
+      GeolocateControl: vi.fn().mockImplementation(function (options) {
         // Store the options for later verification
         mockGeolocateControlInstance.options = options || {};
         return mockGeolocateControlInstance;
@@ -45,12 +45,12 @@ describe('GeolocateControl Component', () => {
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockGeolocateControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({})
     };
     
     // Create context value
@@ -181,7 +181,7 @@ describe('GeolocateControl Component', () => {
     container.appendChild(childNode);
     
     // Create a new instance for this test
-    const originalSetupUI = jest.fn();
+    const originalSetupUI = vi.fn();
     const hackedSetupUI = function() {
       if (!this._container.hasChildNodes()) {
         originalSetupUI();
@@ -209,11 +209,11 @@ describe('GeolocateControl Component', () => {
   });
   
   test('registers event handlers correctly', () => {
-    const onGeolocate = jest.fn();
-    const onError = jest.fn();
-    const onOutOfMaxBounds = jest.fn();
-    const onTrackUserLocationStart = jest.fn();
-    const onTrackUserLocationEnd = jest.fn();
+    const onGeolocate = vi.fn();
+    const onError = vi.fn();
+    const onOutOfMaxBounds = vi.fn();
+    const onTrackUserLocationStart = vi.fn();
+    const onTrackUserLocationEnd = vi.fn();
     
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -259,7 +259,7 @@ describe('GeolocateControl Component', () => {
   
   test('updates event handlers when props change', () => {
     // Initial render with event handlers
-    const initialOnGeolocate = jest.fn();
+    const initialOnGeolocate = vi.fn();
     const { rerender } = render(
       <MapContext.Provider value={mapContextValue}>
         <GeolocateControl onGeolocate={initialOnGeolocate} />
@@ -275,7 +275,7 @@ describe('GeolocateControl Component', () => {
     expect(initialOnGeolocate).toHaveBeenCalledWith({ type: 'geolocate' });
     
     // Rerender with new callback
-    const newOnGeolocate = jest.fn();
+    const newOnGeolocate = vi.fn();
     rerender(
       <MapContext.Provider value={mapContextValue}>
         <GeolocateControl onGeolocate={newOnGeolocate} />
@@ -364,7 +364,7 @@ describe('GeolocateControl Component', () => {
     );
     
     // Clear the mock and test disabling tracking
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGeolocateControlInstance.options = { trackUserLocation: undefined };
     
     render(
@@ -419,15 +419,15 @@ describe('GeolocateControl Component', () => {
     };
     
     // Clear mocks and set up for two instances
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     const mockInstance1 = { ...mockGeolocateControlInstance, _container: document.createElement('div') };
     const mockInstance2 = { ...mockGeolocateControlInstance, _container: document.createElement('div') };
     
     // Create mock constructor that returns different instances
     mockMapLib.GeolocateControl
-      .mockImplementationOnce(() => mockInstance1)
-      .mockImplementationOnce(() => mockInstance2);
+      .mockImplementationOnce(function () { return mockInstance1 })
+      .mockImplementationOnce(function () { return mockInstance2 });
     
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -512,7 +512,7 @@ describe('GeolocateControl Component', () => {
   test('setupUI hack in constructor only initializes UI once', () => {
     // Mock implementation for testing the hack directly
     let setupUICalled = false;
-    const originalSetupUI = jest.fn(() => {
+    const originalSetupUI = vi.fn(() => {
       setupUICalled = true;
     });
     
@@ -563,11 +563,11 @@ describe('GeolocateControl Component', () => {
   // Test event handler registration and callbacks
   test('registers and calls event handlers properly', () => {
     // Create mock event callbacks
-    const onGeolocate = jest.fn();
-    const onError = jest.fn();
-    const onOutOfMaxBounds = jest.fn();
-    const onTrackUserLocationStart = jest.fn();
-    const onTrackUserLocationEnd = jest.fn();
+    const onGeolocate = vi.fn();
+    const onError = vi.fn();
+    const onOutOfMaxBounds = vi.fn();
+    const onTrackUserLocationStart = vi.fn();
+    const onTrackUserLocationEnd = vi.fn();
     
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -624,7 +624,7 @@ describe('GeolocateControl Component', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
         <GeolocateControl 
-          onGeolocate={jest.fn()}
+          onGeolocate={vi.fn()}
           // Other handlers intentionally omitted
         />
       </MapContext.Provider>
@@ -696,65 +696,54 @@ describe('GeolocateControl Component', () => {
     expect(applyReactStyleModule.applyReactStyle).toHaveBeenCalledWith(null, expect.any(Object));
   });
   
-  // Simulate actual props updating within the component
+  // Simulate actual props updating within the component (behavioral: event
+  // handlers read props through thisRef, so a re-rendered handler must win)
   test('updates thisRef.current.props when props change', () => {
-    // Create a spy on React.useRef to track the ref object
-    const useRefSpy = jest.spyOn(React, 'useRef');
-    
-    // Initial render
+    const firstHandler = vi.fn();
+    const secondHandler = vi.fn();
+
     const { rerender } = render(
       <MapContext.Provider value={mapContextValue}>
-        <GeolocateControl trackUserLocation={false} />
+        <GeolocateControl onGeolocate={firstHandler} />
       </MapContext.Provider>
     );
-    
-    // Extract the ref object from the spy
-    const refArg = useRefSpy.mock.calls.find(call => 
-      call[0] && typeof call[0] === 'object' && 'props' in call[0]
-    )[0];
-    const refObj = useRefSpy.mock.results.find(res => 
-      res.value && typeof res.value === 'object' && 'current' in res.value
-    )?.value;
-    
-    // Initial props should be stored
-    expect(refObj.current.props.trackUserLocation).toBe(false);
-    
-    // Re-render with new props
+
+    // Grab the 'geolocate' listener registered on the control instance
+    const registerCall = mockGeolocateControlInstance.on.mock.calls.find(
+      ([event]) => event === 'geolocate'
+    );
+    expect(registerCall).toBeDefined();
+    const geolocateListener = registerCall[1];
+
+    geolocateListener({ type: 'geolocate' });
+    expect(firstHandler).toHaveBeenCalledTimes(1);
+    expect(secondHandler).not.toHaveBeenCalled();
+
+    // Re-render with a new handler — thisRef.current.props must reflect it
     rerender(
       <MapContext.Provider value={mapContextValue}>
-        <GeolocateControl trackUserLocation={true} />
+        <GeolocateControl onGeolocate={secondHandler} />
       </MapContext.Provider>
     );
-    
-    // Verify props were updated
-    expect(refObj.current.props.trackUserLocation).toBe(true);
-    
-    // Clean up
-    useRefSpy.mockRestore();
+
+    geolocateListener({ type: 'geolocate' });
+    expect(firstHandler).toHaveBeenCalledTimes(1); // stale handler not called again
+    expect(secondHandler).toHaveBeenCalledTimes(1);
   });
   
-  // Test using useImperativeHandle to pass ref to parent
+  // Test using useImperativeHandle to pass ref to parent (behavioral:
+  // the forwarded ref exposes the control instance)
   test('useImperativeHandle properly exposes control instance', () => {
-    // Create a spy on useImperativeHandle
-    const useImperativeHandleSpy = jest.spyOn(React, 'useImperativeHandle');
-    
-    // Create a ref
     const ref = React.createRef();
-    
+
     render(
       <MapContext.Provider value={mapContextValue}>
         <GeolocateControl ref={ref} />
       </MapContext.Provider>
     );
-    
-    // Verify useImperativeHandle was called correctly
-    expect(useImperativeHandleSpy).toHaveBeenCalled();
-    
+
     // Verify ref contains the control instance
     expect(ref.current).toBe(mockGeolocateControlInstance);
-    
-    // Clean up
-    useImperativeHandleSpy.mockRestore();
   });
 });
 
@@ -763,7 +752,7 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
   
   test('_setupUI conditional branch coverage', () => {
     // Mock the internal setupUI function
-    const setupUI = jest.fn();
+    const setupUI = vi.fn();
     
     // Create two containers for testing
     const emptyContainer = { hasChildNodes: () => false };
@@ -799,7 +788,7 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
     const withHandler = {
       current: {
         props: {
-          onGeolocate: jest.fn()
+          onGeolocate: vi.fn()
         }
       }
     };
@@ -845,7 +834,7 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
   
   test('useEffect with style dependency branch coverage', () => {
     // Mock the applyReactStyle function
-    const applyStyle = jest.fn();
+    const applyStyle = vi.fn();
     
     // Create the effect callback from the component
     const effectCallback = () => {
@@ -873,17 +862,17 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
     // 2-6. The optional chaining (?.) for all five event handlers
     
     // Mock the required objects and functions for all branches
-    const setupUI = jest.fn();
+    const setupUI = vi.fn();
     const mockGC = {
       _container: {
-        hasChildNodes: jest.fn()
+        hasChildNodes: vi.fn()
       },
       _setupUI: setupUI,
-      on: jest.fn()
+      on: vi.fn()
     };
     
     const mockMapLib = {
-      GeolocateControl: jest.fn().mockReturnValue(mockGC)
+      GeolocateControl: vi.fn().mockReturnValue(mockGC)
     };
     
     // Using helper to store event callbacks
@@ -927,7 +916,7 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
         current: { 
           props: {
             // We'll test both with and without each handler
-            onGeolocate: jest.fn(),
+            onGeolocate: vi.fn(),
             // Other handlers intentionally omitted to test both branches
           }
         }
@@ -989,7 +978,7 @@ describe('Direct _GeolocateControl function tests for branch coverage', () => {
     container.appendChild(document.createElement('span'));
     
     // Create a spy for the original setupUI function
-    const originalSetupUI = jest.fn();
+    const originalSetupUI = vi.fn();
     
     // Create the _setupUI function that matches the implementation in the component
     const modifiedSetupUI = function() {
@@ -1022,7 +1011,7 @@ describe('Direct test of branches in code implementation', () => {
       };
       
       // Function to mock setupUI
-      const setupUI = jest.fn();
+      const setupUI = vi.fn();
       
       // Direct recreation of the implementation in geolocate-control.ts
       if (!container.hasChildNodes()) {

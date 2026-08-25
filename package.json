@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "2.2.2",
+  "version": "3.0.0",
   "engines": {
     "node": ">=18.18.0"
   },
@@ -40,13 +40,17 @@
     "clean": "rm -rf dist",
     "build": "tsup && node scripts/build-styles.js",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src/",
-    "test": "npm run typecheck && jest",
-    "coverage": "jest --coverage --passWithNoTests",
-    "prepare": "husky"
+    "test": "npm run typecheck && vitest run",
+    "coverage": "vitest run --coverage",
+    "coverage:badge": "node scripts/make-coverage-badge.mjs",
+    "prepublishOnly": "npm run typecheck && npm run lint && vitest run && npm run build",
+    "prepare": "husky",
+    "test:unit": "vitest run --project unit",
+    "test:browser": "vitest run --project browser",
+    "playwright:install": "playwright install chromium"
   },
   "dependencies": {
-    "@maplibre/maplibre-gl-style-spec": "25.0.0",
-    "maplibre-gl": "6.2.0"
+    "maplibre-gl": "6.6.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -61,36 +65,32 @@
   "devDependencies": {
     "@commitlint/cli": "21.0.2",
     "@commitlint/config-conventional": "21.0.2",
-    "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/geojson": "^7946.0.16",
-    "@types/jest": "30.0.0",
-    "@types/mapbox-gl": "^3.4.1",
+    "@types/geojson": "7946.0.16",
+    "@types/mapbox-gl": "3.4.1",
     "@types/node": "26.0.0",
     "@types/react": "19.2.17",
     "@typescript-eslint/eslint-plugin": "8.61.1",
     "@typescript-eslint/parser": "8.61.1",
-    "babel-jest": "30.4.1",
-    "eslint": "9.20.0",
-    "eslint-config-prettier": "^10.1.8",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-prettier": "^5.5.6",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-prettier": "5.5.6",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
     "husky": "9.1.7",
-    "identity-obj-proxy": "3.0.0",
-    "jest": "30.4.2",
-    "jest-environment-jsdom": "30.4.1",
-    "maplibre-gl-draw": "^1.6.9",
+    "jsdom": "29.1.1",
+    "maplibre-gl-draw": "1.6.9",
+    "playwright": "1.62.1",
     "puppeteer": "25.1.0",
     "react": "18.0.0",
     "react-dom": "18.0.0",
-    "react-test-renderer": "18.0.0",
-    "tape-promise": "4.0.0",
-    "ts-jest": "29.4.11",
     "tsup": "8.5.1",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
   },
   "publishConfig": {
     "access": "public"

@@ -5,17 +5,18 @@ import { transformToViewState, applyViewStateToTransform } from '../../src/utils
 import { normalizeStyle } from '../../src/utils/style-utils';
 
 // Mock dependencies
-jest.mock('../../src/utils/deep-equal', () => ({
-  deepEqual: jest.fn()
+vi.mock('../../src/utils/deep-equal', () => ({
+  deepEqual: vi.fn()
 }));
 
-jest.mock('../../src/utils/transform', () => ({
-  transformToViewState: jest.fn(),
-  applyViewStateToTransform: jest.fn().mockReturnValue({})
+vi.mock('../../src/utils/transform', async (importOriginal) => ({
+  ...(await importOriginal()),
+  transformToViewState: vi.fn(),
+  applyViewStateToTransform: vi.fn().mockReturnValue({})
 }));
 
-jest.mock('../../src/utils/style-utils', () => ({
-  normalizeStyle: jest.fn(style => style)
+vi.mock('../../src/utils/style-utils', () => ({
+  normalizeStyle: vi.fn(style => style)
 }));
 
 describe('Maplibre Class', () => {
@@ -26,7 +27,7 @@ describe('Maplibre Class', () => {
   
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     deepEqual.mockImplementation((a, b) => a === b);
     transformToViewState.mockImplementation(transform => ({
@@ -51,23 +52,28 @@ describe('Maplibre Class', () => {
     
     // Set up mocks for map instance methods
     mockMapInstance = {
-      on: jest.fn(),
-      once: jest.fn(),
-      off: jest.fn(),
-      fire: jest.fn(),
-      getContainer: jest.fn().mockReturnValue({ 
+      on: vi.fn(),
+      once: vi.fn(),
+      off: vi.fn(),
+      fire: vi.fn(),
+      getContainer: vi.fn().mockReturnValue({ 
         className: '',
         childNodes: {
           length: 0
         },
-        appendChild: jest.fn()
+        appendChild: vi.fn()
       }),
-      getCanvas: jest.fn().mockReturnValue({ style: {}, clientWidth: 800, clientHeight: 600 }),
-      jumpTo: jest.fn(),
-      fitBounds: jest.fn(),
-      resize: jest.fn(),
-      setPadding: jest.fn(),
-      setTransformCameraUpdate: jest.fn(),
+      getCanvas: vi.fn().mockReturnValue({ style: {}, clientWidth: 800, clientHeight: 600 }),
+      getCenter: vi.fn().mockReturnValue({ lng: 0, lat: 0 }),
+      getZoom: vi.fn().mockReturnValue(0),
+      getBearing: vi.fn().mockReturnValue(0),
+      getPitch: vi.fn().mockReturnValue(0),
+      getPadding: vi.fn().mockReturnValue({ top: 0, bottom: 0, left: 0, right: 0 }),
+      jumpTo: vi.fn(),
+      fitBounds: vi.fn(),
+      resize: vi.fn(),
+      setPadding: vi.fn(),
+      setTransformCameraUpdate: vi.fn(),
       transform: {
         width: 800,
         height: 600,
@@ -79,54 +85,58 @@ describe('Maplibre Class', () => {
         bearing: 0,
         pitch: 0
       },
-      isStyleLoaded: jest.fn().mockReturnValue(true),
-      setStyle: jest.fn(),
-      getLight: jest.fn().mockReturnValue({}),
-      getSky: jest.fn().mockReturnValue({}),
-      getTerrain: jest.fn().mockReturnValue({}),
-      getSource: jest.fn().mockReturnValue({
-        setData: jest.fn(),
-        setCoordinates: jest.fn(),
-        setTiles: jest.fn(),
-        setUrl: jest.fn(),
-        updateImage: jest.fn()
+      isStyleLoaded: vi.fn().mockReturnValue(true),
+      setStyle: vi.fn(),
+      getLight: vi.fn().mockReturnValue({}),
+      getSky: vi.fn().mockReturnValue({}),
+      getTerrain: vi.fn().mockReturnValue({}),
+      getSource: vi.fn().mockReturnValue({
+        setData: vi.fn(),
+        setCoordinates: vi.fn(),
+        setTiles: vi.fn(),
+        setUrl: vi.fn(),
+        updateImage: vi.fn()
       }),
-      getProjection: jest.fn().mockReturnValue({}),
-      setLight: jest.fn(),
-      setSky: jest.fn(),
-      setTerrain: jest.fn(),
-      setProjection: jest.fn(),
-      setMinZoom: jest.fn(),
-      setMaxZoom: jest.fn(),
-      setMinPitch: jest.fn(),
-      setMaxPitch: jest.fn(),
-      setMaxBounds: jest.fn(),
-      setRenderWorldCopies: jest.fn(),
-      scrollZoom: { enable: jest.fn(), disable: jest.fn() },
-      boxZoom: { enable: jest.fn(), disable: jest.fn() },
-      dragRotate: { enable: jest.fn(), disable: jest.fn() },
-      dragPan: { enable: jest.fn(), disable: jest.fn() },
-      keyboard: { enable: jest.fn(), disable: jest.fn() },
-      doubleClickZoom: { enable: jest.fn(), disable: jest.fn() },
-      touchZoomRotate: { enable: jest.fn(), disable: jest.fn() },
-      touchPitch: { enable: jest.fn(), disable: jest.fn() },
-      isMoving: jest.fn().mockReturnValue(false),
-      getLayer: jest.fn().mockReturnValue(true),
-      queryRenderedFeatures: jest.fn().mockReturnValue([]),
-      remove: jest.fn(),
+      getProjection: vi.fn().mockReturnValue({}),
+      setLight: vi.fn(),
+      setSky: vi.fn(),
+      setTerrain: vi.fn(),
+      setProjection: vi.fn(),
+      setMinZoom: vi.fn(),
+      setMaxZoom: vi.fn(),
+      setMinPitch: vi.fn(),
+      setMaxPitch: vi.fn(),
+      setMaxBounds: vi.fn(),
+      setRenderWorldCopies: vi.fn(),
+      scrollZoom: { enable: vi.fn(), disable: vi.fn() },
+      boxZoom: { enable: vi.fn(), disable: vi.fn() },
+      dragRotate: { enable: vi.fn(), disable: vi.fn() },
+      dragPan: { enable: vi.fn(), disable: vi.fn() },
+      keyboard: { enable: vi.fn(), disable: vi.fn() },
+      doubleClickZoom: { enable: vi.fn(), disable: vi.fn() },
+      touchZoomRotate: { enable: vi.fn(), disable: vi.fn() },
+      touchPitch: { enable: vi.fn(), disable: vi.fn() },
+      isMoving: vi.fn().mockReturnValue(false),
+      getLayer: vi.fn().mockReturnValue(true),
+      queryRenderedFeatures: vi.fn().mockReturnValue([]),
+      remove: vi.fn(),
       // 2.2.0+: readiness is checked via map.style && map.isStyleLoaded().
       // Keep style as a plain object (not undefined) so the guard passes;
       // isStyleLoaded is mocked at the top of this object literal.
       style: {},
-      _render: jest.fn(),
-      _update: jest.fn(),
+      _render: vi.fn(),
+      _update: vi.fn(),
       _frame: {
-        cancel: jest.fn()
+        cancel: vi.fn()
       }
     };
     
-    // Mock for MapClass constructor
-    mockMapClass = jest.fn().mockImplementation(() => mockMapInstance);
+    // Mock for MapClass constructor (regular function: `new` on a vi.fn
+    // delegates construction to the implementation, and arrow functions
+    // are not constructable under Vitest)
+    mockMapClass = vi.fn().mockImplementation(function () {
+      return mockMapInstance;
+    });
     
     // Mock for container element
     mockContainer = document.createElement('div');
@@ -238,7 +248,7 @@ describe('Maplibre Class', () => {
       
       // Set up props with a callback
       maplibreInstance.props = {
-        onViewStateChange: jest.fn()
+        onViewStateChange: vi.fn()
       };
       
       // Call the method with mock implementation
@@ -274,7 +284,7 @@ describe('Maplibre Class', () => {
       
       // Set up props with a callback
       maplibreInstance.props = {
-        onMove: jest.fn()
+        onMove: vi.fn()
       };
       
       // Mock the _internalUpdate flag
@@ -367,7 +377,7 @@ describe('Maplibre Class', () => {
       // Simulate deferred/error path: no style set at all.
       // isStyleLoaded() would throw if the guard didn't short-circuit on map.style.
       mockMapInstance.style = undefined;
-      mockMapInstance.isStyleLoaded = jest.fn(() => {
+      mockMapInstance.isStyleLoaded = vi.fn(() => {
         throw new Error('Style is not set');
       });
 
@@ -410,8 +420,8 @@ describe('Maplibre Class', () => {
     test('_onEvent handles general events', () => {
       // Set up props with a callback
       maplibreInstance.props = {
-        onLoad: jest.fn(),
-        onError: jest.fn()
+        onLoad: vi.fn(),
+        onError: vi.fn()
       };
       
       // Create mock events
@@ -425,7 +435,7 @@ describe('Maplibre Class', () => {
       expect(maplibreInstance.props.onLoad).toHaveBeenCalledWith(loadEvent);
       
       // Spy on console.error
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       
       // Call error event
       maplibreInstance._onEvent(errorEvent);
@@ -489,15 +499,15 @@ describe('Maplibre Class', () => {
       // Set up props with callbacks and interactive layers
       maplibreInstance.props = {
         interactiveLayerIds: ['layer1', 'layer2'],
-        onMouseEnter: jest.fn(),
-        onMouseLeave: jest.fn()
+        onMouseEnter: vi.fn(),
+        onMouseLeave: vi.fn()
       };
       
       // Initialize hoveredFeatures to empty array
       maplibreInstance._hoveredFeatures = [];
       
       // Mock _queryRenderedFeatures to return features
-      maplibreInstance._queryRenderedFeatures = jest.fn().mockReturnValue(mockFeatures);
+      maplibreInstance._queryRenderedFeatures = vi.fn().mockReturnValue(mockFeatures);
       
       // Call _updateHover to simulate mouse enter
       maplibreInstance._updateHover(mockEvent);
@@ -536,14 +546,14 @@ describe('Maplibre Class', () => {
       // Set up props with callbacks and interactive layers
       maplibreInstance.props = {
         interactiveLayerIds: ['layer1', 'layer2'],
-        onMouseMove: jest.fn(),
-        onMouseEnter: jest.fn(),
-        onMouseLeave: jest.fn()
+        onMouseMove: vi.fn(),
+        onMouseEnter: vi.fn(),
+        onMouseLeave: vi.fn()
       };
       
       // Mock methods
-      maplibreInstance._updateHover = jest.fn();
-      maplibreInstance._queryRenderedFeatures = jest.fn().mockReturnValue(mockFeatures);
+      maplibreInstance._updateHover = vi.fn();
+      maplibreInstance._queryRenderedFeatures = vi.fn().mockReturnValue(mockFeatures);
       maplibreInstance._hoveredFeatures = mockFeatures;
       
       // Call _onPointerEvent

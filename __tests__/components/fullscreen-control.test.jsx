@@ -6,8 +6,8 @@ import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 describe('FullscreenControl Component', () => {
@@ -17,10 +17,10 @@ describe('FullscreenControl Component', () => {
   let mockFullscreenControlInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock document.getElementById
-    document.getElementById = jest.fn().mockImplementation(id => {
+    document.getElementById = vi.fn().mockImplementation(id => {
       if (id === 'custom-container') {
         return document.createElement('div');
       }
@@ -30,13 +30,13 @@ describe('FullscreenControl Component', () => {
     // Create mock control instance
     mockFullscreenControlInstance = {
       _controlContainer: document.createElement('div'),
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('top-right')
+      remove: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right')
     };
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      FullscreenControl: jest.fn().mockImplementation(options => {
+      FullscreenControl: vi.fn().mockImplementation(function (options) {
         // Store the options for later verification
         mockFullscreenControlInstance.options = options || {};
         return mockFullscreenControlInstance;
@@ -45,12 +45,12 @@ describe('FullscreenControl Component', () => {
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockFullscreenControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({})
     };
     
     // Create context value

@@ -7,18 +7,18 @@ import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as compareClassNamesModule from '../../src/utils/compare-class-names';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
-jest.mock('../../src/utils/compare-class-names', () => ({
-  compareClassNames: jest.fn().mockReturnValue(['test-class'])
+vi.mock('../../src/utils/compare-class-names', () => ({
+  compareClassNames: vi.fn().mockReturnValue(['test-class'])
 }));
 
 // Mock for the createPortal function in react-dom
-jest.mock('react-dom', () => ({
-  ...jest.requireActual('react-dom'),
-  createPortal: jest.fn((children, container) => {
+vi.mock('react-dom', async () => ({
+  ...(await vi.importActual('react-dom')),
+  createPortal: vi.fn((children, container) => {
     return <div data-testid="mock-portal">{children}</div>;
   })
 }));
@@ -33,12 +33,12 @@ describe('Marker Component', () => {
 
   beforeEach(() => {
     // Reset any mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create a mock DOM element for the marker
     mockElement = {
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn()
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
     };
     
     // Create a mock LngLat for position
@@ -49,36 +49,36 @@ describe('Marker Component', () => {
     
     // Create a mock marker instance
     mockMarkerInstance = {
-      setLngLat: jest.fn().mockReturnThis(),
-      addTo: jest.fn().mockReturnThis(),
-      on: jest.fn(),
-      off: jest.fn(),
-      remove: jest.fn(),
-      getLngLat: jest.fn().mockReturnValue(mockLngLat),
-      getElement: jest.fn().mockReturnValue(mockElement),
-      getOffset: jest.fn().mockReturnValue([0, 0]),
-      setOffset: jest.fn(),
-      isDraggable: jest.fn().mockReturnValue(false),
-      setDraggable: jest.fn(),
-      getRotation: jest.fn().mockReturnValue(0),
-      setRotation: jest.fn(),
-      getRotationAlignment: jest.fn().mockReturnValue('auto'),
-      setRotationAlignment: jest.fn(),
-      getPitchAlignment: jest.fn().mockReturnValue('auto'),
-      setPitchAlignment: jest.fn(),
-      getPopup: jest.fn().mockReturnValue(null),
-      setPopup: jest.fn(),
-      toggleClassName: jest.fn()
+      setLngLat: vi.fn().mockReturnThis(),
+      addTo: vi.fn().mockReturnThis(),
+      on: vi.fn(),
+      off: vi.fn(),
+      remove: vi.fn(),
+      getLngLat: vi.fn().mockReturnValue(mockLngLat),
+      getElement: vi.fn().mockReturnValue(mockElement),
+      getOffset: vi.fn().mockReturnValue([0, 0]),
+      setOffset: vi.fn(),
+      isDraggable: vi.fn().mockReturnValue(false),
+      setDraggable: vi.fn(),
+      getRotation: vi.fn().mockReturnValue(0),
+      setRotation: vi.fn(),
+      getRotationAlignment: vi.fn().mockReturnValue('auto'),
+      setRotationAlignment: vi.fn(),
+      getPitchAlignment: vi.fn().mockReturnValue('auto'),
+      setPitchAlignment: vi.fn(),
+      getPopup: vi.fn().mockReturnValue(null),
+      setPopup: vi.fn(),
+      toggleClassName: vi.fn()
     };
 
     // Create mock mapLib with Marker constructor
     mockMapLib = {
-      Marker: jest.fn().mockImplementation(() => mockMarkerInstance)
+      Marker: vi.fn().mockImplementation(function () { return mockMarkerInstance })
     };
 
     // Create mock map
     mockMap = {
-      getMap: jest.fn().mockReturnValue({})
+      getMap: vi.fn().mockReturnValue({})
     };
 
     // Create the context value
@@ -189,7 +189,7 @@ describe('Marker Component', () => {
   });
 
   test('handles marker click events', () => {
-    const onClickMock = jest.fn();
+    const onClickMock = vi.fn();
     
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -219,9 +219,9 @@ describe('Marker Component', () => {
   });
 
   test('handles marker drag events', () => {
-    const onDragStartMock = jest.fn();
-    const onDragMock = jest.fn();
-    const onDragEndMock = jest.fn();
+    const onDragStartMock = vi.fn();
+    const onDragMock = vi.fn();
+    const onDragEndMock = vi.fn();
     
     render(
       <MapContext.Provider value={mapContextValue}>

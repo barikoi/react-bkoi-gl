@@ -11,13 +11,13 @@ describe('useControl Hook', () => {
   
   beforeEach(() => {
     mockControl = {
-      remove: jest.fn()
+      remove: vi.fn()
     };
     
     mockMap = {
-      hasControl: jest.fn().mockReturnValue(false),
-      addControl: jest.fn(),
-      removeControl: jest.fn()
+      hasControl: vi.fn().mockReturnValue(false),
+      addControl: vi.fn(),
+      removeControl: vi.fn()
     };
     
     mockContext = {
@@ -34,7 +34,7 @@ describe('useControl Hook', () => {
   
   test('adds control to map during initialization', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
+    const onCreate = vi.fn().mockReturnValue(mockControl);
     
     // Execute
     const { result } = renderHook(() => useControl(onCreate), { wrapper });
@@ -47,7 +47,7 @@ describe('useControl Hook', () => {
   
   test('adds control with position option', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
+    const onCreate = vi.fn().mockReturnValue(mockControl);
     const options = { position: 'top-left' };
     
     // Execute
@@ -59,9 +59,9 @@ describe('useControl Hook', () => {
   
   test('calls onAdd function after adding control', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
-    const onAdd = jest.fn();
-    const onRemove = jest.fn();
+    const onCreate = vi.fn().mockReturnValue(mockControl);
+    const onAdd = vi.fn();
+    const onRemove = vi.fn();
     const options = { position: 'bottom-right' };
     
     // Execute
@@ -74,8 +74,8 @@ describe('useControl Hook', () => {
   
   test('overloaded version with onRemove as second parameter', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
-    const onRemove = jest.fn();
+    const onCreate = vi.fn().mockReturnValue(mockControl);
+    const onRemove = vi.fn();
     const options = { position: 'bottom-right' };
     
     // Execute
@@ -88,7 +88,7 @@ describe('useControl Hook', () => {
   
   test('overloaded version with options as second parameter', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
+    const onCreate = vi.fn().mockReturnValue(mockControl);
     const options = { position: 'bottom-right' };
     
     // Execute
@@ -100,8 +100,8 @@ describe('useControl Hook', () => {
   
   test('removes control when component unmounts', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
-    const onRemove = jest.fn();
+    const onCreate = vi.fn().mockReturnValue(mockControl);
+    const onRemove = vi.fn();
     
     // Setup removeControl to fire when called
     mockMap.removeControl.mockImplementation((control) => {
@@ -125,7 +125,7 @@ describe('useControl Hook', () => {
   
   test('does not try to remove control if map no longer has it', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
+    const onCreate = vi.fn().mockReturnValue(mockControl);
     mockMap.hasControl.mockReturnValue(false);
     
     // Execute
@@ -140,7 +140,7 @@ describe('useControl Hook', () => {
   
   test('avoids adding control twice if already on map', () => {
     // Setup
-    const onCreate = jest.fn().mockReturnValue(mockControl);
+    const onCreate = vi.fn().mockReturnValue(mockControl);
     mockMap.hasControl.mockReturnValue(true);
     
     // Execute

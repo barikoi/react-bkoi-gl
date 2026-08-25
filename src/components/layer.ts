@@ -37,21 +37,6 @@ type LayerWithFilter = {
 }
 
 /**
- * Event handlers for layer interactions
- * @private
- */
-type LayerEventHandlers = {
-  onClick?: (e: MapLayerMouseEvent) => void
-  onMouseEnter?: (e: MapLayerMouseEvent) => void
-  onMouseLeave?: (e: MapLayerMouseEvent) => void
-  onMouseMove?: (e: MapLayerMouseEvent) => void
-  onMouseDown?: (e: MapLayerMouseEvent) => void
-  onMouseUp?: (e: MapLayerMouseEvent) => void
-  onContextMenu?: (e: MapLayerMouseEvent) => void
-  onDoubleClick?: (e: MapLayerMouseEvent) => void
-}
-
-/**
  * Utility type to make id optional in layer specification.
  * @private
  */

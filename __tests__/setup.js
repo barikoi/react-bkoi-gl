@@ -1,5 +1,10 @@
-// Jest setup file
-require('@testing-library/jest-dom');
+// Vitest setup file (ESM)
+import { cleanup } from '@testing-library/react'
+
+// Auto-cleanup between tests (RTL cannot detect vitest's global afterEach)
+afterEach(() => {
+  cleanup()
+})
 
 // Mock canvas
 if (typeof window !== 'undefined') {

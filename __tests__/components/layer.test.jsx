@@ -5,13 +5,14 @@ import { MapContext } from '../../src/components/map';
 import assert from '../../src/utils/assert';
 
 // Mock assert utility
-jest.mock('../../src/utils/assert', () => {
-  return jest.fn((condition, message) => {
+vi.mock('../../src/utils/assert', () => ({
+  __esModule: true,
+  default: vi.fn((condition, message) => {
     if (!condition) {
       throw new Error(message);
     }
-  });
-});
+  })
+}));
 
 describe('Layer Component', () => {
   let mockMap;
@@ -20,31 +21,31 @@ describe('Layer Component', () => {
   let forceUpdateCallback;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     forceUpdateCallback = null;
     
     // Create mock map instance
     mockMapInstance = {
-      on: jest.fn((event, callback) => {
+      on: vi.fn((event, callback) => {
         if (event === 'styledata') {
           forceUpdateCallback = callback;
         }
       }),
-      off: jest.fn(),
-      getLayer: jest.fn(() => false),
-      addLayer: jest.fn(),
-      removeLayer: jest.fn(),
-      setLayoutProperty: jest.fn(),
-      setPaintProperty: jest.fn(),
-      setFilter: jest.fn(),
-      setLayerZoomRange: jest.fn(),
-      moveLayer: jest.fn(),
-      getSource: jest.fn(() => true),
+      off: vi.fn(),
+      getLayer: vi.fn(() => false),
+      addLayer: vi.fn(),
+      removeLayer: vi.fn(),
+      setLayoutProperty: vi.fn(),
+      setPaintProperty: vi.fn(),
+      setFilter: vi.fn(),
+      setLayerZoomRange: vi.fn(),
+      moveLayer: vi.fn(),
+      getSource: vi.fn(() => true),
       style: { _loaded: true }
     };
 
     mockMap = {
-      getMap: jest.fn(() => mockMapInstance)
+      getMap: vi.fn(function () { return mockMapInstance })
     };
 
     mapContextValue = {
@@ -289,7 +290,7 @@ describe('Layer Component', () => {
     // Mock that the layer already exists
     mockMapInstance.getLayer.mockReturnValue(true);
     
-    console.error = jest.fn(); // Silence console warnings
+    console.error = vi.fn(); // Silence console warnings
 
     // First render 
     const { rerender } = render(
@@ -324,7 +325,7 @@ describe('Layer Component', () => {
     // Mock that the layer already exists
     mockMapInstance.getLayer.mockReturnValue(true);
     
-    console.error = jest.fn(); // Silence console warnings
+    console.error = vi.fn(); // Silence console warnings
     
     // First render 
     const { rerender } = render(
@@ -397,9 +398,9 @@ describe('Layer Component', () => {
     const customLayer = {
       id: 'custom-layer',
       type: 'custom',
-      onAdd: jest.fn(),
-      render: jest.fn(),
-      onRemove: jest.fn()
+      onAdd: vi.fn(),
+      render: vi.fn(),
+      onRemove: vi.fn()
     };
     
     render(

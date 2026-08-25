@@ -6,8 +6,8 @@ import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 
 // Mock dependencies
-jest.mock('../../src/utils/apply-react-style', () => ({
-  applyReactStyle: jest.fn()
+vi.mock('../../src/utils/apply-react-style', () => ({
+  applyReactStyle: vi.fn()
 }));
 
 describe('NavigationControl Component', () => {
@@ -17,18 +17,18 @@ describe('NavigationControl Component', () => {
   let mockNavigationControlInstance;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create mock control instance
     mockNavigationControlInstance = {
       _container: document.createElement('div'),
-      remove: jest.fn(),
-      getDefaultPosition: jest.fn().mockReturnValue('top-right')
+      remove: vi.fn(),
+      getDefaultPosition: vi.fn().mockReturnValue('top-right')
     };
     
     // Create mock mapLib with constructor
     mockMapLib = {
-      NavigationControl: jest.fn().mockImplementation(options => {
+      NavigationControl: vi.fn().mockImplementation(function (options) {
         // Store the options for later verification
         mockNavigationControlInstance.options = options || {};
         return mockNavigationControlInstance;
@@ -37,12 +37,12 @@ describe('NavigationControl Component', () => {
     
     // Create mock map
     mockMap = {
-      hasControl: jest.fn().mockImplementation(control => {
+      hasControl: vi.fn().mockImplementation(function (control) {
         return control === mockNavigationControlInstance;
       }),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      getMap: jest.fn().mockReturnValue({})
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      getMap: vi.fn().mockReturnValue({})
     };
     
     // Create context value

@@ -3,10 +3,11 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { GlobeControl } from '../../src/components/globe-control'
 import { MapContext } from '../../src/components/map'
+import * as useControlMod from '../../src/components/use-control'
 
 // Mock useControl hook
-jest.mock('../../src/components/use-control', () => ({
-  useControl: jest.fn((createControl, options) => {
+vi.mock('../../src/components/use-control', () => ({
+  useControl: vi.fn(function (createControl, options) {
     const control = createControl()
     return control
   }),
@@ -17,16 +18,16 @@ describe('GlobeControl', () => {
   let mapContextValue
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     mockMapInstance = {
-      on: jest.fn(),
-      off: jest.fn(),
-      addControl: jest.fn(),
-      removeControl: jest.fn(),
-      hasControl: jest.fn(() => false),
-      setProjection: jest.fn(),
-      getProjection: jest.fn(() => ({ type: 'mercator' })),
+      on: vi.fn(),
+      off: vi.fn(),
+      addControl: vi.fn(),
+      removeControl: vi.fn(),
+      hasControl: vi.fn(function () { return false }),
+      setProjection: vi.fn(),
+      getProjection: vi.fn(() => ({ type: 'mercator' })),
     }
 
     mapContextValue = {
@@ -34,7 +35,7 @@ describe('GlobeControl', () => {
         getMap: () => mockMapInstance,
       },
       mapLib: {
-        Map: jest.fn(),
+        Map: vi.fn(),
       },
     }
   })
@@ -46,7 +47,7 @@ describe('GlobeControl', () => {
       </MapContext.Provider>
     )
 
-    expect(require('../../src/components/use-control').useControl).toHaveBeenCalled()
+    expect(useControlMod.useControl).toHaveBeenCalled()
   })
 
   test('accepts position prop', () => {
@@ -56,7 +57,7 @@ describe('GlobeControl', () => {
       </MapContext.Provider>
     )
 
-    expect(require('../../src/components/use-control').useControl).toHaveBeenCalledWith(
+    expect(useControlMod.useControl).toHaveBeenCalledWith(
       expect.any(Function),
       { position: 'top-left' }
     )
@@ -73,11 +74,11 @@ describe('GlobeControl', () => {
       </MapContext.Provider>
     )
 
-    expect(require('../../src/components/use-control').useControl).toHaveBeenCalled()
+    expect(useControlMod.useControl).toHaveBeenCalled()
   })
 
   test('calls onProjectionChange when projection changes', () => {
-    const onProjectionChange = jest.fn()
+    const onProjectionChange = vi.fn()
 
     render(
       <MapContext.Provider value={mapContextValue}>
@@ -85,11 +86,11 @@ describe('GlobeControl', () => {
       </MapContext.Provider>
     )
 
-    expect(require('../../src/components/use-control').useControl).toHaveBeenCalled()
+    expect(useControlMod.useControl).toHaveBeenCalled()
   })
 
   test('control has isGlobe method', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
@@ -108,7 +109,7 @@ describe('GlobeControl', () => {
   })
 
   test('control has setGlobe method', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
@@ -127,7 +128,7 @@ describe('GlobeControl', () => {
   })
 
   test('custom button element accessibility hardening', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
@@ -150,7 +151,7 @@ describe('GlobeControl', () => {
   })
 
   test('custom non-button element with role="button" gets tabindex="0"', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
@@ -173,7 +174,7 @@ describe('GlobeControl', () => {
   })
 
   test('invalid custom element is refused and falls back to default button', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
@@ -181,7 +182,7 @@ describe('GlobeControl', () => {
       return capturedControl
     })
 
-    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const customDiv = document.createElement('div') // no role="button"
 
     render(
@@ -201,7 +202,7 @@ describe('GlobeControl', () => {
   })
 
   test('updates aria-label and title dynamically on toggle', () => {
-    const useControl = require('../../src/components/use-control').useControl
+    const useControl = useControlMod.useControl
     let capturedControl
 
     useControl.mockImplementation((createControl, options) => {
