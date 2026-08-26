@@ -430,7 +430,7 @@ describe('Map Component', () => {
     let view;
     act(() => {
       view = render(
-        <Map id="test-map-hidden" showBarikoiLogo={false} showAttribution={false}>
+        <Map id="test-map-hidden" showAttribution={false}>
           <div data-testid="map-loaded-marker" />
         </Map>
       );
@@ -441,10 +441,11 @@ describe('Map Component', () => {
       expect(screen.getByTestId('map-loaded-marker')).toBeTruthy();
     });
 
-    // Controls must not be rendered — nor even invoked — when disabled.
-    expect(screen.queryByTestId('logo-control')).not.toBeTruthy();
+    // Branding policy: the Barikoi logo ALWAYS renders (no hide prop);
+    // only attribution can be opted out.
+    expect(screen.getByTestId('logo-control')).toBeTruthy();
+    expect(LogoControl).toHaveBeenCalled();
     expect(screen.queryByTestId('attribution-control')).not.toBeTruthy();
-    expect(LogoControl).not.toHaveBeenCalled();
     expect(AttributionControl).not.toHaveBeenCalled();
 
     view.unmount();

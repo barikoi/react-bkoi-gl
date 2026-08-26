@@ -10,23 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See the [v5→v6 migration guide](https://maplibre.org/maplibre-gl-js/docs/guides/v5-to-v6-migration-guide/).
 
 ### Added
-- **CI pipeline** (`.github/workflows/ci.yaml`) — single workflow, master only (push + PRs): Node 20/22 matrix running typecheck, lint, build, tests with coverage; coverage badge auto-committed on `master` (`scripts/make-coverage-badge.mjs` → `coverage.json` shields endpoint). No secrets required; publishing stays manual.
-- **`prepublishOnly` gate** — typecheck + lint + test + build enforced on every (manual) publish.
-- **Release notes helper** — `scripts/extract-changelog.mjs` prints the top CHANGELOG section for pasting into GitHub Releases.
-- **Test migration: Jest → Vitest 4** — matches the peer ecosystem (`react-map-gl`, `maplibre-gl-js`, `deck.gl` all run Vitest). Suite runs ~2× faster (≈5s vs ≈10s) with native ESM (no ts-jest/babel-jest/identity-obj-proxy CJS shims). Changes: `vitest.config.ts` replaces `jest.config.cjs`; JSX test files renamed `.js` → `.jsx`; `jest.*` → `vi.*` codemod; constructor mocks converted from arrow to regular function implementations (Vitest 4 delegates `new` to the spy implementation); default-export module mocks (`assert`, `maplibre-gl-draw`, `set-globals`) now return `{ __esModule: true, default }` objects; RTL auto-cleanup wired via `afterEach(cleanup)` in setup; `use-isomorphic-layout-effect` tests rewritten against the real source (jsdom + a `node`-environment file covering the SSR branch — the old version mocked the module under test); geolocate white-box tests rewritten behaviorally (no React hook spying). Dev deps removed: jest, ts-jest, babel-jest, jest-environment-jsdom, identity-obj-proxy, @types/jest, react-test-renderer (unused), tape-promise (unused), @testing-library/jest-dom (plain vitest assertions). Added: vitest, @vitest/coverage-v8, jsdom.
-- **Browser test layer (Vitest browser mode + Playwright)** — same stack as react-map-gl: real maplibre-gl runs in headless Chromium for `__tests__/browser/` specs (Map camera + controlled updates, Marker, Popup portal lifecycle, Source+Layer rendering via `queryRenderedFeatures`) against offline inline styles; browser setup applies maplibre v6 `setWorkerUrl` exactly like react-map-gl's. Deps added: `playwright`, `@vitest/browser-playwright`. Scripts: `test:unit`, `test:browser`, `playwright:install`; CI installs Chromium.
+- **CI pipeline** (`.github/workflows/ci.yaml`): Node 20/22 matrix — typecheck, lint, build, tests with coverage; coverage badge committed on `master`.
+- **`prepublishOnly` gate**: typecheck + lint + test + build before every publish.
+- **Release notes helper**: `scripts/extract-changelog.mjs` prints the top CHANGELOG section.
+- **Jest → Vitest 4**: ~2× faster (~5s), native ESM. Deps removed: jest family, `react-test-renderer`, `tape-promise`, `@testing-library/jest-dom`. Added: `vitest`, `@vitest/coverage-v8`, `jsdom`.
+- **Browser test layer** (Vitest browser mode): real maplibre-gl in headless Chromium (`__tests__/browser/`) — Map camera/controlled updates, Marker, Popup lifecycle, Source+Layer via `queryRenderedFeatures`. Scripts: `test:unit`, `test:browser`, `playwright:install`.
+- **End-to-end suite** (`e2e/`, `npm run e2e`): runs against the built `dist/`. 27 case pages, one full-viewport map per URL, covering the README feature matrix — Map (styles/viewState/events/MapRef), Marker & Popup, Source/Layer/CanvasSource, controls in four groups (camera, globe, minimap incl. `parentRect`, terrain), DrawControl, hooks. Specs assert paint-level branding (logo PNG decodes), attribution persistence, and camera behavior (zoomIn/zoomOut/flyTo).
+- **`npm run e2e:review`**: headed human-review runner — one browser, one case at a time, per-case evidence report in `e2e/report/`.
+- **`npm run e2e:coverage`**: README-claim → case → spec matrix + `docs.barikoi.com/examples` mapping (`e2e/report/coverage.md`).
 
 ### Fixed
-- **`onLoad` fired twice** — the wrapper fired a synthetic `load` event on top of maplibre-gl's natural one, double-triggering consumer `onLoad` callbacks in real browsers. Synthetic fire removed; caught by the browser tests.
-- **Camera events crashed on maplibre v6** — `_onCameraEvent` read the internal `map.transform`, which no longer exists in v6 (`Cannot read properties of undefined (reading 'center')` on resize/move). View state now read from public getters (`getCenter`/`getZoom`/`getBearing`/`getPitch`/`getPadding`) via new `mapToViewState`/`viewStateChanges` helpers.
-- **Controlled props never updated the camera** — `<Map longitude={…} zoom={…}>` rerenders never called `setProps`: the diffing layout effect had `[mapInstance]` deps that never change. The effect now runs per render (it subscribes to nothing); caught by the browser tests via the `cursor` side effect.
-- **SonarQube removed** — `action.yaml` workflow and `sonar-project.properties` dropped; CI is the single remaining workflow.
-- **Test coverage improvements** — attribution-content rewrite, logo-control stale-logo removal/attributes/cleanup, draw-control event wiring/cursor reset/unsubscription, `set-globals` URL validation branches, `emitWarning` routing (311 tests, was 283; ~89% lines; `src/**/*.d.ts` excluded from coverage).
-- **README badges** — CI, coverage (live endpoint), maplibre-gl version, Node engines.
+- **`onLoad` fired twice** — synthetic `load` removed; maplibre's natural event is used.
+- **Camera events crashed on v6** — `map.transform` no longer exists; view state read from public getters via new `mapToViewState`/`viewStateChanges` helpers.
+- **Controlled props never updated the camera** — props-diff effect had `[mapInstance]` deps that never change; now runs per render.
+- **SonarQube removed** — `action.yaml` and `sonar-project.properties` dropped.
+- Test count 283 → 311 (~89% lines).
+- README badges: CI, coverage, maplibre-gl version, Node engines.
 
 ### Breaking (relative to 2.2.1)
+- **`showBarikoiLogo` prop removed** — the Barikoi logo always renders; consumers who must hide it override the CSS.
 - **`Marker` drag callbacks no longer receive `lngLat` on the event** — maplibre-gl v6's `MarkerDragEvent` carries `{ type, target }` only. Use `e.target.getLngLat()` (or a `marker` ref) to read the position.
-- **Bundlers must set the worker URL** — v6 is ESM-only; `import.meta.url` auto-detection fails under webpack/Turbopack/Vite, producing a blank map with no errors. Call `setWorkerUrl()` from `maplibre-gl` before first render (see README "Next.js + Turbopack: Worker URL fix"). Direct CDN/`<script type="module">` usage needs no change.
+- **Bundlers must set the worker URL** — v6 is ESM-only; `import.meta.url` auto-detection fails under webpack/Turbopack/Vite (blank map, no errors). Call `setWorkerUrl()` from `maplibre-gl` before first render. CDN/`<script type="module">` usage needs no change.
 - **Transitive maplibre-gl is now v6** — consumers importing `maplibre-gl` directly get ESM-only output; the UMD bundle and separate CSP build are gone (CSP no longer needs a special bundle). Nested objects/arrays in GeoJSON feature properties are preserved as real objects — remove any `JSON.parse` on them.
 - **`PopupEvent` / `MarkerDragEvent` types now come from `maplibre-gl`** — v6 exports them as classes; the locally defined shapes are removed. Check `e.type` instead of `instanceof`.
 - **`MapBoxZoomEvent`** replaces the `MapLibreZoomEvent` alias, matching maplibre-gl v6.
@@ -41,9 +45,12 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 - All `package.json` version specifiers are exact pins (no `^`/`~`); `maplibre-gl` pinned to `6.6.0`.
 
 ### Fixed
+- **Barikoi logo showed maplibre's logo instead** — maplibre's own CSS (equal specificity, imported later by consumers) overrode ours. Logo rule now uses `.maplibregl-map a.maplibregl-ctrl-logo` + `!important`, winning regardless of import order.
+- **Attribution copyright vanished seconds after load** — maplibre rebuilds the attribution DOM on tile-load events, wiping the rewrite. Links are now re-applied via `MutationObserver`; text leads with `©`; compact mode off so attribution is always visible.
+- **GeolocateControl click did nothing** — under StrictMode's double mount, two click listeners toggled the control ON then OFF. `_finishSetupUI` is deduped per button.
+- **Minimap rendered blank** — `onAdd` snapshotted the parent style before it loaded. Creation deferred until parent style is ready; pending listeners cleaned up on remove.
 - **Unused `Popup` import** removed from `src/types/events.ts`.
-- **README worker-fix script** — `fileURLToPath` replaces `.pathname` (broken on Windows: `/C:/...`).
-- Tests updated for the v6 event shapes (`marker.test.js`, `maplibre.test.js`).
+- **README worker-fix script** — `fileURLToPath` replaces `.pathname` (Windows path fix).
 
 ## [2.2.1] - 09-07-2026
 
@@ -57,7 +64,7 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 ### Added
 - **Injectable logger** (`logger`, `setLogger`, `Logger`) exported from the public surface — route warnings/errors to telemetry (Sentry, etc.) instead of `console`.
 - **`onWarning` prop** on `<Map>` for per-instance non-fatal warning handling (transient `queryRenderedFeatures` errors, etc.); falls back to `console.warn`.
-- **`showBarikoiLogo` / `showAttribution` props** on `<Map>` (default `true`) — opt out of the auto-included Logo/Attribution controls without the OSM/MapLibre license compliance caveats.
+- **`showAttribution` prop** on `<Map>` (default `true`) — opt out of the auto-included Attribution control without the OSM/MapLibre license compliance caveats. (The Barikoi logo has no opt-out: see Breaking.)
 - **Accessibility hardening** for `GlobeControl` and `MinimapControl`:
   - `GlobeControl` forces `type="button"`, `aria-label`, `title`; custom `buttonElement` must be `<button>` or carry `role="button"`, otherwise refused with a warning; dynamic label on toggle.
   - `MinimapControl` announces collapse/expand via a visually-hidden `aria-live="polite"` region; `aria-expanded` reflects state.

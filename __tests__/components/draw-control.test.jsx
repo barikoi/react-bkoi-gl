@@ -26,12 +26,25 @@ describe('DrawControl', () => {
   let mapContextValue
   let mockDrawControlInstance
   let addedControls
+  let mapContainer
 
   beforeEach(() => {
     vi.clearAllMocks()
 
     // Track added controls
     addedControls = new Set()
+
+    // Build a container with all four control corners, each holding one
+    // ctrl-group child (mirrors maplibre's control position containers)
+    mapContainer = document.createElement('div')
+    for (const cornerName of ['top-left', 'top-right', 'bottom-left', 'bottom-right']) {
+      const corner = document.createElement('div')
+      corner.className = `maplibregl-ctrl-${cornerName}`
+      const group = document.createElement('div')
+      group.className = 'maplibregl-ctrl-group'
+      corner.appendChild(group)
+      mapContainer.appendChild(corner)
+    }
 
     // Create mock draw control instance
     mockDrawControlInstance = {
@@ -55,6 +68,7 @@ describe('DrawControl', () => {
       on: vi.fn(),
       off: vi.fn(),
       getCanvas: vi.fn(() => ({ style: {} })),
+      getContainer: vi.fn(() => mapContainer),
       getZoom: vi.fn(() => 10),
       getCenter: vi.fn(() => ({ lng: 90, lat: 23 })),
       getMap: vi.fn().mockReturnThis()
@@ -91,6 +105,43 @@ describe('DrawControl', () => {
         mockDrawControlInstance,
         'top-left'
       )
+    })
+
+    test('applies style to the control container', () => {
+      const props = {
+        position: 'top-left',
+        style: { display: 'none', zIndex: 5 }
+      }
+
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <DrawControl {...props} />
+        </MapContext.Provider>
+      )
+
+      const group = mapContainer.querySelector(
+        '.maplibregl-ctrl-top-left .maplibregl-ctrl-group'
+      )
+      expect(group.style.display).toBe('none')
+      expect(group.style.zIndex).toBe('5')
+    })
+
+    test('applies style to the control container for bottom positions', () => {
+      const props = {
+        position: 'bottom-right',
+        style: { opacity: 0.5 }
+      }
+
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <DrawControl {...props} />
+        </MapContext.Provider>
+      )
+
+      const group = mapContainer.querySelector(
+        '.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group'
+      )
+      expect(group.style.opacity).toBe('0.5')
     })
 
     test('accepts draw options', () => {

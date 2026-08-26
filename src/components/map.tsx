@@ -40,9 +40,6 @@ export type MapProps = MapInitOptions &
     /** Map container CSS style */
     style?: CSSProperties
     children?: React.ReactNode
-    /** Whether to render the Barikoi logo control.
-     * @default true */
-    showBarikoiLogo?: boolean
     /** Whether to render the map attribution control.
      * @default true
      * @remarks Attribution is required by the OpenStreetMap and MapLibre
@@ -208,10 +205,10 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
       {mapInstance && (
         <MapContext.Provider value={contextValue}>
           <div style={CHILD_CONTAINER_STYLE}>
-            {/* Automatically include Barikoi Logo and Attribution controls.
-                Both default to true; set showBarikoiLogo / showAttribution to
-                false to opt out. */}
-            {props.showBarikoiLogo !== false && <LogoControl position='bottom-left' />}
+            {/* Barikoi logo is ALWAYS rendered (branding policy: no hide prop —
+                consumers who must hide it override CSS themselves).
+                Attribution can be opted out via showAttribution={false}. */}
+            <LogoControl position='bottom-left' />
             {props.showAttribution !== false && <AttributionControl position='bottom-right' />}
             {props.children}
           </div>

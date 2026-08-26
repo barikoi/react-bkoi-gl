@@ -20,7 +20,9 @@ function _AttributionControl(props: AttributionControlProps) {
   const ctrl = useControl(
     ({ mapLib }) =>
       new mapLib.AttributionControl({
-        compact: true,
+        // Always-expanded attribution: the Barikoi copyright must stay visible —
+        // compact mode hides it behind the ⓘ toggle.
+        compact: false,
         ...props,
       }),
     { position: props.position }
@@ -31,36 +33,53 @@ function _AttributionControl(props: AttributionControlProps) {
 
     if (!ctrl._container || !map) return
 
+    const innerSelector = '.maplibregl-ctrl-attrib-inner'
+
+    const applyAttribution = () => {
+      const inner = ctrl._container.querySelector(innerSelector)
+
+      if (!(inner instanceof HTMLElement)) {
+        logger.warn(
+          'AttributionControl: .maplibregl-ctrl-attrib-inner element not found in control container. Legally-required attribution styling was not applied.'
+        )
+        return
+      }
+
+      // Already applied (ours)? maplibre rebuilds the inner container on every
+      // styledata/sourcedata/terrain event (tile loads land seconds after
+      // load) — a one-shot rewrite gets wiped and the Barikoi copyright
+      // disappears. Mark our version; re-apply whenever maplibre swaps the DOM.
+      if (inner.dataset.bkoiAttrib === '1') return
+
+      inner.textContent = ''
+      inner.dataset.bkoiAttrib = '1'
+
+      const createLink = (text: string, href: string) => {
+        const a = document.createElement('a')
+        a.href = href
+        a.target = '_blank'
+        a.rel = 'noopener noreferrer'
+        a.textContent = text
+        return a
+      }
+
+      inner.appendChild(document.createTextNode('© '))
+      inner.appendChild(createLink('Barikoi', 'https://barikoi.com'))
+      inner.appendChild(document.createTextNode(' © '))
+      inner.appendChild(createLink('OpenMapTiles', 'https://openmaptiles.org'))
+      inner.appendChild(document.createTextNode(' © '))
+      inner.appendChild(
+        createLink('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright')
+      )
+    }
+
+    // maplibre AttributionControl re-renders its DOM on styledata/sourcedata/
+    // terrain — watch the control container and re-apply after every rebuild.
+    const observer = new MutationObserver(() => applyAttribution())
+    observer.observe(ctrl._container, { childList: true, subtree: true })
+
     const onLoad = () => {
-      setTimeout(() => {
-        const inner = ctrl._container.querySelector('.maplibregl-ctrl-attrib-inner')
-
-        if (inner instanceof HTMLElement) {
-          // Use DOM APIs instead of innerHTML for security
-          inner.textContent = ''
-
-          const createLink = (text: string, href: string) => {
-            const a = document.createElement('a')
-            a.href = href
-            a.target = '_blank'
-            a.rel = 'noopener noreferrer'
-            a.textContent = text
-            return a
-          }
-
-          inner.appendChild(createLink('Barikoi', 'https://barikoi.com'))
-          inner.appendChild(document.createTextNode(' © '))
-          inner.appendChild(createLink('OpenMapTiles', 'https://openmaptiles.org'))
-          inner.appendChild(document.createTextNode(' © '))
-          inner.appendChild(
-            createLink('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright')
-          )
-        } else {
-          logger.warn(
-            'AttributionControl: .maplibregl-ctrl-attrib-inner element not found in control container. Legally-required attribution styling was not applied.'
-          )
-        }
-      }, 0)
+      applyAttribution()
     }
 
     if (map.loaded()) {
@@ -70,6 +89,7 @@ function _AttributionControl(props: AttributionControlProps) {
     }
 
     return () => {
+      observer.disconnect()
       map.off('load', onLoad)
     }
   }, [props.style, ctrl._container, map])

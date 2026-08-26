@@ -47,7 +47,13 @@
     "prepare": "husky",
     "test:unit": "vitest run --project unit",
     "test:browser": "vitest run --project browser",
-    "playwright:install": "playwright install chromium"
+    "playwright:install": "playwright install chromium",
+    "test:pack": "node scripts/test-pack.mjs",
+    "e2e": "npm run build && playwright test",
+    "e2e:headed": "npm run build && playwright test --headed",
+    "e2e:serve": "vite e2e/app --port 5175 --strictPort",
+    "e2e:review": "node e2e/review/run-review.mjs",
+    "e2e:coverage": "node e2e/scripts/generate-coverage.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.6.0"
@@ -65,6 +71,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.0.2",
     "@commitlint/config-conventional": "21.0.2",
+    "@playwright/test": "^1.62.1",
     "@testing-library/react": "16.3.2",
     "@types/geojson": "7946.0.16",
     "@types/mapbox-gl": "3.4.1",

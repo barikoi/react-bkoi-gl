@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useEffect, useMemo, memo, useRef, useContext } from 'react'
 import MapboxDraw from 'maplibre-gl-draw'
 import { MapContext } from './map'
+import { applyReactStyle } from '../utils/apply-react-style'
 
 import type { ControlPosition, IControl, Map as MapInstance } from '../types/lib'
 
@@ -76,6 +77,7 @@ const defaultDrawOptions: DrawControlOptions = {
 function _DrawControl(props: DrawControlProps) {
   const {
     position,
+    style,
     onDrawCreate,
     onDrawDelete,
     onDrawUpdate,
@@ -151,6 +153,10 @@ function _DrawControl(props: DrawControlProps) {
 
   // Store control reference
   const ctrlRef = useRef<(IControl & { getMode: () => string }) | null>(null)
+  // Draw control container element (maplibre-gl-draw exposes no _container)
+  const containerRef = useRef<HTMLElement | null>(null)
+  // Keep style in a ref so control recreation re-applies it without extra deps
+  const styleRef = useRef(style)
   const listenersRef = useRef<{
     handleCreate?: (e: DrawEvent) => void
     handleUpdate?: (e: DrawEvent) => void
@@ -228,6 +234,18 @@ function _DrawControl(props: DrawControlProps) {
     // Add control to map
     map.addControl(ctrl, position)
 
+    // maplibre-gl-draw returns its container div from onAdd() but does not
+    // expose it on the control; after addControl it is the last child of the
+    // corner container for top positions, first child for bottom positions.
+    const cornerPosition = position || 'top-right'
+    const corner = mapInstance
+      .getContainer()
+      .querySelector(`.maplibregl-ctrl-${cornerPosition}`)
+    containerRef.current = (
+      cornerPosition.includes('bottom') ? corner?.firstElementChild : corner?.lastElementChild
+    ) as HTMLElement | null
+    applyReactStyle(containerRef.current, styleRef.current)
+
     // Store listeners for cleanup
     listenersRef.current = {
       handleCreate,
@@ -285,8 +303,15 @@ function _DrawControl(props: DrawControlProps) {
         map.removeControl(ctrlRef.current)
       }
       ctrlRef.current = null
+      containerRef.current = null
     }
   }, [context, optionsKey, position])
+
+  // Apply style updates without recreating the control
+  useEffect(() => {
+    styleRef.current = style
+    applyReactStyle(containerRef.current, style)
+  }, [style])
 
   return null
 }

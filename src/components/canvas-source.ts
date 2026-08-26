@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react'
-import { useContext, useEffect, useMemo, useRef, memo } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState, memo } from 'react'
 import { MapContext } from './map'
 import type { MapInternalProperties, SourceWithOptionalMethods } from '../types/internal'
 
@@ -38,11 +38,11 @@ export type CanvasCoordinates = [
  * @example
  * ```tsx
  * // Canvas source with dynamic content
- * const canvasRef = useRef<HTMLCanvasElement>(null);
  * const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
  *
- * useEffect(() => {
- *   const canvas = canvasRef.current;
+ * // Draw in a ref callback: <Map> renders children only after the maplibre
+ * // instance exists, so a mount effect runs before the canvas commits.
+ * const attachCanvas = (canvas: HTMLCanvasElement | null) => {
  *   if (!canvas) return;
  *   const ctx = canvas.getContext('2d');
  *   if (ctx) {
@@ -50,7 +50,7 @@ export type CanvasCoordinates = [
  *     ctx.fillRect(0, 0, 100, 100);
  *   }
  *   setCanvasEl(canvas);
- * }, []);
+ * };
  *
  * {canvasEl && (
  *   <CanvasSource
@@ -96,14 +96,14 @@ export type CanvasSourceProps = {
  * ```tsx
  * import { Map, CanvasSource, Layer } from 'react-bkoi-gl';
  * import "react-bkoi-gl/styles";
- * import { useRef, useEffect, useState } from 'react';
+ * import { useState } from 'react';
  *
  * function CanvasExample() {
- *   const canvasRef = useRef<HTMLCanvasElement>(null);
  *   const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
  *
- *   useEffect(() => {
- *     const canvas = canvasRef.current;
+ *   // Draw in a ref callback — it fires exactly when the canvas attaches
+ *   // (<Map> children mount only after the maplibre instance exists).
+ *   const attachCanvas = (canvas: HTMLCanvasElement | null) => {
  *     if (!canvas) return;
  *
  *     const ctx = canvas.getContext('2d');
@@ -117,7 +117,7 @@ export type CanvasSourceProps = {
  *     }
  *
  *     setCanvasEl(canvas);
- *   }, []);
+ *   };
  *
  *   return (
  *     <Map
@@ -128,7 +128,7 @@ export type CanvasSourceProps = {
  *         zoom: 12
  *       }}
  *     >
- *       <canvas ref={canvasRef} width={256} height={256} style={{ display: 'none' }} />
+ *       <canvas ref={attachCanvas} width={256} height={256} style={{ display: 'none' }} />
  *       {canvasEl && (
  *         <CanvasSource
  *           id="my-canvas"
@@ -151,38 +151,50 @@ export type CanvasSourceProps = {
 function _CanvasSource(props: CanvasSourceProps) {
   const map = useContext(MapContext).map.getMap()
   const propsRef = useRef(props)
+  // Children render only once the source exists; adding it is async (style
+  // load), so flip this flag to re-render when the source lands.
+  const [isSourceReady, setSourceReady] = useState(false)
 
   const id = useMemo(() => props.id || `canvas-source-${Date.now()}`, [props.id])
 
   useEffect(() => {
     if (!map) return undefined
 
-    const mapInternal = map as unknown as MapInternalProperties
-
     const addSource = () => {
-      if (!mapInternal.style || !mapInternal.style._loaded) return
-      if (map.getSource(id)) return
+      if (!map.style) return
 
-      const { coordinates, canvas, animate } = props
+      if (!map.getSource(id)) {
+        const { coordinates, canvas, animate } = props
 
-      // Add canvas source
-      ;(map as any).addSource(id, {
-        type: 'canvas',
-        coordinates,
-        canvas,
-        animate: animate || false,
-      })
+        // Add canvas source
+        ;(map as any).addSource(id, {
+          type: 'canvas',
+          coordinates,
+          canvas,
+          animate: animate || false,
+        })
+      }
+      setSourceReady(true)
     }
 
-    // Wait for style to load
-    if (mapInternal.style && mapInternal.style._loaded) {
+    const addSourceIfStyleLoaded = () => {
+      if (!map.style || !map.isStyleLoaded()) return
+      addSource()
+    }
+
+    // Wait for style to load. 'load' means the style is ready by definition
+    // (v6's isStyleLoaded() can still report false at event time); 'styledata'
+    // covers late mounts and setStyle() re-adds.
+    if (map.style && map.isStyleLoaded()) {
       addSource()
     } else {
-      map.once('styledata', addSource)
+      map.once('load', addSource)
+      map.on('styledata', addSourceIfStyleLoaded)
     }
 
     return () => {
-      map.off('styledata', addSource)
+      map.off('styledata', addSourceIfStyleLoaded)
+      map.off('load', addSource)
       const mapInternalForCleanup = map as unknown as MapInternalProperties
       if (mapInternalForCleanup.style && mapInternalForCleanup.style._loaded && map.getSource(id)) {
         // Remove all layers using this source first
@@ -221,8 +233,7 @@ function _CanvasSource(props: CanvasSourceProps) {
   // Render children with source id
   if (!map) return null
 
-  const mapInternal = map as unknown as MapInternalProperties
-  if (!mapInternal.style || !mapInternal.style._loaded || !map.getSource(id)) {
+  if (!isSourceReady || !map.getSource(id)) {
     return null
   }
 

@@ -20,7 +20,7 @@ test('Source + Layer render a real GeoJSON feature', async () => {
         mapLib={maplibregl}
         mapStyle={geojsonStyle}
         initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
-        showBarikoiLogo={false}
+       
         showAttribution={false}
       >
         <Source id="extra" type="geojson" data={geojsonStyle.sources.points.data} />

@@ -2,6 +2,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { Marker } from '../../src/components/marker';
+import { Popup } from '../../src/components/popup';
 import { MapContext } from '../../src/components/map';
 import * as applyReactStyleModule from '../../src/utils/apply-react-style';
 import * as compareClassNamesModule from '../../src/utils/compare-class-names';
@@ -429,4 +430,69 @@ describe('Marker Component', () => {
     // Should have removed the marker
     expect(mockMarkerInstance.remove).toHaveBeenCalled();
   });
-}); 
+
+  test('anchors a Popup child to the marker coordinates (README pattern)', () => {
+    // <Marker><Popup>...</Popup></Marker> must not crash with NaN LngLat —
+    // the marker injects its own coordinates into the Popup child.
+    const popupSetLngLat = vi.fn().mockReturnThis();
+    mockMapLib = {
+      ...mockMapLib,
+      Popup: vi.fn().mockImplementation(function () {
+        return {
+          setLngLat: popupSetLngLat,
+          setDOMContent: vi.fn().mockReturnThis(),
+          addTo: vi.fn().mockReturnThis(),
+          on: vi.fn(),
+          off: vi.fn(),
+          once: vi.fn(),
+          isOpen: vi.fn(() => true),
+          getLngLat: vi.fn(() => ({ lng: 10, lat: 20 })),
+          getElement: vi.fn(() => mockElement),
+          remove: vi.fn(),
+        };
+      })
+    };
+    mapContextValue = { map: mockMap, mapLib: mockMapLib };
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <Marker longitude={10} latitude={20}>
+          <Popup>
+            <div>attached</div>
+          </Popup>
+        </Marker>
+      </MapContext.Provider>
+    );
+
+    expect(popupSetLngLat).toHaveBeenCalledWith([10, 20]);
+  });
+
+  test('onDragEnd receives lngLat (maplibre v6 fires bare {type,target} events)', () => {
+    // Simulate the v6 marker firing drag events with no lngLat — the
+    // wrapper must deliver e.lngLat from the marker position.
+    const received = []
+    mockMarkerInstance.getLngLat = vi.fn().mockReturnValue({ lng: 91.1, lat: 24.2 })
+    let fireDragEnd
+    mockMarkerInstance.on = vi.fn((event, handler) => {
+      if (event === 'dragend') fireDragEnd = handler
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <Marker
+          longitude={10}
+          latitude={20}
+          draggable
+          onDragStart={(e) => received.push(['dragstart', e.lngLat.lng])}
+          onDrag={(e) => received.push(['drag', e.lngLat.lat])}
+          onDragEnd={(e) => received.push(['dragend', e.lngLat.lng, e.lngLat.lat])}
+        />
+      </MapContext.Provider>
+    )
+
+    // v6-style bare event — must not throw, must expose lngLat
+    fireDragEnd({ type: 'dragend', target: mockMarkerInstance })
+
+    expect(received).toContainEqual(['dragend', 91.1, 24.2])
+  });
+});  

@@ -309,6 +309,7 @@ class Minimap implements IControl {
   private differentStyle = false
   private desync?: () => void
   private toggleButtonCleanup?: () => void
+  private pendingStyleListener?: () => void
   private isMinimized = false
   private resizeHandler?: () => void
   private resizeTimeout?: ReturnType<typeof setTimeout>
@@ -371,28 +372,60 @@ class Minimap implements IControl {
     this.options.bearing = parentMap.getBearing()
     this.options.pitch = this.options.pitchAdjust ? parentMap.getPitch() : 0
 
-    if (!this.differentStyle) {
-      this.options.style = parentMap.getStyle()
+    // Snapshot the parent style only once it has actually loaded —
+    // getStyle() before style load returns the empty default style and the
+    // minimap renders blank.
+    const createMinimap = () => {
+      if (!this.differentStyle) {
+        this.options.style = this.parentMap.getStyle()
+      }
+
+      this.map = new Map(this.options as unknown as ConstructorParameters<typeof Map>[0])
+
+      this.map.once('style.load', () => {
+        this.map.resize()
+      })
+
+      this.map.once('load', () => {
+        this.configureInteractions()
+        this.addParentRect(this.options.parentRect)
+        this.desync = this.syncMaps()
+        this.setupToggleButton()
+        this.setupResponsiveSizing()
+      })
     }
 
-    this.map = new Map(this.options as unknown as ConstructorParameters<typeof Map>[0])
+    const styleLoaded =
+      typeof parentMap.isStyleLoaded === 'function' ? parentMap.isStyleLoaded() : true
+    if (this.differentStyle || styleLoaded) {
+      createMinimap()
+    } else {
+      // Re-arm with on (not once): styledata can fire before loading completes
+      // and a one-shot listener loses the race (same pitfall as Source add).
+      // 'load' is the guaranteed terminal signal — the final styledata may
+      // land while isStyleLoaded() is still false.
+      const tryCreate = () => {
+        if (this.parentMap.isStyleLoaded()) {
+          this.parentMap.off('styledata', tryCreate)
+          this.parentMap.off('load', tryCreate)
+          this.pendingStyleListener = undefined
+          createMinimap()
+        }
+      }
+      parentMap.on('styledata', tryCreate)
+      parentMap.on('load', tryCreate)
+      this.pendingStyleListener = tryCreate
+    }
 
-    this.map.once('style.load', () => {
-      this.map.resize()
-    })
-
-    this.map.once('load', () => {
-      this.configureInteractions()
-      this.addParentRect(this.options.parentRect)
-      this.desync = this.syncMaps()
-      this.setupToggleButton()
-      this.setupResponsiveSizing()
-    })
-
-    return this.container
+        return this.container
   }
 
   onRemove(): void {
+    if (this.pendingStyleListener) {
+      this.parentMap.off('styledata', this.pendingStyleListener)
+      this.parentMap.off('load', this.pendingStyleListener)
+      this.pendingStyleListener = undefined
+    }
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler)
       this.resizeHandler = undefined

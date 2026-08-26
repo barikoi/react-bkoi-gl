@@ -52,6 +52,7 @@ export default defineConfig({
           name: 'browser',
           include: ['__tests__/browser/**/*.spec.{js,jsx,ts,tsx}'],
           setupFiles: ['__tests__/browser/setup.ts'],
+          testTimeout: 10_000,
           fileParallelism: false,
           browser: {
             enabled: true,

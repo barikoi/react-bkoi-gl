@@ -46,6 +46,20 @@ function _GeolocateControl(props: GeolocateControlProps, ref: React.Ref<Geolocat
         }
       }
 
+      // maplibre v6: the click listener is attached in the ASYNC
+      // _finishSetupUI. Under StrictMode's double mount, both queued
+      // invocations attach a click listener to the SAME current button, so one
+      // click fires trigger() twice — and trigger() is a toggle (ON then OFF),
+      // cancelling itself: no dot, no geolocate event. Run _finishSetupUI only
+      // once per button element.
+      const finishUI = gc._finishSetupUI
+      let finishedForButton: HTMLElement | undefined
+      gc._finishSetupUI = (...args) => {
+        if (gc._geolocateButton && finishedForButton === gc._geolocateButton) return
+        finishedForButton = gc._geolocateButton
+        return finishUI(...args)
+      }
+
       gc.on('geolocate', e => {
         thisRef.current.props.onGeolocate?.(e as GeolocateResultEvent)
       })

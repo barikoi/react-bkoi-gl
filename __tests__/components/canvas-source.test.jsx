@@ -36,6 +36,7 @@ describe('CanvasSource', () => {
       getSource: vi.fn(() => null),
       getLayer: vi.fn(() => null),
       getStyle: vi.fn(() => ({ layers: [] })),
+      isStyleLoaded: vi.fn(() => true),
       style: { _loaded: true },
     }
 
@@ -173,5 +174,83 @@ describe('CanvasSource', () => {
 
     expect(mockMapInstance.removeLayer).toHaveBeenCalledWith('layer1')
     expect(mockMapInstance.removeLayer).not.toHaveBeenCalledWith('layer2')
+  })
+
+  test('retries until style load completes (v3 race regression)', () => {
+    // Race: styledata fires while isStyleLoaded() is still false (v6 can
+    // report false even at 'load' time) — the source must still be added
+    // when 'load' fires (v3 lost this race and never added the source).
+    const listeners = {}
+    let styleLoaded = false
+    const racingMap = {
+      ...mockMapInstance,
+      on: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      once: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      off: vi.fn(),
+      isStyleLoaded: vi.fn(() => styleLoaded),
+      addSource: vi.fn(),
+    }
+    mapContextValue = { map: { getMap: () => racingMap } }
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <CanvasSource id="racing-canvas" coordinates={coordinates} canvas={mockCanvas} />
+      </MapContext.Provider>
+    )
+
+    // Early styledata: style not loaded yet → addSource deferred
+    listeners.styledata[0]()
+    expect(racingMap.addSource).not.toHaveBeenCalled()
+
+    // Map 'load' fires (isStyleLoaded still false in v6) → source added
+    listeners.load[0]()
+    expect(racingMap.addSource).toHaveBeenCalledWith('racing-canvas', expect.objectContaining({ type: 'canvas' }))
+  })
+
+  test('renders children only after the async style load (regression)', async () => {
+    // Source added asynchronously on 'load' — children must appear once the
+    // source lands (v3 returned null forever with no re-render).
+    const listeners = {}
+    let added = false
+    const racingMap = {
+      ...mockMapInstance,
+      on: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      once: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      off: vi.fn(),
+      isStyleLoaded: vi.fn(() => false),
+      addSource: vi.fn(() => { added = true }),
+      getSource: vi.fn(() => (added ? { type: 'canvas' } : null)),
+    }
+    mapContextValue = { map: { getMap: () => racingMap } }
+
+    const { container } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <CanvasSource id="late-canvas" coordinates={coordinates} canvas={mockCanvas}>
+          <Layer id="late-layer" type="raster" />
+        </CanvasSource>
+      </MapContext.Provider>
+    )
+
+    // Before load: no children
+    expect(container.querySelector('[data-testid="mocked-layer"]')).toBeNull()
+
+    // After 'load': source added, children render with the source id
+    const { act } = await import('@testing-library/react')
+    act(() => { listeners.load[0]() })
+    const layer = container.querySelector('[data-testid="mocked-layer"]')
+    expect(layer).not.toBeNull()
+    expect(layer.getAttribute('data-source')).toBe('late-canvas')
   })
 })

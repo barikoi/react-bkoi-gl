@@ -144,6 +144,27 @@ npm run typecheck      # TypeScript only
 npx vitest run <pattern> # subset of tests
 ```
 
+### Browser Specs (real maplibre-gl in Chromium)
+
+Copy an existing spec — `__tests__/browser/controls.spec.jsx` and
+`draw-control.spec.jsx` are the patterns. Conventions:
+
+- Harness: `createRoot` + `act()` from `react-dom/test-utils`, `ref={mapRef}`
+  on `<Map>`; mount into a detached `div` (no `document.body` state leak).
+- Wait for readiness with `waitForMapLoad(mapRef)`, `waitFor(() => cond)`
+  (polling with a deadline — for DOM/state conditions) or
+  `actUntil(resolve => eventSource.once(..., resolve))` (one-shot event
+  registration) — never arbitrary `sleep()` values, and never `actUntil`
+  with an `if (cond) resolve()` body (it checks once and hangs if not met).
+- Styles: `emptyStyle` (camera/marker/control tests) or `geojsonStyle`
+  (layer/source tests) — both offline; do not fetch remote styles/tiles.
+- Sequential re-renders on one `<Map>` instance per test (react-map-gl idiom),
+  then one `root.unmount()` with DOM-absence assertions.
+- Real-map timing is slower than jsdom: for lazy components (e.g.
+  maplibre-gl-draw polls `map.loaded()` at 16 ms) wait for a concrete signal
+  (`map.getSource('mapbox-gl-draw-cold')`) and raise the per-file timeout via
+  `vi.setConfig({ testTimeout: 30000 })`.
+
 ### Testing Pitfalls (read before writing tests)
 
 - **Component tests mock the whole `Maplibre` class**

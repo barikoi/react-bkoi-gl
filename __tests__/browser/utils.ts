@@ -47,6 +47,22 @@ export async function actUntil(updateFunc: (resolve: (value?: unknown) => void) 
   return result
 }
 
+/**
+ * Poll `cond` inside act boundaries until it returns true.
+ * Use for conditions with no event to hook (unlike `actUntil`, which
+ * registers a one-shot event listener and never re-runs its callback).
+ */
+export async function waitFor(cond: () => boolean, timeoutMs = 10000) {
+  const deadline = Date.now() + timeoutMs
+  while (!cond()) {
+    if (Date.now() > deadline) {
+      throw new Error(`waitFor: condition not met within ${timeoutMs}ms`)
+    }
+    await act(() => sleep(50))
+  }
+  await act(() => sleep(0))
+}
+
 // Minimal offline style: no sources, no layers — no network needed for
 // camera/marker/popup tests. For layer/source tests use `geojsonStyle`.
 export const emptyStyle = {

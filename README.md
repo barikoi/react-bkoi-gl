@@ -291,7 +291,6 @@ The core component that renders a Barikoi map. All other components must be chil
 | `onZoomEnd` | `(e: ViewStateChangeEvent) => void` | - | Zoom end handler |
 | `onError` | `(e: ErrorEvent) => void` | - | Error handler |
 | `onWarning` | `(e: ErrorEvent) => void` | - | Non-fatal warning handler (e.g. transient `queryRenderedFeatures` errors before style load). Falls back to `console.warn` when omitted. |
-| `showBarikoiLogo` | `boolean` | `true` | Render the Barikoi logo control (bottom-left). |
 | `showAttribution` | `boolean` | `true` | Render the attribution control (bottom-right). Attribution is required by the OSM/MapLibre license terms — keep this enabled unless you provide attribution elsewhere. |
 
 And all [MapLibre Map options](https://maplibre.org/maplibre-gl-js/docs/API/types/MapOptions/).
@@ -1197,16 +1196,16 @@ Render custom HTML canvas elements as map layers.
 ```tsx
 import { Map, CanvasSource, Layer } from 'react-bkoi-gl';
 import "react-bkoi-gl/styles";
-import { useRef, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 function CanvasExample() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
+  // <Map> renders its children only after the maplibre instance exists, so
+  // the canvas commits later than a mount effect runs. Draw in a ref callback
+  // — it fires exactly when the element attaches to the DOM.
+  const attachCanvas = (canvas: HTMLCanvasElement | null) => {
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.fillStyle = 'rgba(0, 100, 255, 0.5)';
@@ -1216,9 +1215,8 @@ function CanvasExample() {
       ctx.arc(128, 128, 50, 0, 2 * Math.PI);
       ctx.fill();
     }
-
     setCanvasEl(canvas);
-  }, []);
+  };
 
   return (
     <Map
@@ -1230,7 +1228,7 @@ function CanvasExample() {
       }}
       style={{ width: '100%', height: '100vh' }}
     >
-      <canvas ref={canvasRef} width={256} height={256} style={{ display: 'none' }} />
+      <canvas ref={attachCanvas} width={256} height={256} style={{ display: 'none' }} />
       {canvasEl && (
         <CanvasSource
           id="my-canvas"

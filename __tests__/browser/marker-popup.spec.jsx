@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { act } from 'react-dom/test-utils'
 import * as maplibregl from 'maplibre-gl'
 import { Map, Marker, Popup } from 'react-bkoi-gl'
-import { emptyStyle, waitForMapLoad, actUntil } from './utils'
+import { emptyStyle, waitForMapLoad, waitFor } from './utils'
 
 test('Marker renders at the given position', async () => {
   const container = document.createElement('div')
@@ -21,7 +21,7 @@ test('Marker renders at the given position', async () => {
         mapLib={maplibregl}
         mapStyle={emptyStyle}
         initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
-        showBarikoiLogo={false}
+       
         showAttribution={false}
       >
         <Marker ref={markerRef} longitude={90.3938} latitude={23.8216} />
@@ -55,7 +55,7 @@ test('Popup opens with content and closes', async () => {
         mapLib={maplibregl}
         mapStyle={emptyStyle}
         initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
-        showBarikoiLogo={false}
+       
         showAttribution={false}
       >
         {showPopup && (
@@ -68,9 +68,7 @@ test('Popup opens with content and closes', async () => {
   )
 
   // Popup content is portaled into the map container — poll until opened
-  await actUntil((resolve) => {
-    if (document.querySelector('[data-testid="popup-content"]')) resolve()
-  })
+  await waitFor(() => Boolean(document.querySelector('[data-testid="popup-content"]')))
   const content = document.querySelector('[data-testid="popup-content"]')
   expect(content, 'popup content is rendered').toBeTruthy()
   expect(content.textContent).toBe('Hello Barikoi')
@@ -83,14 +81,12 @@ test('Popup opens with content and closes', async () => {
         mapLib={maplibregl}
         mapStyle={emptyStyle}
         initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 12 }}
-        showBarikoiLogo={false}
+       
         showAttribution={false}
       />
     )
   )
-  await actUntil((resolve) => {
-    if (!document.querySelector('[data-testid="popup-content"]')) resolve()
-  })
+  await waitFor(() => !document.querySelector('[data-testid="popup-content"]'))
   expect(document.querySelector('[data-testid="popup-content"]')).toBeNull()
 
   await act(() => root.unmount())

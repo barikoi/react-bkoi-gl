@@ -14,11 +14,24 @@ import { applyReactStyle } from '../utils/apply-react-style'
 
 import type { Popup as PopupInstance, Marker as MarkerInstance, MarkerOptions } from '../types/lib'
 import type { MarkerEvent } from '../types/events'
-import type { MarkerDragEvent } from 'maplibre-gl'
+import type { MarkerDragEvent, LngLat } from 'maplibre-gl'
 
 import { MapContext } from './map'
+import { Popup } from './popup'
 import { arePointsEqual } from '../utils/deep-equal'
 import { compareClassNames } from '../utils/compare-class-names'
+
+/**
+ * Payload delivered to onDragStart/onDrag/onDragEnd. maplibre-gl v6 fires
+ * bare { type, target } events — we enrich them with the marker position so
+ * the README contract (`e.lngLat.lng`) holds.
+ */
+export type MarkerDragEventData = {
+  type: 'dragstart' | 'drag' | 'dragend'
+  target: MarkerInstance
+  /** Marker position when the event fired */
+  lngLat: LngLat
+}
 
 export type MarkerProps = MarkerOptions & {
   /** Longitude of the anchor location */
@@ -31,9 +44,9 @@ export type MarkerProps = MarkerOptions & {
   /** CSS style override, applied to the control's container */
   style?: React.CSSProperties
   onClick?: (e: MarkerEvent<MouseEvent>) => void
-  onDragStart?: (e: MarkerDragEvent) => void
-  onDrag?: (e: MarkerDragEvent) => void
-  onDragEnd?: (e: MarkerDragEvent) => void
+  onDragStart?: (e: MarkerDragEventData) => void
+  onDrag?: (e: MarkerDragEventData) => void
+  onDragEnd?: (e: MarkerDragEventData) => void
   children?: React.ReactNode
 }
 
@@ -46,6 +59,12 @@ export const Marker: React.FC<MarkerProps> = memo(
       onDrag?: MarkerProps['onDrag']
       onDragEnd?: MarkerProps['onDragEnd']
     }>({})
+
+    const toDragEventData = (e: MarkerDragEvent): MarkerDragEventData => ({
+      type: e.type,
+      target: marker,
+      lngLat: marker.getLngLat(),
+    })
 
     const marker: MarkerInstance = useMemo(() => {
       let hasChildren = false
@@ -86,15 +105,15 @@ export const Marker: React.FC<MarkerProps> = memo(
       marker.getElement().addEventListener('click', clickHandler)
 
       const dragStartHandler = (e: MarkerDragEvent) => {
-        callbackRef.current.onDragStart?.(e)
+        callbackRef.current.onDragStart?.(toDragEventData(e))
       }
 
       const dragHandler = (e: MarkerDragEvent) => {
-        callbackRef.current.onDrag?.(e)
+        callbackRef.current.onDrag?.(toDragEventData(e))
       }
 
       const dragEndHandler = (e: MarkerDragEvent) => {
-        callbackRef.current.onDragEnd?.(e)
+        callbackRef.current.onDragEnd?.(toDragEventData(e))
       }
 
       marker.on('dragstart', dragStartHandler)
@@ -167,6 +186,24 @@ export const Marker: React.FC<MarkerProps> = memo(
       prevClassNameRef.current = className
     })
 
-    return createPortal(props.children, marker.getElement())
+    // README: a <Popup> rendered inside <Marker> is anchored to the marker's
+    // coordinates — inject them (a standalone Popup requires longitude/latitude
+    // and crashes with NaN otherwise).
+    const children = useMemo(
+      () =>
+        React.Children.map(props.children, (child) => {
+          if (React.isValidElement(child) && child.type === Popup) {
+            const popupChild = child as React.ReactElement<React.ComponentProps<typeof Popup>>
+            return React.cloneElement(popupChild, {
+              longitude: props.longitude,
+              latitude: props.latitude,
+            })
+          }
+          return child
+        }),
+      [props.children, props.longitude, props.latitude]
+    )
+
+    return createPortal(children, marker.getElement())
   })
 )
