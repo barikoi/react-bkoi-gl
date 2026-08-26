@@ -44,13 +44,6 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 - The separate direct `@maplibre/maplibre-gl-style-spec@25.0.0` dependency was removed — style-spec types are re-exported from `maplibre-gl` (which bundles style-spec `^26.3.0`), so no consumer-facing type change.
 - All `package.json` version specifiers are exact pins (no `^`/`~`); `maplibre-gl` pinned to `6.6.0`.
 
-### Fixed
-- **Barikoi logo showed maplibre's logo instead** — maplibre's own CSS (equal specificity, imported later by consumers) overrode ours. Logo rule now uses `.maplibregl-map a.maplibregl-ctrl-logo` + `!important`, winning regardless of import order.
-- **Attribution copyright vanished seconds after load** — maplibre rebuilds the attribution DOM on tile-load events, wiping the rewrite. Links are now re-applied via `MutationObserver`; text leads with `©`; compact mode off so attribution is always visible.
-- **GeolocateControl click did nothing** — under StrictMode's double mount, two click listeners toggled the control ON then OFF. `_finishSetupUI` is deduped per button.
-- **Minimap rendered blank** — `onAdd` snapshotted the parent style before it loaded. Creation deferred until parent style is ready; pending listeners cleaned up on remove.
-- **Unused `Popup` import** removed from `src/types/events.ts`.
-- **README worker-fix script** — `fileURLToPath` replaces `.pathname` (Windows path fix).
 
 ## [2.2.1] - 09-07-2026
 
