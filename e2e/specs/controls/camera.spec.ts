@@ -1,7 +1,15 @@
 // Controls group A — camera + basic controls: Navigation zoom buttons,
 // MapRef zoomIn/zoomOut/flyTo, Scale, Fullscreen, Geolocate.
 // One URL: /?case=controls-camera
-import { test, expect, gotoCase, getMapState, waitForLog, waitForCameraStable, section } from '../../fixtures/map.js'
+import {
+  test,
+  expect,
+  gotoCase,
+  getMapState,
+  waitForLog,
+  waitForCameraStable,
+  section,
+} from '../../fixtures/map.js'
 
 test('NavigationControl: zoom buttons and compass render; zoom-in works', async ({ page }) => {
   await gotoCase(page, 'controls-camera/navigation')
@@ -21,7 +29,7 @@ test('MapRef camera: zoomIn, zoomOut, and flyTo drive the map', async ({ page })
   await gotoCase(page, 'controls-camera/camera-ref')
 
   const readLastReport = async () => {
-    const reports = await page.evaluate(() => window.__LOG__.filter((l) => l.type === 'ref-report'))
+    const reports = await page.evaluate(() => window.__LOG__.filter(l => l.type === 'ref-report'))
     return reports[reports.length - 1]
   }
 
@@ -36,6 +44,7 @@ test('MapRef camera: zoomIn, zoomOut, and flyTo drive the map', async ({ page })
   expect(report.zoom).toBeCloseTo(13, 3)
 
   await page.getByTestId('zoom-out').click()
+  await waitForCameraStable(page)
   await page.getByTestId('zoom-out').click()
   await waitForCameraStable(page)
   await page.getByTestId('report').click()
@@ -64,14 +73,13 @@ test('FullscreenControl toggles fullscreen', async ({ page }) => {
   // Headless-shell may report fullscreen as already active at load, so
   // locate the button by either class and assert the state TOGGLES.
   const btn = page.locator(
-    '.maplibregl-ctrl-group button[class*=fullscreen], .maplibregl-ctrl-group button[class*=shrink]')
+    '.maplibregl-ctrl-group button[class*=fullscreen], .maplibregl-ctrl-group button[class*=shrink]'
+  )
   await expect(btn).toBeVisible()
 
   const before = await btn.getAttribute('class')
   await btn.click()
-  await expect
-    .poll(async () => btn.getAttribute('class'), { timeout: 10_000 })
-    .not.toBe(before)
+  await expect.poll(async () => btn.getAttribute('class'), { timeout: 10_000 }).not.toBe(before)
 
   const enteredFs = await page.evaluate(() => Boolean(document.fullscreenElement))
   if (enteredFs) {
@@ -80,23 +88,30 @@ test('FullscreenControl toggles fullscreen', async ({ page }) => {
   }
 })
 
-test('GeolocateControl centers map on (faked) user location', async ({ browser }) => {
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-    permissions: ['geolocation'],
-    geolocation: { latitude: 23.75, longitude: 90.38, accuracy: 10 },
-  })
+test.use({
+  permissions: ['geolocation'],
+  geolocation: { latitude: 23.75, longitude: 90.38, accuracy: 10 },
+})
+test('GeolocateControl centers map on (faked) user location', async ({ page }) => {
+  // Default page + per-test context options: one window, review hold applies.
   // Headless-shell geolocation permission grants are unreliable — replace the
   // API outright with a deterministic position (no permission prompt path).
-  await context.addInitScript(() => {
+  await page.addInitScript(() => {
     const pos = () => ({
-      coords: { latitude: 23.75, longitude: 90.38, accuracy: 10, altitude: null, altitudeAccuracy: null, heading: null, speed: null },
+      coords: {
+        latitude: 23.75,
+        longitude: 90.38,
+        accuracy: 10,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+      },
       timestamp: Date.now(),
     })
-    navigator.geolocation.getCurrentPosition = (ok) => ok(pos())
-    navigator.geolocation.watchPosition = (ok) => (ok(pos()), 1)
+    navigator.geolocation.getCurrentPosition = ok => ok(pos())
+    navigator.geolocation.watchPosition = ok => (ok(pos()), 1)
   })
-  const page = await context.newPage()
   await gotoCase(page, 'controls-camera/geolocate')
 
   // maplibre v6 attaches the click handler asynchronously (permissions query)
@@ -114,5 +129,4 @@ test('GeolocateControl centers map on (faked) user location', async ({ browser }
   // User-location dot + accuracy circle render (maplibre default elements)
   const dot = page.locator('.maplibregl-user-location-dot')
   await expect(dot).toBeVisible({ timeout: 10_000 })
-  await context.close()
 })

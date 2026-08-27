@@ -6,6 +6,7 @@ import * as sourcesLayers from './sources-layers.jsx'
 import * as controls from './controls.jsx'
 import * as draw from './draw.jsx'
 import * as hooks from './hooks.jsx'
+import * as examples from './examples.jsx'
 
 export const CASES = {
   // Map module
@@ -40,7 +41,15 @@ export const CASES = {
   'controls-terrain/terrain': controls.ControlsTerrain,
   // Draw
   'draw/basic': draw.DrawBasic,
+  'draw/advanced': draw.DrawAdvanced,
   // Hooks
   'hooks/use-map': hooks.HooksUseMap,
-  'hooks/use-control': hooks.HooksUseControl,
+
+  // MapLibre official examples using open data (Barikoi serves none of these)
+  'examples/hillshade': examples.ExampleHillshade,
+  'examples/cluster': examples.ExampleCluster,
+  'examples/heatmap': examples.ExampleHeatmap,
+  'examples/animation': examples.ExampleAnimation,
+  'examples/video': examples.ExampleVideoSource,
+  'examples/camera-controls': examples.ExampleCameraControls,
 }

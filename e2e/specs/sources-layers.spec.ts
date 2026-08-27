@@ -23,7 +23,9 @@ test('data-driven styling renders all features; filter narrows a layer', async (
   expect(large[0].properties.name).toBe('Dhaka')
 })
 
-test('layer events: mouseenter/leave flips hover state; click reports feature', async ({ page }) => {
+test('layer events: mouseenter/leave flips hover state; click reports feature', async ({
+  page,
+}) => {
   await gotoCase(page, 'sources-layers/layer-events')
 
   // Feature sits at the section canvas center (Dhaka point at 90.3938,23.8216)
@@ -48,10 +50,12 @@ test('CanvasSource adds a canvas-backed raster layer', async ({ page }) => {
   // Source lands asynchronously (style load); poll instead of assuming
   // the settle already covered it.
   await expect
-    .poll(() => page.evaluate(() => Boolean(window.__MAP__?.getSource('my-canvas'))), { timeout: 8_000 })
+    .poll(() => page.evaluate(() => Boolean(window.__MAP__?.getSource('my-canvas'))), {
+      timeout: 8_000,
+    })
     .toBe(true)
   const layers = await page.evaluate(
-    () => window.__MAP__.getStyle().layers.filter((l) => l.source === 'my-canvas').length
+    () => window.__MAP__.getStyle().layers.filter(l => l.source === 'my-canvas').length
   )
   // StrictMode double-mount can add the auto-id'd layer twice — count > 0.
   expect(layers).toBeGreaterThan(0)

@@ -1,7 +1,9 @@
 // Controls group C — MinimapControl. One URL: /?case=controls-minimap
 import { test, expect, gotoCase, waitForLog, section } from '../../fixtures/map.js'
 
-test('MinimapControl renders with the full parent style, toggles, and reports onToggle', async ({ page }) => {
+test('MinimapControl renders with the full parent style, toggles, and reports onToggle', async ({
+  page,
+}) => {
   await gotoCase(page, 'controls-minimap/minimap')
   const sec = page
   // Parent + minimap maps inside this section
@@ -13,11 +15,11 @@ test('MinimapControl renders with the full parent style, toggles, and reports on
   await expect
     .poll(
       () =>
-        minimap.evaluate((el) => {
-          const ctrl = window.__MAP__._controls.find((c) => c.container === el)
+        minimap.evaluate(el => {
+          const ctrl = window.__MAP__._controls.find(c => c.container === el)
           return ctrl?.map?.getStyle?.().layers?.length ?? 0
         }),
-      { timeout: 20_000 },
+      { timeout: 20_000 }
     )
     .toBeGreaterThan(100)
 
@@ -36,12 +38,12 @@ test('MinimapControl parentRect renders the parent viewport rectangle', async ({
   await expect
     .poll(
       () =>
-        minimap.evaluate((el) => {
-          const ctrl = window.__MAP__._controls.find((c) => c.container === el)
-          const ids = ctrl?.map?.getStyle?.().layers?.map((l) => l.id) ?? []
-          return ['parentRectOutline', 'parentRectFill'].filter((id) => ids.includes(id)).length
+        minimap.evaluate(el => {
+          const ctrl = window.__MAP__._controls.find(c => c.container === el)
+          const ids = ctrl?.map?.getStyle?.().layers?.map(l => l.id) ?? []
+          return ['parentRectOutline', 'parentRectFill'].filter(id => ids.includes(id)).length
         }),
-      { timeout: 20_000 },
+      { timeout: 20_000 }
     )
     .toBe(2)
   // The rectangle source exists on the minimap and survives parent panning
@@ -53,10 +55,10 @@ test('MinimapControl parentRect renders the parent viewport rectangle', async ({
   await page.mouse.up()
   await expect
     .poll(() =>
-      minimap.evaluate((el) => {
-        const ctrl = window.__MAP__._controls.find((c) => c.container === el)
+      minimap.evaluate(el => {
+        const ctrl = window.__MAP__._controls.find(c => c.container === el)
         return ctrl?.map?.getSource?.('parentRect') ? 1 : 0
-      }),
+      })
     )
     .toBe(1)
 })
