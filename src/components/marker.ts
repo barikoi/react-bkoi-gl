@@ -67,9 +67,12 @@ export const Marker: React.FC<MarkerProps> = memo(
     })
 
     const marker: MarkerInstance = useMemo(() => {
+      // Children replace the default marker icon — EXCEPT a <Popup> child: a
+      // popup-only Marker (README "Popup attached to marker") must keep its
+      // pin; the popup is portal'd separately and needs no host element.
       let hasChildren = false
       React.Children.forEach(props.children, el => {
-        if (el) {
+        if (el && !(React.isValidElement(el) && el.type === Popup)) {
           hasChildren = true
         }
       })
@@ -191,7 +194,7 @@ export const Marker: React.FC<MarkerProps> = memo(
     // and crashes with NaN otherwise).
     const children = useMemo(
       () =>
-        React.Children.map(props.children, (child) => {
+        React.Children.map(props.children, child => {
           if (React.isValidElement(child) && child.type === Popup) {
             const popupChild = child as React.ReactElement<React.ComponentProps<typeof Popup>>
             return React.cloneElement(popupChild, {

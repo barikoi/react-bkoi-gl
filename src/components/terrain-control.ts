@@ -14,13 +14,16 @@ export type TerrainControlProps = TerrainSpecification & {
 }
 
 function _TerrainControl(props: TerrainControlProps) {
-  const ctrl = useControl(({ mapLib }) => new mapLib.TerrainControl(props), {
-    position: props.position,
+  // Strip wrapper-only props — maplibre v6 validates options and rejects
+  // unknown keys ("position"), which breaks the control's toggle wiring.
+  const { position, style, ...options } = props
+  const ctrl = useControl(({ mapLib }) => new mapLib.TerrainControl(options), {
+    position,
   })
 
   useEffect(() => {
-    applyReactStyle(ctrl._container, props.style)
-  }, [props.style])
+    applyReactStyle(ctrl._container, style)
+  }, [style])
 
   return null
 }

@@ -343,6 +343,9 @@ function MapExample() {
 
 Displays a marker on the map at specified coordinates.
 
+> A `<Popup>` as the only child keeps the default marker icon — the popup
+> anchors to a visible pin. Any other children replace the default icon.
+
 <details>
 <summary><strong>Props</strong></summary>
 
