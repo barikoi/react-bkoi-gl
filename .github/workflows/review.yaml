@@ -1,0 +1,25 @@
+# LLM code review on every push, via barikoi/code-review (see its README).
+# Reviews each push and files issues for findings; narrow `branches` to
+# limit noise. Trusting @v1 means trusting whoever can move that tag —
+# pin a full commit SHA instead if that's a concern.
+name: Code Review
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  review:
+    uses: barikoi/code-review/.github/workflows/ollama-code-review.yml@v1
+    secrets:
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_MODEL: ${{ secrets.LLM_MODEL }}
+    # Optional per-repo overrides:
+    # with:
+    #   model: some-other-tag
+    #   severity_threshold: high
