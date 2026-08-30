@@ -5,11 +5,18 @@
 // from the last run via e2e/report/review-*.json when present).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs'
 
-const specs = readdirSync('e2e/specs').map((f) => `e2e/specs/${f}`)
+// spec files recursively (specs/ has nested dirs: controls/, examples/)
+const specFiles = []
+;(function walk(dir) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) walk(`${dir}/${e.name}`)
+    else specFiles.push(`${dir}/${e.name}`)
+  }
+})('e2e/specs')
 
 // case-id → spec references (static grep: gotoCase(page, '<id>'))
 const caseToSpecs = {}
-for (const s of specs) {
+for (const s of specFiles) {
   const src = readFileSync(s, 'utf8')
   for (const m of src.matchAll(/gotoCase\(page,\s*'([^']+)'\)/g)) {
     ;(caseToSpecs[m[1]] ||= []).push(s.replace('e2e/specs/', ''))
@@ -27,19 +34,21 @@ const matrix = [
   ['Map Component — controlled viewState', ['map/controlled']],
   ['Map Component — events (drag/hover/zoom/resize/idle)', ['map/events', 'map/events-extended']],
   ['Map Component — MapRef methods', ['map/ref-methods']],
-  ['Marker Component — default, custom, draggable', ['marker/basic']],
-  ['Popup Component — basic, close, marker-attached', ['popup/basic', 'popup/marker-attached']],
-  ['Source/Layer — GeoJSON circle/fill/line', ['source/geojson']],
-  ['Layer — data-driven styling, filter', ['layer/data-driven']],
-  ['Layer events — mouseenter/leave, click', ['layer/events']],
-  ['CanvasSource', ['source/canvas']],
-  ['Controls — Navigation', ['controls/navigation']],
-  ['Controls — Scale', ['controls/scale']],
-  ['Controls — Fullscreen', ['controls/fullscreen']],
-  ['Controls — Geolocate', ['controls/geolocate']],
-  ['Controls — Globe', ['controls/globe']],
-  ['Controls — Minimap', ['controls/minimap']],
-  ['Controls — Terrain', ['controls/terrain']],
+  ['Marker Component — default, custom, draggable', ['marker-popup/marker-basic']],
+  ['Popup Component — basic, close, marker-attached', ['marker-popup/popup-basic', 'marker-popup/popup-marker-attached']],
+  ['Source/Layer — GeoJSON circle/fill/line', ['sources-layers/geojson']],
+  ['Layer — data-driven styling, filter', ['sources-layers/data-driven']],
+  ['Layer events — mouseenter/leave, click', ['sources-layers/layer-events']],
+  ['CanvasSource', ['sources-layers/canvas']],
+  ['Source/Layer — vector tiles (url + source-layer)', ['sources-layers/vector']],
+  ['Source/Layer — symbol layer (icon-image)', ['sources-layers/symbol-icon']],
+  ['Controls — Navigation', ['controls-camera/navigation']],
+  ['Controls — Scale', ['controls-camera/scale']],
+  ['Controls — Fullscreen', ['controls-camera/fullscreen']],
+  ['Controls — Geolocate', ['controls-camera/geolocate']],
+  ['Controls — Globe', ['controls-globe/globe']],
+  ['Controls — Minimap', ['controls-minimap/minimap']],
+  ['Controls — Terrain', ['controls-terrain/terrain']],
   ['DrawControl — toolbar, draw point/polygon, delete', ['draw/basic']],
   ['Hooks — useMap, useControl', ['hooks/use-map', 'hooks/use-control']],
   ['Styles — react-bkoi-gl/styles (logo paint)', ['map/basic']],
@@ -50,27 +59,27 @@ const matrix = [
 const barikoiExamples = [
   ['getting-started/display-basic-map', 'map/basic', '✅'],
   ['getting-started/display-custom-map-style', 'map/alt-style', '✅'],
-  ['getting-started/add-maps-control', 'controls/navigation', '✅'],
-  ['markers-and-popups/add-marker', 'marker/basic', '✅'],
-  ['markers-and-popups/add-draggable-marker', 'marker/basic (draggable)', '✅'],
+  ['getting-started/add-maps-control', 'controls-camera/navigation', '✅'],
+  ['markers-and-popups/add-marker', 'marker-popup/marker-basic', '✅'],
+  ['markers-and-popups/add-draggable-marker', 'marker-popup/marker-basic (draggable)', '✅'],
   ['markers-and-popups/add-marker-map-click', 'map/events (click→marker state)', '✅'],
-  ['markers-and-popups/add-popup', 'popup/basic', '✅'],
-  ['markers-and-popups/multiple-marker-as-layer', 'source/geojson (features→layer)', '✅'],
-  ['markers-and-popups/soft-pulsing-marker', '—', '➖ pass-through (CSS on Marker children), no case yet'],
-  ['layers-and-styling/add-geojson-line', 'source/geojson (line layer)', '✅'],
-  ['layers-and-styling/add-polygon', 'source/geojson (fill layer)', '✅'],
-  ['layers-and-styling/multiple-geojson', 'layer/data-driven', '✅'],
-  ['layers-and-styling/icon-layer', '—', '❌ gap: no icon/symbol-layer e2e case'],
-  ['layers-and-styling/vector-tile-layer', '—', '❌ gap: no vector-tile Source e2e case'],
-  ['advanced-features/animate-map-camera', 'map/ref-methods (flyTo)', '✅'],
+  ['markers-and-popups/add-popup', 'marker-popup/popup-basic', '✅'],
+  ['markers-and-popups/multiple-marker-as-layer', 'sources-layers/geojson (features→layer)', '✅'],
+  ['markers-and-popups/soft-pulsing-marker', 'marker-popup/marker-pulse', '✅'],
+  ['layers-and-styling/add-geojson-line', 'sources-layers/geojson (line layer)', '✅'],
+  ['layers-and-styling/add-polygon', 'sources-layers/geojson (fill layer)', '✅'],
+  ['layers-and-styling/multiple-geojson', 'sources-layers/data-driven', '✅'],
+  ['layers-and-styling/icon-layer', 'sources-layers/symbol-icon', '✅'],
+  ['layers-and-styling/vector-tile-layer', 'sources-layers/vector', '✅'],
+  ['advanced-features/animate-map-camera', 'examples/animate-camera (exact port: orbit + flyover + reset)', '✅'],
   ['advanced-features/fly-location', 'map/ref-methods (flyTo)', '✅'],
-  ['advanced-features/fit-bound', '—', '❌ gap: fitBounds untested in e2e'],
-  ['advanced-features/animate-point-along-line', '—', '➖ app-level pattern; source/geojson covers the data path'],
+  ['advanced-features/fit-bound', 'map/ref-methods (fitBounds)', '✅'],
+  ['advanced-features/animate-point-along-line', 'examples/animation', '✅'],
   ['advanced-features/click-to-center', 'map/events (click)', '✅'],
   ['advanced-features/mouse-position', 'map/events (click lngLat)', '✅'],
-  ['advanced-features/live-real-time-data', '—', '➖ app-level pattern (WebSocket→setData); unit-covered'],
-  ['advanced-features/measure-distance', '—', '➖ app-level (turf); not a library claim'],
-  ['advanced-features/measure-polygon-area', '—', '➖ app-level (turf); not a library claim'],
+  ['advanced-features/live-real-time-data', 'advanced/live-data', '✅'],
+  ['advanced-features/measure-distance', 'advanced/measure-distance', '✅'],
+  ['advanced-features/measure-polygon-area', 'advanced/measure-area', '✅'],
 ]
 
 const rows = matrix
@@ -103,7 +112,7 @@ ${rows}
 
 ## docs.barikoi.com/examples mapping
 
-Legend: ✅ covered · ➖ app-level pattern, not a library contract · ❌ gap
+Legend: ✅ covered by an e2e case
 
 | Barikoi example | Our case | Status |
 |---|---|---|

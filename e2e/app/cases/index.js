@@ -6,6 +6,7 @@ import * as sourcesLayers from './sources-layers.jsx'
 import * as controls from './controls.jsx'
 import * as draw from './draw.jsx'
 import * as hooks from './hooks.jsx'
+import * as advanced from './advanced.jsx'
 import * as examples from './examples.jsx'
 
 export const CASES = {
@@ -21,11 +22,14 @@ export const CASES = {
   'marker-popup/marker-basic': markerPopup.MarkerBasic,
   'marker-popup/popup-basic': markerPopup.PopupBasic,
   'marker-popup/popup-marker-attached': markerPopup.PopupMarkerAttached,
+  'marker-popup/marker-pulse': markerPopup.MarkerPulse,
   // Sources & Layers
   'sources-layers/geojson': sourcesLayers.SourceGeojson,
   'sources-layers/data-driven': sourcesLayers.LayerDataDriven,
   'sources-layers/layer-events': sourcesLayers.LayerEvents,
   'sources-layers/canvas': sourcesLayers.SourceCanvas,
+  'sources-layers/vector': sourcesLayers.SourceVector,
+  'sources-layers/symbol-icon': sourcesLayers.LayerSymbolIcon,
   // Controls — group A (camera + basics)
   'controls-camera/navigation': controls.ControlsNavigation,
   'controls-camera/camera-ref': controls.ControlsCameraRef,
@@ -44,6 +48,7 @@ export const CASES = {
   'draw/advanced': draw.DrawAdvanced,
   // Hooks
   'hooks/use-map': hooks.HooksUseMap,
+  'hooks/use-control': hooks.HooksUseControl,
 
   // MapLibre official examples using open data (Barikoi serves none of these)
   'examples/hillshade': examples.ExampleHillshade,
@@ -52,4 +57,9 @@ export const CASES = {
   'examples/animation': examples.ExampleAnimation,
   'examples/video': examples.ExampleVideoSource,
   'examples/camera-controls': examples.ExampleCameraControls,
+  'examples/animate-camera': examples.ExampleAnimateCamera,
+  // Barikoi docs advanced-features examples
+  'advanced/live-data': advanced.AdvancedLiveData,
+  'advanced/measure-distance': advanced.AdvancedMeasureDistance,
+  'advanced/measure-area': advanced.AdvancedMeasureArea,
 }

@@ -176,6 +176,15 @@ test('map/ref-methods: MapRef methods expose the maplibre instance', async ({ pa
   expect(report.center.lng).toBeCloseTo(90.4, 4)
   expect(report.center.lat).toBeCloseTo(23.83, 4)
   expect(report.zoom).toBeCloseTo(15, 3)
+
+  // fitBounds: camera lands on the bounds center, zoomed in past the start
+  await page.getByTestId('fit').click()
+  await waitForCameraStable(page)
+  await page.getByTestId('report').click()
+  report = await readLastReport()
+  expect(report.center.lng).toBeCloseTo(90.39, 2)
+  expect(report.center.lat).toBeCloseTo(23.825, 2)
+  expect(report.zoom).toBeGreaterThan(12.5)
 })
 
 test('map/alt-style: README osm_barikoi_v2 style loads', async ({ page }) => {

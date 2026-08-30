@@ -269,3 +269,62 @@ export function SourceCanvas() {
     </Section>
   )
 }
+
+// Vector tile source — MapLibre demotiles (open data; Barikoi serves none
+// of its vector tiles keyless). Covers the docs.barikoi.com
+// "vector-tile-layer" example: type="vector" url + source-layer on Layer.
+export function SourceVector() {
+  return (
+    <Section title='Vector tile source — demotiles countries fill'>
+      <TestMap section='vector' initialViewState={{ longitude: 20, latitude: 15, zoom: 1.2 }}>
+        <Source id='demotiles' type='vector' url='https://demotiles.maplibre.org/tiles/tiles.json'>
+          <Layer
+            id='countries-fill'
+            type='fill'
+            source-layer='countries'
+            paint={{ 'fill-color': '#627BC1', 'fill-opacity': 0.5 }}
+          />
+        </Source>
+      </TestMap>
+    </Section>
+  )
+}
+
+// Symbol layer with an icon-image — covers the docs.barikoi.com
+// "icon-layer" example: load/addImage on map load, then icon-image layout.
+// 32×32 opaque red marker disc with white ring (verified pixel e61e41ff) —
+// a 1×1 half-transparent PNG scales up invisible under premultiplied alpha.
+const ICON_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAgUlEQVR4nO3XwQ3AIAgFUCfpLu6/h2u0Z41SUOCTCIlX/5ODSinCen9Kup84tD2VXOoYTiiFOT71bvjYEbdTH3fDIpyNsAxnIaAAj/AlwjN8irgbgAjvEAlIQALgAPhFlIAQz3GID0kIgDUC+jPemg1gg4lWN1TnQ9hwSmFmJd3vA+dotTp28sa0AAAAAElFTkSuQmCC'
+
+export function LayerSymbolIcon() {
+  return (
+    <Section title='Symbol layer — icon-image (loadImage → addImage)'>
+      <TestMap
+        section='symbol-icon'
+        onLoad={({ target: map }) => {
+          map
+            .loadImage(ICON_PNG)
+            .then(({ data }) => {
+              if (!map.hasImage('test-icon')) map.addImage('test-icon', data)
+              window.__log({ type: 'icon-added' })
+            })
+            .catch(err => window.__log({ type: 'icon-error', err: String(err) }))
+        }}
+      >
+        <Source id='icon-points' type='geojson' data={geojsonData}>
+          <Layer
+            id='points-icon'
+            type='symbol'
+            layout={{
+              'icon-image': 'test-icon',
+              'icon-size': 1,
+              'icon-allow-overlap': true,
+              'icon-ignore-placement': true,
+            }}
+          />
+        </Source>
+      </TestMap>
+    </Section>
+  )
+}

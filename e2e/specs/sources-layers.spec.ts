@@ -60,3 +60,54 @@ test('CanvasSource adds a canvas-backed raster layer', async ({ page }) => {
   // StrictMode double-mount can add the auto-id'd layer twice — count > 0.
   expect(layers).toBeGreaterThan(0)
 })
+
+test('Vector tile source + source-layer render features', async ({ page }) => {
+  await gotoCase(page, 'sources-layers/vector')
+
+  // Vector source loads from the tilejson; layer registered against it.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const m = window.__MAP__
+          return Boolean(
+            m?.getSource('demotiles') &&
+              m.getStyle().layers.some(l => l.id === 'countries-fill' && l['source-layer'] === 'countries')
+          )
+        }),
+      { timeout: 20_000 }
+    )
+    .toBe(true)
+
+  // Rendered vector features are queryable (world view — land everywhere).
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          window.__MAP__.queryRenderedFeatures(undefined, { layers: ['countries-fill'] }).length
+        ),
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThan(0)
+})
+
+test('Symbol layer renders an icon-image added via loadImage/addImage', async ({ page }) => {
+  await gotoCase(page, 'sources-layers/symbol-icon')
+
+  const [ev] = await waitForLog(page, 'icon-added')
+  expect(ev).toBeTruthy()
+  await expect
+    .poll(() => page.evaluate(() => window.__MAP__.hasImage('test-icon')))
+    .toBe(true)
+
+  // The symbol layer paints the icon over the point feature at view center.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          window.__MAP__.queryRenderedFeatures(undefined, { layers: ['points-icon'] }).length
+        ),
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThan(0)
+})

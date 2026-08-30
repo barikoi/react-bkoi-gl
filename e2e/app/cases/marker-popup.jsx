@@ -84,3 +84,36 @@ export function PopupMarkerAttached() {
     </Section>
   )
 }
+
+// Soft pulsing marker — docs.barikoi.com "soft-pulsing-marker" example:
+// a CSS keyframe animation inside Marker children (pure pass-through).
+const PULSE_CSS = `
+@keyframes pulse-ring {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.pulse-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #e91e63; position: relative;
+}
+.pulse-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: #e91e63; opacity: 0.6;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+`
+
+export function MarkerPulse() {
+  return (
+    <Section title='Soft pulsing marker — CSS animation on Marker children'>
+      <style>{PULSE_CSS}</style>
+      <TestMap section='marker-pulse'>
+        <Marker longitude={90.3938} latitude={23.8216}>
+          <div data-testid='pulse-marker' className='pulse-dot'>
+            <span className='pulse-ring' />
+          </div>
+        </Marker>
+      </TestMap>
+    </Section>
+  )
+}

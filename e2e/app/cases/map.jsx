@@ -182,6 +182,22 @@ export function MapRefMethods() {
         >
           Fly
         </button>
+        <button
+          data-testid='fit'
+          onClick={() =>
+            mapRef.current
+              ?.getMap()
+              .fitBounds(
+                [
+                  [90.36, 23.8],
+                  [90.42, 23.85],
+                ],
+                { duration: 400, padding: 40 }
+              )
+          }
+        >
+          FitBounds
+        </button>
       </div>
       <TestMap ref={mapRef} section='ref-methods' />
     </Section>

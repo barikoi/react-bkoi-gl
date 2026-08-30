@@ -3,6 +3,7 @@ import { MapProvider, useControl, useMap } from 'react-bkoi-gl'
 import { TestMap } from '../test-map.jsx'
 import { Section } from './map.jsx'
 
+// Shared buttons for the hooks cases.
 function MapButtons() {
   const { current: map } = useMap()
   return (
@@ -20,22 +21,44 @@ function MapButtons() {
   )
 }
 
-class CustomControl {
-  onAdd() {
-    this.container = document.createElement('div')
-    this.container.className = 'custom-control'
-    this.container.setAttribute('data-testid', 'custom-control')
-    this.container.textContent = 'Custom Control'
-    return this.container
+// Live zoom-readout IControl — visually meaningful in headed review
+// (the earlier bare-control case was removed for being unreadable).
+class ZoomReadoutControl {
+  onAdd(map) {
+    this._map = map
+    this._container = document.createElement('div')
+    this._container.className = 'custom-control'
+    this._container.setAttribute('data-testid', 'zoom-readout')
+    this._update = () => {
+      this._container.textContent = `Zoom: ${map.getZoom().toFixed(1)}`
+    }
+    this._update()
+    map.on('zoom', this._update)
+    return this._container
   }
+
   onRemove() {
-    this.container.remove()
+    this._map.off('zoom', this._update)
+    this._container.remove()
   }
 }
 
-function CustomControlComponent() {
-  useControl(() => new CustomControl(), { position: 'top-left' })
+function ZoomReadout() {
+  useControl(() => new ZoomReadoutControl(), { position: 'top-right' })
   return null
+}
+
+export function HooksUseControl() {
+  return (
+    <Section title='useControl — custom IControl with live zoom readout'>
+      <MapProvider>
+        <TestMap section='use-control'>
+          <ZoomReadout />
+        </TestMap>
+        <MapButtons />
+      </MapProvider>
+    </Section>
+  )
 }
 
 export function HooksUseMap() {

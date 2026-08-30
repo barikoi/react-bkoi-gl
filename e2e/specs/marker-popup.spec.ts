@@ -76,3 +76,20 @@ test('marker-popup/popup-marker-attached: popup anchored at marker', async ({ pa
     Math.abs(popupBox.x + popupBox.width / 2 - (markerBox.x + markerBox.width / 2))
   ).toBeLessThan(20)
 })
+
+test('marker-popup/marker-pulse: CSS pulse animation on Marker children', async ({ page }) => {
+  await gotoCase(page, 'marker-popup/marker-pulse')
+
+  await expect(page.locator('.maplibregl-marker')).toHaveCount(1)
+  const pulse = page.getByTestId('pulse-marker')
+  await expect(pulse).toBeVisible()
+
+  // Visual identity lives in CSS — assert the computed animation, not pixels.
+  const anim = await pulse.evaluate(el => {
+    const s = getComputedStyle(el.querySelector('.pulse-ring'))
+    return { name: s.animationName, duration: s.animationDuration, state: s.animationPlayState }
+  })
+  expect(anim.name).toBe('pulse-ring')
+  expect(anim.state).toBe('running')
+  expect(parseFloat(anim.duration)).toBeGreaterThan(0)
+})

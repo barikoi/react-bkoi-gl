@@ -235,7 +235,7 @@ export function ExampleVideoSource() {
 /* ── fitBounds + pitch/bearing (maplibre examples:
       "fit a map to a bounding box" + "set pitch and bearing") ─────────── */
 
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 
 export function ExampleCameraControls() {
   const mapRef = useRef(null)
@@ -265,6 +265,98 @@ export function ExampleCameraControls() {
         </button>
       </div>
       <TestMap ref={mapRef} section='camera-controls' />
+    </Section>
+  )
+}
+
+// Exact port of docs.barikoi.com/examples/advanced-features/animate-map-camera
+// ("Cinematic Camera Animation"): dark style, pitch-60 orbital rotation on
+// load (15°/s), a 4-stop Dhaka flyover tour (flyTo, 6s legs), and a reset
+// easeTo. Camera transitions are identical to the example; only the React
+// wiring (refs, cleanup) is added.
+const AMC_HOME = [90.4074, 23.7925] // Dhaka
+const AMC_TOUR = [
+  { center: [90.4074, 23.7925], zoom: 17, pitch: 65, bearing: 0 },
+  { center: [90.393, 23.78], zoom: 16.5, pitch: 60, bearing: 90 },
+  { center: [90.42, 23.81], zoom: 17, pitch: 70, bearing: 180 },
+  { center: [90.4074, 23.7925], zoom: 18, pitch: 75, bearing: 360 },
+]
+
+export function ExampleAnimateCamera() {
+  const mapRef = useRef(null)
+  const rafRef = useRef(0)
+  const timeoutRef = useRef(0)
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(rafRef.current)
+      clearTimeout(timeoutRef.current)
+    },
+    []
+  )
+
+  const stop = () => {
+    cancelAnimationFrame(rafRef.current)
+    clearTimeout(timeoutRef.current)
+  }
+
+  // 1. Continuous orbital rotation — 15° per second, exactly like the example.
+  const startOrbit = () => {
+    stop()
+    window.__log({ type: 'orbit-start' })
+    const startTime = performance.now() / 1000
+    const rotate = () => {
+      const elapsed = performance.now() / 1000 - startTime
+      const bearing = (elapsed * 15) % 360
+      mapRef.current?.getMap().setBearing(bearing)
+      if (!((elapsed * 60) | 0) % 60) window.__log({ type: 'orbit-frame', bearing })
+      rafRef.current = requestAnimationFrame(rotate)
+    }
+    rotate()
+  }
+
+  // 2. Cinematic flyover tour — same locations, durations, and 7s cadence.
+  const startFlyover = () => {
+    stop()
+    let i = 0
+    const fly = () => {
+      window.__log({ type: 'flyover-leg', leg: i, target: AMC_TOUR[i] })
+      mapRef.current?.getMap().flyTo({ ...AMC_TOUR[i], duration: 6000, essential: true })
+      i = (i + 1) % AMC_TOUR.length
+      timeoutRef.current = setTimeout(fly, 7000)
+    }
+    fly()
+  }
+
+  // 3. Reset view — ease back home, pitch/bearing to 0 over 2s.
+  const resetView = () => {
+    stop()
+    window.__log({ type: 'reset' })
+    mapRef.current
+      ?.getMap()
+      .easeTo({ center: AMC_HOME, zoom: 16, pitch: 0, bearing: 0, duration: 2000 })
+  }
+
+  return (
+    <Section title='Example — cinematic camera animation (orbit + flyover tour)'>
+      <div className='map-ui'>
+        <button data-testid='orbit' onClick={startOrbit}>
+          Orbital View
+        </button>
+        <button data-testid='flyover' onClick={startFlyover}>
+          Dhaka Flyover
+        </button>
+        <button data-testid='reset' onClick={resetView}>
+          Reset View
+        </button>
+      </div>
+      <TestMap
+        ref={mapRef}
+        section='animate-camera'
+        mapStyle={BARIKOI_STYLE('barikoi-dark-mode')}
+        initialViewState={{ longitude: AMC_HOME[0], latitude: AMC_HOME[1], zoom: 16, pitch: 60, bearing: 0 }}
+        onLoad={startOrbit}
+      />
     </Section>
   )
 }

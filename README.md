@@ -1,20 +1,17 @@
-<h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com/npm/npm-intro">Docs</a></h1>
+<h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com">Docs</a></h1>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
-  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml/badge.svg?branch=master" alt="CI"></a>
-  <a href="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbarikoi%2Freact-bkoi-gl%2Fmaster%2Fcoverage.json"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbarikoi%2Freact-bkoi-gl%2Fmaster%2Fcoverage.json" alt="coverage"></a>
-  <a href="https://www.npmjs.com/package/maplibre-gl"><img src="https://img.shields.io/npm/v/maplibre-gl?label=maplibre-gl" alt="maplibre-gl version"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl.svg?label=downloads" alt="npm weekly downloads"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/node/v/react-bkoi-gl?label=node" alt="node"></a>
-  <a href="https://github.com/barikoi/react-bkoi-gl/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/react-bkoi-gl.svg?label=license" alt="license"></a>
+  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/l/react-bkoi-gl.svg?label=license" alt="license"></a>
 </p>
 
 ## Description
 
-`react-bkoi-gl` is a suite of [React](http://facebook.github.io/react/) components that provides a React API for [Barikoi Maps](https://docs.barikoi.com/docs/maps-api). Built on top of [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/), it offers high-performance, customizable map rendering with full TypeScript support.
+`react-bkoi-gl` is a suite of [React](https://react.dev/) components that provides a React API for [Barikoi Maps](https://docs.barikoi.com/docs/maps-api). It offers high-performance, customizable WebGL map rendering with full TypeScript support.
 
 Powered by <a href="https://barikoi.com/">Barikoi - Maps for Businesses</a>
 
@@ -143,11 +140,11 @@ import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
 ```
 
-### Next.js + Turbopack: Worker URL fix (maplibre-gl v6)
+### Next.js + Turbopack: blank map — worker URL fix
 
-> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 3.0.0 (maplibre-gl v6).
+> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 3.0.0.
 
-MapLibre GL v6 spawns a Web Worker to process vector tiles. It auto-detects the worker URL from `import.meta.url`, but **Turbopack provides a non-https `import.meta.url`** at compile time, so the auto-detection returns `""` → worker fails silently → **blank map, no errors**.
+The map engine spawns a Web Worker to process vector tiles. It auto-detects the worker URL from `import.meta.url`, but **Turbopack provides a non-https `import.meta.url`** at compile time, so the auto-detection returns `""` → worker fails silently → **blank map, no errors**.
 
 **Fix — two steps:**
 
@@ -189,7 +186,7 @@ import { Map } from "react-bkoi-gl";
 import "react-bkoi-gl/styles";
 import { setWorkerUrl } from "maplibre-gl";
 
-// Point maplibre at the stable public path we copied in step 1.
+// Point the engine at the stable public path we copied in step 1.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export default function MapView() {
@@ -249,7 +246,7 @@ Build maps by composing the `Map` component with layers, sources, UI controls, a
 
 - [`Source`](#source-component): Data source (GeoJSON, vector, raster, image, video, etc.).
 - [`CanvasSource`](#canvas-source): Render a custom HTML canvas as a source.
-- [`Layer`](#layer-component): Render MapLibre layers from a source (supports events).
+- [`Layer`](#layer-component): Render map layers from a source (supports events).
 
 #### Controls
 
@@ -259,7 +256,7 @@ Build maps by composing the `Map` component with layers, sources, UI controls, a
 - [`ScaleControl`](#scale-control): Scale bar.
 - [`TerrainControl`](#terrain-control): Terrain visualization.
 - [`DrawControl`](#draw-control): Draw/edit polygons, lines, points.
-- [`GlobeControl`](#globe-control): Toggle globe projection (MapLibre 3.x+).
+- [`GlobeControl`](#globe-control): Toggle globe projection.
 - [`MinimapControl`](#minimap-control): Overview minimap (toggleable, responsive).
 
 #### Hooks
@@ -291,9 +288,9 @@ The core component that renders a Barikoi map. All other components must be chil
 | `onZoomEnd` | `(e: ViewStateChangeEvent) => void` | - | Zoom end handler |
 | `onError` | `(e: ErrorEvent) => void` | - | Error handler |
 | `onWarning` | `(e: ErrorEvent) => void` | - | Non-fatal warning handler (e.g. transient `queryRenderedFeatures` errors before style load). Falls back to `console.warn` when omitted. |
-| `showAttribution` | `boolean` | `true` | Render the attribution control (bottom-right). Attribution is required by the OSM/MapLibre license terms — keep this enabled unless you provide attribution elsewhere. |
+| `showAttribution` | `boolean` | `true` | Render the attribution control (bottom-right). Attribution is required by the OpenStreetMap data license — keep this enabled unless you provide attribution elsewhere. |
 
-And all [MapLibre Map options](https://maplibre.org/maplibre-gl-js/docs/API/types/MapOptions/).
+And all [underlying map options](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/).
 
 </details>
 
@@ -649,7 +646,7 @@ function SourceExample() {
 
 ### Layer Component
 
-Renders data from a source on the map. Supports all MapLibre layer types.
+Renders data from a source on the map. Supports all standard layer types.
 
 <details>
 <summary><strong>Props</strong></summary>
@@ -1130,7 +1127,7 @@ function MinimapExample() {
 
 ### Globe Control
 
-Toggle between 2D map and 3D globe view (requires MapLibre GL 3.x+).
+Toggle between 2D map and 3D globe view.
 
 <details>
 <summary><strong>Props</strong></summary>
@@ -1204,7 +1201,7 @@ import { useState } from 'react';
 function CanvasExample() {
   const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
 
-  // <Map> renders its children only after the maplibre instance exists, so
+  // <Map> renders its children only after the map instance exists, so
   // the canvas commits later than a mount effect runs. Draw in a ref callback
   // — it fires exactly when the element attaches to the DOM.
   const attachCanvas = (canvas: HTMLCanvasElement | null) => {
@@ -1551,7 +1548,7 @@ Access the underlying map instance through the ref:
 ```tsx
 const mapRef = useRef<MapRef>(null);
 
-// Get the underlying MapLibre instance
+// Get the underlying map instance
 const map = mapRef.current?.getMap();
 
 // Common methods:
@@ -1581,9 +1578,110 @@ map.remove()              // Remove map
 
 ---
 
+## Camera Animation
+
+Animate the camera through the map instance: `flyTo` for cinematic tours,
+`easeTo` for smooth transitions, and `setBearing` per animation frame for a
+continuous orbital rotation.
+
+```tsx
+import { Map, useMap, MapProvider } from 'react-bkoi-gl';
+import "react-bkoi-gl/styles";
+import { useEffect, useRef } from 'react';
+
+const HOME: [number, number] = [90.4074, 23.7925]; // Dhaka
+
+// Cinematic tour: same camera transitions as the Barikoi "animate-map-camera" example
+const TOUR: Array<{
+  center: [number, number];
+  zoom: number;
+  pitch: number;
+  bearing: number;
+}> = [
+  { center: [90.4074, 23.7925], zoom: 17, pitch: 65, bearing: 0 },
+  { center: [90.393, 23.78], zoom: 16.5, pitch: 60, bearing: 90 },
+  { center: [90.42, 23.81], zoom: 17, pitch: 70, bearing: 180 },
+  { center: [90.4074, 23.7925], zoom: 18, pitch: 75, bearing: 360 }
+];
+
+function CameraControls() {
+  const { current: map } = useMap();
+  const raf = useRef(0);
+  const timer = useRef(0);
+
+  // Stop any running animation
+  const stop = () => {
+    cancelAnimationFrame(raf.current);
+    clearTimeout(timer.current);
+  };
+
+  useEffect(() => stop, []); // cleanup on unmount
+
+  // 1. Continuous orbital rotation — 15° per second
+  const startOrbit = () => {
+    stop();
+    const startTime = performance.now() / 1000;
+    const rotate = () => {
+      const elapsed = performance.now() / 1000 - startTime;
+      map?.setBearing((elapsed * 15) % 360);
+      raf.current = requestAnimationFrame(rotate);
+    };
+    rotate();
+  };
+
+  // 2. Cinematic flyover tour — one 6s flyTo per stop, looping
+  const startFlyover = () => {
+    stop();
+    let i = 0;
+    const fly = () => {
+      map?.flyTo({ ...TOUR[i], duration: 6000, essential: true });
+      i = (i + 1) % TOUR.length;
+      timer.current = setTimeout(fly, 7000);
+    };
+    fly();
+  };
+
+  // 3. Reset — ease back home, pitch and bearing to 0
+  const resetView = () => {
+    stop();
+    map?.easeTo({ center: HOME, zoom: 16, pitch: 0, bearing: 0, duration: 2000 });
+  };
+
+  return (
+    <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 1 }}>
+      <button onClick={startOrbit}>Orbital View</button>
+      <button onClick={startFlyover}>Dhaka Flyover</button>
+      <button onClick={resetView}>Reset View</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <MapProvider>
+      <Map
+        mapStyle={`https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${API_KEY}`}
+        initialViewState={{
+          longitude: HOME[0],
+          latitude: HOME[1],
+          zoom: 16,
+          pitch: 60,
+          bearing: 0
+        }}
+        style={{ width: '100%', height: '100vh' }}
+      >
+        <CameraControls />
+      </Map>
+    </MapProvider>
+  );
+}
+```
+
+---
+
 ## Styling
 
-The library uses MapLibre GL JS styles. Import the styles in your application:
+Import the library stylesheet in your application:
 
 ```tsx
 import "react-bkoi-gl/styles";
@@ -1593,10 +1691,12 @@ import "react-bkoi-gl/styles";
 
 - `osm-liberty` - Default street style
 - `osm_barikoi_v2` - Barikoi street style
+- `barikoi-dark-mode` - Dark style (used by the [Camera Animation](#camera-animation) example)
 
 ```tsx
 const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`;
 const mapStyle = `https://map.barikoi.com/styles/osm_barikoi_v2/style.json?key=${API_KEY}`;
+const mapStyle = `https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${API_KEY}`;
 ```
 
 ---
@@ -1628,7 +1728,7 @@ import type {
 
 - [Barikoi API Documentation](https://docs.barikoi.com/docs/maps-api)
 - [Barikoi Business API](https://docs.barikoi.com/api)
-- [MapLibre GL JS Docs](https://maplibre.org/maplibre-native/ios/latest/documentation/maplibre/)
+- [MapLibre GL JS Docs](https://maplibre.org/maplibre-gl-js/docs/) (engine reference)
 - [Interactive Examples](https://docs.barikoi.com/examples)
 
 ---
