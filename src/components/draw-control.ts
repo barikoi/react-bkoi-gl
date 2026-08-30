@@ -238,9 +238,7 @@ function _DrawControl(props: DrawControlProps) {
     // expose it on the control; after addControl it is the last child of the
     // corner container for top positions, first child for bottom positions.
     const cornerPosition = position || 'top-right'
-    const corner = mapInstance
-      .getContainer()
-      .querySelector(`.maplibregl-ctrl-${cornerPosition}`)
+    const corner = mapInstance.getContainer().querySelector(`.maplibregl-ctrl-${cornerPosition}`)
     containerRef.current = (
       cornerPosition.includes('bottom') ? corner?.firstElementChild : corner?.lastElementChild
     ) as HTMLElement | null

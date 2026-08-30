@@ -29,13 +29,23 @@ and e2e specs exist to cover each claim.
   Globe, Logo, Minimap, and `DrawControl` (maplibre-gl-draw wrapper with
   toolbar; captures its container via control-corner DOM query).
 - `src/components/use-control.ts` — `useControl()` for custom IControls.
+- `src/maplibre/worker-setup.ts` — auto-registers the worker URL before the
+  first `<Map>` mounts (asset probe → Blob-worker fallback; overrides win).
+  `scripts/build-worker.mjs` bundles the engine worker into
+  `dist/bkoi-map-worker.mjs` (exported as `react-bkoi-gl/worker`) and regenerates
+  `src/maplibre/worker-bundle.generated.ts` (committed). Details:
+  `docs/framework-setup.md`.
 - `src/exports-maplibre-gl.ts` — public surface: `Map` (default), all
-  components/hooks above, plus re-exports of maplibre-gl types.
+  components/hooks above, re-exports of maplibre-gl types, plus engine globals
+  (`setWorkerUrl`, `getWorkerUrl`, `getVersion`, `GPUInitializationError`) so
+  app code never imports `maplibre-gl` (breaks under pnpm strict layout).
 - `src/utils/` — `applyReactStyle`, `deep-equal`, `compare-class-names`,
   `style-utils`, `logger`, `warn`.
-- Build: `tsup` (ESM/CJS to `dist/`) + `scripts/build-styles.js`
-  (copies/compiles CSS into `dist/styles/`). maplibre-gl v6 is ESM-only →
-  `dist/index.cjs` is bundler-only (documented in `scripts/test-pack.mjs`).
+- Build: `scripts/build-worker.mjs --ts-only` → `tsup` (ESM/CJS to `dist/`) →
+  `scripts/build-worker.mjs` (branded worker + generated TS) +
+  `scripts/build-styles.js` (CSS into `dist/styles/`). maplibre-gl v6 is
+  ESM-only → `dist/index.cjs` is bundler-only (asserted in
+  `scripts/test-pack.mjs`).
 
 ## Commands
 
@@ -44,11 +54,14 @@ and e2e specs exist to cover each claim.
 | Dev server (style/api experiments) | `npm run e2e:serve` (vite, :5175) |
 | Typecheck / lint | `npm run typecheck` / `npm run lint` |
 | Build | `npm run build` (tsup + CSS) |
-| Unit tests (mocked maplibre) | `npm run test:unit` — 315 tests |
+| Unit tests (mocked maplibre) | `npm run test:unit` — 317 tests |
 | Browser tests (real maplibre, headless, local style) | `npm run test:browser` — 9 tests |
 | E2E (Playwright vs built `dist/`) | `npm run e2e` (chains `npm run build`) |
 | Pack tarball smoke | `npm run test:pack` |
-| Full gate | typecheck + lint + unit + browser + e2e + test:pack |
+| Framework repros (Vite/Next 15/Next 16/CRA consumer apps) | `npm run test:framework` (npm; `--pm=pnpm|yarn|bun`, `--only=<app>`; long: run detached) |
+| Framework headed review (same UX as e2e:review) | `npm run test:framework:review` (`ONLY=`, `DWELL=`, `PAUSE=1`, `PM=`, `SKIP_INSTALL=1`) |
+| Test suites | `tests/` — `unit/`, `browser/`, `e2e/`, `framework/` |
+| Full gate | typecheck + lint + unit + browser + e2e + test:pack (+ `npm run test:framework` before releases) |
 
 ## Command discipline (tool/assistant workflow)
 
@@ -62,17 +75,19 @@ and e2e specs exist to cover each claim.
 - **Recon-then-action.** Reproduce with the single failing spec before any
   full-suite run; fix, then retry just that spec; only then re-run the suite.
 - Zombie vite from aborted calls: `pkill -f "[v]ite e2e"` (bracket so
-  `pkill` never matches its own pattern).
+  `pkill` never matches its own pattern). Framework servers: `npx next start`
+  orphans its child on kill — `tests/framework` spawns `node_modules/.bin/next`
+  in its own process group and `fuser -k <port>/tcp`s before and after.
 
 ## E2E architecture
 
-- `e2e/app/` — vite app, one case per URL (`/?case=<name>`) from
-  `e2e/app/cases/`; `react-bkoi-gl` aliased to `dist/` (e2e validates the
+- `tests/e2e/app/` — vite app, one case per URL (`/?case=<name>`) from
+  `tests/e2e/app/cases/`; `react-bkoi-gl` aliased to `dist/` (e2e validates the
   publish artifact; rebuild before runs).
 - Page state on `window`: `__MAP__` (live maplibre instance), `__LOG__`
   (event log), `__pageErrors__` (uncaught errors, recorded in
-  `e2e/app/main.jsx`).
-- `e2e/fixtures/map.ts` — `gotoCase`, `getMapState`, `waitForLog`,
+  `tests/e2e/app/main.jsx`).
+- `tests/e2e/fixtures/map.ts` — `gotoCase`, `getMapState`, `waitForLog`,
   `waitForCameraStable` (poll-based waits only; assert map state/DOM,
   never pixels).
 - Config: `workers: 1` (WebGL determinism), `timeout: 60_000` — never
@@ -92,4 +107,11 @@ and e2e specs exist to cover each claim.
 - `Marker` does not forward `data-testid` — spec selectors must use real
   Marker DOM (`.maplibregl-marker`, `.maplibregl-marker-draggable`).
 - Component function children need `forwardRef` to receive refs (React 18).
+- Vitest mock factories (`vi.mock('maplibre-gl', …)`) throw on PROPERTY
+  ACCESS of missing exports — when the engine surface grows (e.g.
+  `setWorkerUrl`), every virtual mock in `tests/unit/` must gain it, or the
+  `<Map>` mount chain rejects and components never render.
+- Framework review transitions are instant because builds are snapshotted into
+  `tests/framework/<app>/.fw-snap/<cell>` (gitignored); rerun without
+  `SKIP_BUILD` after library changes or you review stale builds.
 - `.env` (gitignored) must define `BARIKOI_API_KEY` or `API_KEY`.

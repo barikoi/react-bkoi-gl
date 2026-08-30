@@ -52,6 +52,11 @@ export type { GlobeControlProps, GlobeControlOptions } from './components/globe-
 
 export { logger, setLogger, type Logger } from './utils/logger'
 
+// Engine globals consumers may need without importing maplibre-gl directly
+// (a transitive dep is not resolvable from app code under pnpm/yarn PnP).
+export { setWorkerUrl, getWorkerUrl, getVersion } from 'maplibre-gl'
+export { GPUInitializationError } from 'maplibre-gl'
+
 // Types
 export * from './types/common'
 export * from './types/events'

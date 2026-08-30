@@ -41,26 +41,39 @@ npm install
 | Script | Description |
 |--------|-------------|
 | `npm run typecheck` | TypeScript validation (`tsc --noEmit`) |
-| `npm run clean` | Remove the `dist/` directory |
-| `npm run build` | Production bundle (tsup + `scripts/build-styles.js`) |
-| `npm run lint` | ESLint |
-| `npm test` | TypeScript validation + Vitest suite |
+| `npm run lint` | ESLint (flat config, `src/`) |
+| `npm test` | Typecheck + full Vitest suite |
+| `npm run test:unit` / `npm run test:browser` | Vitest projects (jsdom / real Chromium) |
 | `npm run coverage` | Vitest with coverage report |
+| `npm run build` | Production bundle (worker bundle + tsup + CSS) |
+| `npm run test:pack` | Pack-tarball smoke (installs the tarball, asserts exports/files) |
+| `npm run e2e` | Playwright suite vs built `dist/` (chains build) |
+| `npm run e2e:serve` / `e2e:review` / `e2e:coverage` | e2e host app / headed review / claim-coverage matrix |
+| `npm run test:framework` / `test:framework:review` | Framework compatibility matrix / its headed review |
+| `npm run playwright:install` | One-time Chromium install for browser tests |
+| `npm run prepublishOnly` | Publish gate: typecheck + lint + test + build |
 
 ### Project Structure
 
 ```
 src/
   components/     # React components — Map, Layer, Source, controls, etc.
-  maplibre/       # MapLibre wrapper class, MapRef factory
+  maplibre/       # MapLibre wrapper class, MapRef factory, worker-setup.ts
   types/          # TypeScript type definitions
   utils/          # Helpers (logger, deep-equal, transform, etc.)
-__tests__/        # Vitest tests, mirrors src/ layout
-  mocks/          # Load-bearing maplibre-gl and react-dom mocks
-scripts/          # Build scripts (build-styles.js)
+scripts/          # build-worker.mjs, build-styles.js, test-pack.mjs, …
 styles/           # Committed CSS overrides, concatenated into the bundle
-docs/audits/      # Historical code audit reports (not shipped)
+tests/
+  unit/           # Vitest, jsdom, mocked maplibre-gl (mocks/ here too)
+  browser/        # Vitest browser mode — real maplibre-gl in Chromium
+  e2e/            # Playwright suite vs built dist/ (app/, specs/, review/)
+  framework/      # Consumer repro apps: Vite/Next 15/Next 16/CRA + runner
+docs/
+  framework-setup.md  # Worker-resolution internals, overrides, troubleshooting
+  audits/         # Historical code audit reports (not shipped)
 ```
+`src/maplibre/worker-bundle.generated.ts` is GENERATED (worker source inlined
+for the Blob fallback) and committed so typecheck works before a build.
 
 ### Git Hooks
 
@@ -110,31 +123,60 @@ Use `map.getMap()` to access the raw MapLibre instance when needed.
 3. Add to map in `useEffect` (cleanup on unmount).
 4. Update props reactively via additional effects.
 
+### Worker Setup (automatic)
+
+`<Map>` never requires worker configuration. Before the engine Map is
+constructed, `ensureWorkerUrl()` (`src/maplibre/worker-setup.ts`) probes the
+bundler-emitted `dist/bkoi-map-worker.mjs` asset (webpack/CRA/Next — both
+Turbopack and webpack modes) and falls back to a same-origin Blob worker built
+from the inlined source. Explicit overrides (`setWorkerUrl()`, the `workerUrl`
+prop) always win. Mechanism, CSP, and self-hosting:
+[docs/framework-setup.md](./docs/framework-setup.md).
+
 ### Public Surface
 
 Everything exported from `src/exports-maplibre-gl.ts` is public. Anything
 else is internal even if TypeScript visibility allows it. Notably public:
 `logger`, `setLogger`, `Logger` (injectable logger), all map components,
-hooks (`useMap`, `useControl`), and `MapRef`. Type re-exports live in
-`src/types/`. Add new exports only via `src/exports-maplibre-gl.ts` — no
+hooks (`useMap`, `useControl`), `MapRef`, and the engine globals
+`setWorkerUrl` / `getWorkerUrl` / `getVersion` / `GPUInitializationError`.
+Type re-exports live in `src/types/`. Add new exports only via `src/exports-maplibre-gl.ts` — no
 barrel files elsewhere.
 
 ---
 
 ## Testing Workflow
 
+### Framework Compatibility (`tests/framework/`)
+
+One real consumer app per framework — **Vite 6/7, Next.js 15, Next.js 16, CRA
+react-scripts 5** — installed from the packed tarball (tarball method) and
+verified headlessly for actual tile rendering (worker constructed + 200, engine
+`load` + `idle`, no uncaught errors). Covers the README's zero-config claims
+and the package-manager matrix (npm/pnpm/yarn/bun) plus both Next bundler
+modes (Turbopack and webpack).
+
+```bash
+npm run test:framework                                # full npm matrix (~10 min; run detached)
+node tests/framework/run.mjs --only=next16 --pm=pnpm  # single cell + PM
+npm run test:framework:review                         # headed human walkthrough (e2e:review UX)
+```
+
+Installs are heavy and long — run detached (`nohup … &`) and poll the log.
+Mechanism details: [docs/framework-setup.md](./docs/framework-setup.md).
+
 ### Unit Tests
 
 - **Framework**: Vitest (unit, jsdom, mocked maplibre-gl) + React Testing Library;
   Vitest browser mode (real maplibre-gl in headless Chromium via Playwright)
-  for `__tests__/browser/` specs — same setup as react-map-gl.
-- **Projects**: `unit` (jsdom, `__tests__/**/*test*`) and `browser`
-  (`__tests__/browser/**/*.spec.*`, real WebGL rendering, offline inline styles).
+  for `tests/browser/` specs — same setup as react-map-gl.
+- **Projects**: `unit` (jsdom, `tests/unit/**/*test*`) and `browser`
+  (`tests/browser/**/*.spec.*`, real WebGL rendering, offline inline styles).
   Run one: `npm run test:unit` / `npm run test:browser`; browsers:
   `npm run playwright:install` (once per machine/CI).
-- **Location**: `__tests__/`, organized by component and utility.
-- **Mocks**: `__tests__/mocks/maplibre-gl.js` and
-  `__tests__/mocks/react-dom-mock.js` are load-bearing.
+- **Location**: `tests/unit/`, organized by component and utility; browser specs in `tests/browser/`.
+- **Mocks**: `tests/unit/mocks/maplibre-gl.js` and
+  `tests/unit/mocks/react-dom-mock.js` are load-bearing.
 - **Coverage**: run `npm run coverage` to generate a report in `coverage/`.
 
 ```bash
@@ -146,7 +188,7 @@ npx vitest run <pattern> # subset of tests
 
 ### Browser Specs (real maplibre-gl in Chromium)
 
-Copy an existing spec — `__tests__/browser/controls.spec.jsx` and
+Copy an existing spec — `tests/browser/controls.spec.jsx` and
 `draw-control.spec.jsx` are the patterns. Conventions:
 
 - Harness: `createRoot` + `act()` from `react-dom/test-utils`, `ref={mapRef}`
@@ -170,8 +212,8 @@ Copy an existing spec — `__tests__/browser/controls.spec.jsx` and
 - **Component tests mock the whole `Maplibre` class**
   (`vi.mock('../../src/maplibre/maplibre', () => class { ... })`). Changes
   to the real `Maplibre.setProps`, `_updateStyleComponents`, or `_initialize`
-  are NOT exercised by `__tests__/components/*`. Test wrapper internals in
-  `__tests__/maplibre/maplibre.test.js` instead.
+  are NOT exercised by `tests/unit/components/*`. Test wrapper internals in
+  `tests/unit/maplibre/maplibre.test.js` instead.
 - **Style readiness has two signals, depending on the file:**
   - `src/maplibre/maplibre.ts` checks `map.style && map.isStyleLoaded()`.
     Mock with `style: {}` and `isStyleLoaded: vi.fn()`. Do NOT use
@@ -185,8 +227,17 @@ Copy an existing spec — `__tests__/browser/controls.spec.jsx` and
 - **MapLibre private fields** (`_container`, `_resizeObserver`, `_update`,
   `_render`, `_frame`) are accessed via `typeof` guards in `maplibre.ts`.
   They drift across MapLibre versions — never assume they exist.
-- **`__tests__/mocks/maplibre-gl.js`** must be updated whenever the MapLibre
+- **`tests/unit/mocks/maplibre-gl.js`** must be updated whenever the MapLibre
   API surface used by source changes.
+- **Vitest mocks throw on missing-export property access** — any virtual
+  `vi.mock('maplibre-gl', …)` factory must expose everything source touches
+  (`setWorkerUrl`, `getWorkerUrl`, `getVersion`, …) or `<Map>`'s mount chain
+  rejects with "No X export is defined on the mock" and components never
+  render. Keep the factories in sync with the engine surface.
+- **Worker resolution in tests**: `<Map>` probes the bundled worker URL and
+  falls back to a Blob worker (see `docs/framework-setup.md`); in jsdom the
+  probe is skipped (non-http URL). If a test asserts worker behavior, mock at
+  the `maplibre-gl` level, not the network level.
 
 ### Local Package Testing
 
@@ -217,8 +268,8 @@ Single workflow: `.github/workflows/ci.yaml`, **master only** (pushes to
   (`scripts/make-coverage-badge.mjs`) and commits it if changed — the README
   coverage badge reads that file via the shields.io endpoint.
 - No secrets required.
-- SonarQube (`.github/workflows/action.yaml`) is separate, temporarily
-  disabled (branch `down`) while the SonarQube server is under maintenance.
+- SonarQube was removed entirely (workflow + properties) — coverage is the
+  quality gate.
 - `package-lock.json` is gitignored by policy — CI installs with `npm install`,
   resolving from the exact version pins in `package.json`.
 
@@ -393,6 +444,6 @@ Publishing is **manual** — CI never publishes.
 - [README.md](./README.md) — user-facing API docs and examples
 - [CHANGELOG.md](./CHANGELOG.md) — version history
 - [Barikoi API docs](https://docs.barikoi.com/docs/maps-api)
-- [MapLibre GL JS](https://maplibre.org/maplibre-gl-js-docs/)
+- [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [GitHub Issues](https://github.com/barikoi/react-bkoi-gl/issues)

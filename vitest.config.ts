@@ -26,21 +26,21 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           environment: 'jsdom',
-          setupFiles: ['__tests__/setup.js'],
-          include: ['__tests__/**/*test*.{js,jsx,ts,tsx,cjs}'],
-          exclude: ['__tests__/browser/**'],
+          setupFiles: ['tests/unit/setup.js'],
+          include: ['tests/unit/**/*test*.{js,jsx,ts,tsx,cjs}'],
+          exclude: ['tests/browser/**'],
         },
         resolve: {
           alias: [
             // Order matters: first match wins
             {
               find: /^react-bkoi-gl\/test(.*)$/,
-              replacement: `${root}/__tests__$1`,
+              replacement: `${root}/tests/unit$1`,
             },
             { find: /^react-bkoi-gl(.*)$/, replacement: `${root}/src$1` },
             {
               find: /^maplibre-gl$/,
-              replacement: `${root}/__tests__/mocks/maplibre-gl.js`,
+              replacement: `${root}/tests/unit/mocks/maplibre-gl.js`,
             },
           ],
         },
@@ -50,8 +50,8 @@ export default defineConfig({
         // following the react-map-gl browser-mode setup
         test: {
           name: 'browser',
-          include: ['__tests__/browser/**/*.spec.{js,jsx,ts,tsx}'],
-          setupFiles: ['__tests__/browser/setup.ts'],
+          include: ['tests/browser/**/*.spec.{js,jsx,ts,tsx}'],
+          setupFiles: ['tests/browser/setup.ts'],
           testTimeout: 10_000,
           fileParallelism: false,
           browser: {

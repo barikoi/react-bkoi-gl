@@ -417,7 +417,7 @@ class Minimap implements IControl {
       this.pendingStyleListener = tryCreate
     }
 
-        return this.container
+    return this.container
   }
 
   onRemove(): void {

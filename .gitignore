@@ -17,6 +17,21 @@ yarn-error.log
 .codelens
 # e2e
 playwright-report/
-e2e/report/
+tests/e2e/report/
 test-results/
 !.env.example
+
+# framework-tests (consumer repro apps)
+tests/framework/*/node_modules/
+tests/framework/*/dist/
+tests/framework/*/build/
+tests/framework/*/.next/
+tests/framework/*/package-lock.json
+tests/framework/*/pnpm-lock.yaml
+tests/framework/*/yarn.lock
+tests/framework/*/bun.lock*
+tests/framework/*.tgz
+tests/framework/result-*.json
+tests/framework/results.json
+tests/framework/*/.fw-snap/
+tests/framework/review-report/

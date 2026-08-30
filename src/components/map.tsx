@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useContext, useMemo, useImperativeHandle }
 
 import { MountedMapsContext } from './use-map'
 import Maplibre, { MaplibreProps } from '../maplibre/maplibre'
+import { ensureWorkerUrl } from '../maplibre/worker-setup'
 import createRef, { MapRef } from '../maplibre/create-ref'
 
 import type { CSSProperties } from 'react'
@@ -71,7 +72,7 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
     let maplibre: Maplibre | null = null
 
     Promise.resolve(initialMapLib || import('maplibre-gl'))
-      .then((module: MapLib | { default: MapLib }) => {
+      .then(async (module: MapLib | { default: MapLib }) => {
         if (!isMounted) {
           return
         }
@@ -86,6 +87,9 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
           throw new Error('Invalid mapLib')
         }
 
+        // Resolve the worker URL (bundled asset or Blob fallback) before the
+        // engine Map is constructed — see src/maplibre/worker-setup.ts.
+        await ensureWorkerUrl(mapboxgl)
         setGlobals(mapboxgl, propsRef.current)
         if (initialReuseMaps) {
           maplibre = Maplibre.reuse(propsRef.current, containerRef.current)

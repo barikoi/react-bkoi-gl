@@ -24,11 +24,15 @@
       "types": "./dist/styles/index.d.ts",
       "import": "./dist/styles/react-bkoi-gl.css",
       "default": "./dist/styles/react-bkoi-gl.css"
-    }
+    },
+    "./worker": "./dist/bkoi-map-worker.mjs"
   },
   "author": "barikoi",
   "readme": "README.md",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "homepage": "https://docs.barikoi.com/docs/maps-api",
   "files": [
     "dist",
@@ -37,12 +41,10 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "build": "tsup && node scripts/build-styles.js",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src/",
+    "build": "node scripts/build-worker.mjs --ts-only && tsup && node scripts/build-worker.mjs && node scripts/build-styles.js",
+    "lint": "eslint src/",
     "test": "npm run typecheck && vitest run",
     "coverage": "vitest run --coverage",
-    "coverage:badge": "node scripts/make-coverage-badge.mjs",
     "prepublishOnly": "npm run typecheck && npm run lint && vitest run && npm run build",
     "prepare": "husky",
     "test:unit": "vitest run --project unit",
@@ -50,10 +52,11 @@
     "playwright:install": "playwright install chromium",
     "test:pack": "node scripts/test-pack.mjs",
     "e2e": "npm run build && playwright test",
-    "e2e:headed": "npm run build && playwright test --headed",
-    "e2e:serve": "vite e2e/app --port 5175 --strictPort",
-    "e2e:review": "node e2e/review/run-review.mjs",
-    "e2e:coverage": "node e2e/scripts/generate-coverage.mjs"
+    "e2e:serve": "vite tests/e2e/app --port 5175 --strictPort",
+    "e2e:review": "node tests/e2e/review/run-review.mjs",
+    "e2e:coverage": "node tests/e2e/scripts/generate-coverage.mjs",
+    "test:framework": "node tests/framework/run.mjs",
+    "test:framework:review": "node tests/framework/review.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.6.0"
@@ -63,7 +66,7 @@
     "react-dom": ">=18.0.0"
   },
   "lint-staged": {
-    "{src,scripts,__tests__}/**/*.{js,jsx,ts,tsx}": [
+    "{src,scripts,tests}/**/*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ]
@@ -71,6 +74,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.0.2",
     "@commitlint/config-conventional": "21.0.2",
+    "@eslint/eslintrc": "3.3.6",
     "@playwright/test": "^1.62.1",
     "@testing-library/react": "16.3.2",
     "@types/geojson": "7946.0.16",

@@ -13,15 +13,15 @@ const eslintconfig = [
   // Global ignores
   {
     ignores: [
-      '**/.eslintrc.json',
       '**/tsconfig.json',
       '**/index.d.ts',
       '**/*.config.js',
       '**/*.config.mjs',
       'dist/',
+      'src/maplibre/worker-bundle.generated.ts',
       'node_modules/',
       'coverage/',
-      '__tests__/',
+      'tests/',
       'examples/',
       '*.md',
       'scripts/',

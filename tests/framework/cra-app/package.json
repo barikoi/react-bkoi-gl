@@ -1,0 +1,34 @@
+{
+  "name": "fw-cra",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-bkoi-gl": "file:../react-bkoi-gl-3.0.0.tgz",
+    "react-dom": "^18.3.1",
+    "react-scripts": "5.0.1"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!react-bkoi-gl|maplibre-gl)"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-class-static-block": "^7.27.1"
+  }
+}
