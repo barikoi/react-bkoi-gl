@@ -109,6 +109,89 @@ Map rendering is bundled — no separate map engine install needed.
 
 ---
 
+## Migrating to v3 from v2.x (map not rendering after upgrade)
+
+Upgrading an existing Vite, CRA or Next.js project to `react-bkoi-gl` v3 and seeing the page render but the map stays blank/grey — tiles never load, usually with no error? That is the one breaking change almost everyone hits. The rendering engine behind v3 is ESM-only and loads its tile-processing code from a **separate Web Worker file**. In every bundler, the worker URL must be registered explicitly with `setWorkerUrl()` — the automatic detection from `import.meta.url` does not survive bundling, and when the worker fails to load the engine hangs silently instead of erroring.
+
+### Step 1 — register the worker URL (required in every bundler)
+
+Call this once, at module level, **before the first `<Map>` renders** (not inside a component, so no render-order race):
+
+| Setup | Snippet |
+|---|---|
+| **Vite** | `import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";`<br>`setWorkerUrl(workerUrl);` |
+| **webpack 5+ / CRA (react-scripts 5) / rspack / rsbuild** | `setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).toString());` |
+| **Next.js (Turbopack or webpack mode)** | Copy both worker files to `public/` and point at them — [full walkthrough below](#nextjs-blank-map--worker-url-fix-turbopack-and-webpack-modes) |
+| **esbuild / Rollup** | Copy the worker file next to your bundle, then `setWorkerUrl(new URL("./maplibre-gl-worker.mjs", import.meta.url).toString());` |
+
+```tsx
+import { Map } from "react-bkoi-gl";
+import "react-bkoi-gl/styles";
+import { setWorkerUrl } from "maplibre-gl";
+
+// Vite example — see table above for your bundler
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+setWorkerUrl(workerUrl);
+
+export default function MapView() {
+  return <Map mapStyle={...} initialViewState={...} style={{ width: "100%", height: "100vh" }} />;
+}
+```
+
+> **Vite: use `?worker&url`, not plain `?url`.** Plain `?url` works in dev but in production builds the worker file is emitted without its `maplibre-gl-shared.mjs` sibling — the worker fails on its first import and **no tiles load in production only**. `?worker&url` routes the file through Vite's worker pipeline and emits a self-contained chunk.
+>
+> **Vite SSR** (Astro, TanStack Start, …): also add `ssr: { noExternal: ["maplibre-gl"] }` to `vite.config.ts`.
+
+### Step 2 — TypeScript config
+
+- The `new URL(..., import.meta.url)` snippets require `"module": "ES2020"` or higher in `tsconfig.json` — with `"module": "commonjs"`/`"es5"` TypeScript rejects `import.meta` (`error TS1343`). This is the typical cause of the "TS target" build errors after upgrading.
+- Use **TypeScript ≥ 5** and keep `"skipLibCheck": true`. Older TS versions and `skipLibCheck: false` choke on the engine's shipped type declarations.
+- Keep bundler build targets modern: ES2020+ (`build.target` in Vite, `target` in tsconfig). The engine ships modern JavaScript; downleveling it is unsupported.
+
+### Step 3 — CRA (react-scripts) specifics
+
+- **react-scripts ≥ 5 required** (webpack 5). react-scripts 4 and older use webpack 4, which cannot parse the ESM bundle at all — migrate the app to CRA 5 or Vite first.
+- CRA's **Jest** runner does not transform `node_modules`, so tests fail with `SyntaxError: Unexpected token 'export'`. Add to `package.json`:
+
+```json
+{
+  "jest": {
+    "transformIgnorePatterns": ["node_modules/(?!maplibre-gl/)"]
+  }
+}
+```
+
+### Step 4 — Next.js compiler & server bundling
+
+Next.js **excludes everything in `node_modules` from transpilation and compilation by default** — `react-bkoi-gl` and the map engine ship compiled ESM, so unlike older libraries they need **no `transpilePackages` entry** (that option exists for packages publishing raw uncompiled source; adding it here is unnecessary).
+
+If `next build` fails with `ESM packages cannot be consumed via require()` or `SyntaxError: Unexpected token 'export'` during the server pass, something on the server (a Server Component, Route Handler, or `getServerSideProps`) is importing the engine. Fix the import boundary first — engine code belongs in `"use client"` files ([Next.js & SSR](#nextjs--ssr) above, `dynamic(..., { ssr: false })` in Pages Router). If a server-side import genuinely cannot be avoided, opt the package out of server bundling so Node loads it natively:
+
+```js
+// next.config.js — Next.js ≥ 15 (on 13/14: experimental.serverComponentsExternalPackages)
+const nextConfig = {
+  serverExternalPackages: ["maplibre-gl"],
+};
+```
+
+### Step 5 — other engine v6 behavior changes to check
+
+- **Default import is gone.** The engine is ESM-only (no UMD/CJS build). Replace `import maplibregl from "maplibre-gl"` with `import * as maplibregl from "maplibre-gl"` or named imports. `react-bkoi-gl` exports are unaffected.
+- **Events are classes — check `e.type`, not `instanceof`.**
+- **`styleimagemissing` can no longer resolve images.** A listener that calls `addImage` inside the event does nothing in v6 — use `map.setMissingStyleImageResolver((id) => map.addImage(id, generateImage(id)))` instead (accessible via `mapRef.current.getMap()`).
+- **Nested GeoJSON properties are now real objects**, not JSON strings — remove any `JSON.parse` on `feature.properties` (it now throws).
+- **CSP:** serve the worker same-origin (any bundler setup above) with `worker-src 'self'; img-src data: blob: 'self';`.
+- **The engine CSS is mandatory** — without it markers and popups misrender. `react-bkoi-gl/styles` already includes it; make sure the import survived the upgrade.
+
+### Still blank after all that? Checklist
+
+1. **Network tab**: is `maplibre-gl-worker.mjs` loaded, or 404? A 404 means the copied/emitted path doesn't match the `setWorkerUrl()` argument.
+2. Is `setWorkerUrl()` called at module level **before** the first `<Map>` mounts?
+3. In production builds only → the Vite `?url` vs `?worker&url` trap above.
+4. Does the style URL respond 200 (valid Barikoi API key)? A bad key renders an empty canvas with a console error.
+
+---
+
 ## Next.js & SSR
 
 `react-bkoi-gl` renders into a `<canvas>` and must run client-side. In Next.js App Router, mark consumer components with `"use client"`:
@@ -140,9 +223,9 @@ import dynamic from "next/dynamic";
 const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
 ```
 
-### Next.js + Turbopack: blank map — worker URL fix
+### Next.js: blank map — worker URL fix (Turbopack and webpack modes)
 
-> **Applies to**: Next.js ≥ 15 (Turbopack default) + `react-bkoi-gl` ≥ 3.0.0.
+> **Applies to**: Next.js ≥ 15 + `react-bkoi-gl` ≥ 3.0.0. Next.js needs this in **both** bundler modes — `next dev`/`next build` (Turbopack default) and `next build --webpack` — because the asset handling is Next's, not Turbopack's alone. See [Migrating to v3](#migrating-to-v3-from-v2x-map-not-rendering-after-upgrade) for the general case.
 
 The map engine spawns a Web Worker to process vector tiles. It auto-detects the worker URL from `import.meta.url`, but **Turbopack provides a non-https `import.meta.url`** at compile time, so the auto-detection returns `""` → worker fails silently → **blank map, no errors**.
 
@@ -172,10 +255,13 @@ Add to `package.json`:
 ```json
 {
   "scripts": {
-    "postinstall": "node scripts/copy-maplibre-worker.mjs"
+    "predev": "node scripts/copy-maplibre-worker.mjs",
+    "prebuild": "node scripts/copy-maplibre-worker.mjs"
   }
 }
 ```
+
+> Prefer `predev`/`prebuild` hooks over `postinstall`: lifecycle `pre*` hooks always run for their script name, while `postinstall` is skipped by package managers when an install has no work to do (and by `--ignore-scripts`). If you use custom scripts like `build:local`, add a matching `prebuild:local` hook.
 
 **2. Call `setWorkerUrl` before your first `<Map>`** (module-level, in a `"use client"` file):
 
