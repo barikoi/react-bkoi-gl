@@ -30,6 +30,7 @@ tests/framework/*/package-lock.json
 tests/framework/*/pnpm-lock.yaml
 tests/framework/*/yarn.lock
 tests/framework/*/bun.lock*
+tests/framework/*/pnpm-workspace.yaml
 tests/framework/*.tgz
 tests/framework/result-*.json
 tests/framework/results.json

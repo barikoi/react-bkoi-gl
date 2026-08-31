@@ -8,8 +8,9 @@ Each app proves one README claim:
 
 | App | Bundler | What is validated |
 |---|---|---|
-| `vite-app` | Vite 7 (build + preview) | zero-config auto worker URL |
-| `vite6-app` | Vite 6 (build + preview) | same, on the previous Vite major |
+| `vite5-app` | Vite 5 (build + preview) | zero-config auto worker URL, oldest supported Vite major |
+| `vite6-app` | Vite 6 (build + preview) | same, previous Vite major |
+| `vite-app` (`vite7`) | Vite 7 (build + preview) | zero-config auto worker URL |
 | `next15-app` | Next.js 15 — `next build` (webpack) and `next build --turbopack` | zero-config auto worker URL (self-contained worker asset emission) |
 | `next16-app` | Next.js 16 — `next build` (Turbopack default) and `next build --webpack` | same, plus **pnpm strict layout** cell (`--pm pnpm`) |
 | `cra-app` | react-scripts 5 (webpack 5) + Jest | zero-config build; Jest module resolution recipe |
@@ -37,8 +38,8 @@ node tests/framework/run.mjs --only=next16
 
 # package-manager matrix (apps share the same source; PM changes the layout)
 node tests/framework/run.mjs --only=next16 --pm=pnpm   # strict layout proof
-node tests/framework/run.mjs --only=vite  --pm=yarn
-node tests/framework/run.mjs --only=vite  --pm=bun
+node tests/framework/run.mjs --only=vite5,vite6,vite7  --pm=yarn
+node tests/framework/run.mjs --only=vite5,vite6,vite7  --pm=bun
 ```
 
 Requires `BARIKOI_API_KEY` (or `API_KEY`) in the repo `.env` — real Barikoi
