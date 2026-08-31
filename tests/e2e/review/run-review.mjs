@@ -12,7 +12,7 @@
 //
 // Requires the vite host app on :5175 (npm run e2e:serve) — reused if up.
 import { chromium } from '@playwright/test'
-import { headedContext, headedLaunch, reviewBannerScript } from '../../shared/review-banner.mjs'
+import { headedContext, headedLaunch, hudHoldScript, mountHudScript } from '../../shared/review-banner.mjs'
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 
 const PORT = process.env.E2E_PORT || '5175'
@@ -88,22 +88,10 @@ const flat = MODULES.flatMap(([m, cs]) => cs)
 const allIds = new Set(CASES)
 
 const planned = flat.filter(([id]) => !ONLY || id.startsWith(ONLY))
-const missing = ONLY ? [] : CASES.filter(mod => !MODULES.some(([m]) => m === mod))
+const missing = ONLY ? [] : CASES.filter(c => !flat.some(([id]) => id === c))
 
-// Visual aid banner — SAME visual format as the case pages' title chip
-// (.case-page-title in app.css): white chip, 600 13px system-ui, rounded.
-// Shown top-center with progress + what-to-look-for; pointer-events none.
-const banner = (module, i, j, caseId, note) => `(function(){
-  document.title='▶ ${caseId} (${i}/${j})';
-  const old=document.getElementById('__bkoiBanner'); old&&old.remove();
-  const b=document.createElement('div');
-  b.id='__bkoiBanner';
-  b.style.cssText='position:absolute;top:10px;left:12px;z-index:5;display:flex;gap:8px;align-items:center;font:600 13px/1.4 system-ui,sans-serif;color:#123;pointer-events:none';
-  b.innerHTML='<span style="background:rgba(255,255,255,0.85);padding:3px 10px;border-radius:4px">${module} — ${caseId}</span>' +
-    '<span style="background:rgba(255,255,255,0.85);padding:3px 10px;border-radius:4px">${i}/${j}</span>' +
-    '<span style="background:rgba(255,255,255,0.9);padding:3px 10px;border-radius:4px;font-weight:400">👁 ${note}</span>';
-  document.body.appendChild(b);
-})()`
+// Visual banner + bottom-center HUD come from tests/shared/review-banner.mjs
+// (single source of truth, shared with the framework review runner).
 
 const browser = await chromium.launch(headedLaunch)
 const context = await browser.newContext(headedContext)
@@ -121,7 +109,7 @@ for (const [module, cases] of MODULES) {
   if (!todo.length) continue
   console.log(`\n━━ ${module}`)
 
-  for (const [id, note] of todo) {
+  for (const [id] of todo) {
     n += 1
     process.stdout.write(`  ▶ ${id} … `)
     const errors = []
@@ -185,8 +173,10 @@ for (const [module, cases] of MODULES) {
       await page.waitForTimeout(1500)
     }
 
-    // On-screen banner (visual aid) once body exists.
-    await page.evaluate(banner(module, n, total, id, note)).catch(() => {})
+    // Bottom-center "Rendering · <case>" pill is the only on-screen UI;
+    // window title carries the progress counter.
+    await page.evaluate((t) => { document.title = t }, `▶ ${module} — ${id} (${n}/${total})`).catch(() => {})
+    await page.evaluate(mountHudScript({ label: id })).catch(() => {})
 
     const evidence = await page
       .evaluate(() => {
@@ -221,7 +211,9 @@ for (const [module, cases] of MODULES) {
         process.stdout.write('loaded — press Enter for next … ')
         await new Promise(r => process.stdin.once('data', r))
       } else {
-        await page.waitForTimeout(DWELL)
+        // Hold with the draining progress bar (same as the framework review);
+        // resolves when the bar empties, i.e. after the full DWELL.
+        await page.evaluate(hudHoldScript(DWELL)).catch(() => {})
       }
     }
 

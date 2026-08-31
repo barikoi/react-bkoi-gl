@@ -2,12 +2,18 @@
 // no one-shot event registration that can race a condition already true.
 import { test as base, expect, type Page, type TestInfo } from '@playwright/test'
 
-// Headed runs (--headed / e2e:headed) hold each finished test on screen for
-// 10s so a human can review whether rendering looks right. Headless: no-op.
+// Headed runs (`npx playwright test --headed`) hold each finished test on
+// screen for 10s so a human can review whether rendering looks right.
+// Headless: no-op.
 const REVIEW_HOLD_MS = 10_000
 
+// CLI `--headed` never lands in testInfo.project.use (probed: identical with
+// and without the flag) — but fixtures run in the runner's Node process, so
+// the flag is in process.argv. A project-level `use: { headless: false }`
+// keeps working as the second signal.
 const isHeadedRun = (testInfo: TestInfo) =>
-  (testInfo.project.use as { headless?: boolean }).headless === false
+  (testInfo.project.use as { headless?: boolean }).headless === false ||
+  process.argv.includes('--headed')
 
 /**
  * Bottom-center status pill shared by every spec: “Rendering · <module>”
@@ -19,8 +25,7 @@ async function mountHud(page: Page) {
   await page.evaluate(() => {
     if (document.getElementById('e2e-hud')) return
     const title = document.querySelector('.case-page-title')?.textContent?.trim()
-    const name =
-      title || new URLSearchParams(location.search).get('case') || ''
+    const name = title || new URLSearchParams(location.search).get('case') || ''
     const el = document.createElement('div')
     el.id = 'e2e-hud'
     el.innerHTML = '<span class="dot"></span><span class="label"></span><span class="hold"></span>'
@@ -38,15 +43,14 @@ async function holdForReview(page: Page, testInfo: TestInfo) {
   if (!page.url() || page.url() === 'about:blank') return
   try {
     await mountHud(page)
-    await page.evaluate(
-    (ms) => {
+    await page.evaluate(ms => {
       const el = document.getElementById('e2e-hud')
       const hold = el?.querySelector('.hold') as HTMLElement | null
       if (!hold) return
       hold.innerHTML = '<span class="bar"><i></i></span>'
       const bar = hold.querySelector('.bar i') as HTMLElement | null
       const t0 = performance.now()
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const tick = () => {
           const left = Math.max(0, ms - (performance.now() - t0))
           if (bar) bar.style.width = `${(left / ms) * 100}%`
@@ -55,9 +59,7 @@ async function holdForReview(page: Page, testInfo: TestInfo) {
         }
         requestAnimationFrame(tick)
       }).then(() => el?.remove())
-    },
-    REVIEW_HOLD_MS,
-  )
+    }, REVIEW_HOLD_MS)
   } catch {
     // The hold is a cosmetic review aid — a destroyed context (renderer
     // reload, navigation) must never fail the test.
@@ -82,13 +84,21 @@ const isMapSettled = () => {
   // tile (or a maximized headed viewport needing 4× the tiles) blocks the
   // gate past the 60s test timeout. Every downstream assertion retries on
   // its own timeout, so style-loaded + camera-idle is the right gate.
-  return Boolean(
-    m &&
-      m.isStyleLoaded() &&
-      !m.isMoving() &&
-      !m.isZooming() &&
-      !m.isRotating(),
-  )
+  return Boolean(m && m.isStyleLoaded() && !m.isMoving() && !m.isZooming() && !m.isRotating())
+}
+
+// maplibre v6 folds TILE completeness into isStyleLoaded() (Style#loaded →
+// TileManager#loaded → every in-view tile must be loaded/errored). Cases that
+// animate the camera continuously from load (animate-camera's 15°/s orbit)
+// churn the in-view tile set every frame, so isMapSettled can never sample
+// true on a busy display (headed + maximized = 4× the tiles of headless;
+// verified: stopping the orbit flips isStyleLoaded() true within ~2s). Gate
+// those cases on a parsed style instead — the engine 'load' event has
+// already fired by then (the case starts animating on onLoad).
+const NO_SETTLE_CASES = new Set(['examples/animate-camera'])
+const hasParsedStyle = () => {
+  const m = window.__MAP__
+  return Boolean(m && m.getStyle())
 }
 
 /** Scoped locator — full-page cases now, so it aliases the page itself. */
@@ -115,9 +125,8 @@ export async function gotoCase(page, id) {
   await expect
     .poll(() => page.evaluate(() => Boolean(window.__MAP__)), { timeout: 45_000 })
     .toBeTruthy()
-  await expect
-    .poll(() => page.evaluate(isMapSettled), { timeout: 45_000 })
-    .toBeTruthy()
+  const settle = NO_SETTLE_CASES.has(id) ? hasParsedStyle : isMapSettled
+  await expect.poll(() => page.evaluate(settle), { timeout: 45_000 }).toBeTruthy()
 
   const logo = page.locator('a.maplibregl-ctrl-logo[href*="barikoi.com"]').first()
   await expect(logo).toBeVisible()
@@ -129,7 +138,7 @@ export async function gotoCase(page, id) {
 }
 
 export async function getMapState(page, sectionId) {
-  return page.evaluate((s) => {
+  return page.evaluate(s => {
     const map = (s && window.__MAPS__?.[s]) || window.__MAP__
     const c = map.getCenter()
     return {
@@ -150,33 +159,25 @@ export async function queryFeaturesAt(page, layerId, point = null, sectionId) {
       const box = point ? [point, point] : undefined
       return map.queryRenderedFeatures(box, { layers: [layerId] })
     },
-    { layerId, point, sectionId },
+    { layerId, point, sectionId }
   )
 }
 
 /** Wait for ≥1 log entry of `type`; returns all matching entries. */
 export async function waitForLog(page, type, { timeout = 15_000 } = {}) {
   await expect
-    .poll(
-      () =>
-        page.evaluate(
-          (t) => window.__LOG__.filter((l) => l.type === t).length,
-          type,
-        ),
-      { timeout },
-    )
+    .poll(() => page.evaluate(t => window.__LOG__.filter(l => l.type === t).length, type), {
+      timeout,
+    })
     .toBeGreaterThan(0)
-  return page.evaluate(
-    (t) => window.__LOG__.filter((l) => l.type === t),
-    type,
-  )
+  return page.evaluate(t => window.__LOG__.filter(l => l.type === t), type)
 }
 
 /** Wait until the camera has been quiet for `ms` (any move restarts the timer). */
 export async function waitForCameraStable(page, ms = 600, sectionId) {
   await page.evaluate(
     ({ ms, s }) =>
-      new Promise((resolve) => {
+      new Promise(resolve => {
         const map = (s && window.__MAPS__?.[s]) || window.__MAP__
         let timer = setTimeout(resolve, ms)
         const onMove = () => {
@@ -188,7 +189,7 @@ export async function waitForCameraStable(page, ms = 600, sectionId) {
         }
         map.on('move', onMove)
       }),
-    { ms, s: sectionId },
+    { ms, s: sectionId }
   )
 }
 

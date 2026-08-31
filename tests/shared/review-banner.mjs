@@ -2,25 +2,12 @@
  * Shared headed-review overlay — single source of truth for the on-screen UI
  * used by tests/e2e/review and tests/framework/review.
  *
- * - reviewBannerScript: top-left white chips (case label + progress + note)
  * - HUD: bottom-center dark pill (#e2e-hud, same look as the e2e fixtures'
  *   "Rendering · <case>" pill) with a draining hold progress bar.
  *
  * The HUD CSS mirrors the `#e2e-hud` block in tests/e2e/app/app.css — keep the
  * two in sync (the fixtures cannot import from here: app.css ships to Vite).
  */
-
-export const reviewBannerScript = ({ label, progress, note }) => `(function(){
-  document.title='▶ ${label} (${progress})';
-  const old=document.getElementById('__bkoiBanner'); old&&old.remove();
-  const b=document.createElement('div');
-  b.id='__bkoiBanner';
-  b.style.cssText='position:absolute;top:10px;left:12px;z-index:5;display:flex;gap:8px;align-items:center;font:600 13px/1.4 system-ui,sans-serif;color:#123;pointer-events:none';
-  b.innerHTML='<span style="background:rgba(255,255,255,0.85);padding:3px 10px;border-radius:4px">${label}</span>' +
-    '<span style="background:rgba(255,255,255,0.85);padding:3px 10px;border-radius:4px">${progress}</span>' +
-    '<span style="background:rgba(255,255,255,0.9);padding:3px 10px;border-radius:4px;font-weight:400">👁 ${note}</span>';
-  document.body.appendChild(b);
-})()`
 
 export const headedLaunch = { headless: false, args: ['--start-maximized'] }
 export const headedContext = { viewport: null }
