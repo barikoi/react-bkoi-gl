@@ -44,8 +44,8 @@ export const CASES = {
   // Controls — group D (terrain)
   'controls-terrain/terrain': controls.ControlsTerrain,
   // Draw
-  'draw/basic': draw.DrawBasic,
-  'draw/advanced': draw.DrawAdvanced,
+  // Draw — single URL for the whole draw module (one test, phase-swapped)
+  'draw/all': draw.DrawAll,
   // Hooks
   'hooks/use-map': hooks.HooksUseMap,
   'hooks/use-control': hooks.HooksUseControl,

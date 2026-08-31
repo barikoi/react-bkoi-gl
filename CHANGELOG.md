@@ -54,6 +54,8 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 - The separate direct `@maplibre/maplibre-gl-style-spec@25.0.0` dependency was removed — style-spec types are re-exported from `maplibre-gl` (which bundles style-spec `^26.3.0`), so no consumer-facing type change.
 - All `package.json` version specifiers are exact pins (no `^`/`~`); `maplibre-gl` pinned to `6.6.0`.
 - **Test suites consolidated under `tests/`** — `tests/unit`, `tests/browser`, `tests/e2e`, `tests/framework` (was `__tests__/`, `e2e/`, `framework-tests/`).
+- **Draw e2e consolidated into a single `draw/all` case** — basic and advanced `DrawControl` configs run on one map in one window (in-page phase swap via the `draw:advanced` event; no second navigation). Stability hardening for headed/slow runs: `doubleClickZoom` disabled before drawing (finish-dblclicks no longer zoom mid-draw), drags gated on the selected point actually rendering in the active draw layers, drag-update retried up to 3×, and the polygon auto-select poll accepts a `selectionchange` logged after the create (empty-features events tolerated).
+- **Review/coverage report paths fixed** — `e2e:review` and `e2e:coverage` wrote to a stray top-level `e2e/report/` (pre-consolidation layout); all artifacts now go to `tests/e2e/report/` (already gitignored and used by the Playwright HTML reporter).
 - **ESLint migrated to flat config** (`eslint.config.mjs`); legacy `.eslintrc.cjs` deleted and dead files/scripts removed (`.ocularrc.js`, `tsconfig.build.json`, `babel.config.cjs`, `clean`/`e2e:headed`/`coverage:badge` scripts); `sideEffects: ["**/*.css"]` declared for safe tree-shaking.
 
 
