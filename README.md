@@ -1,9 +1,15 @@
 <h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com">Docs</a></h1>
 
 <p align="center">
-  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml/badge.svg?branch=master&event=push" alt="CI"></a>
-  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/barikoi/react-bkoi-gl/master/coverage.json" alt="coverage"></a>
+  <!-- TEST: badges scoped to the maplibre-v6.6.0 branch (master has no ci.yaml /
+       coverage.json yet). Switch back to master + drop event filter once merged.
+       NOTE: while this repo is private, the CI badge only renders when viewed on
+       github.com signed in, and the coverage badge (fetched server-side by
+       shields.io) needs the repo public. -->
+  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml?query=branch%3Amaplibre-v6.6.0"><img src="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml/badge.svg?branch=maplibre-v6.6.0" alt="CI"></a>
+  <a href="https://github.com/barikoi/react-bkoi-gl/blob/maplibre-v6.6.0/coverage.json"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/barikoi/react-bkoi-gl/maplibre-v6.6.0/coverage.json" alt="coverage"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
+  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/types/react-bkoi-gl.svg?label=types" alt="npm types"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl.svg?label=downloads" alt="npm weekly downloads"></a>
