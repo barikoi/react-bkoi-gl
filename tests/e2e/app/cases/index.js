@@ -43,6 +43,7 @@ export const CASES = {
   'controls-minimap/minimap-rect': controls.ControlsMinimapRect,
   // Controls — group D (terrain)
   'controls-terrain/terrain': controls.ControlsTerrain,
+  // Draw
   // Draw — single URL for the whole draw module (one test, phase-swapped)
   'draw/all': draw.DrawAll,
   // Hooks

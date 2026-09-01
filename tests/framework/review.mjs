@@ -42,7 +42,7 @@ const getArg = (k, d) => {
   const p = args.find((a) => a.startsWith(`--${k}=`))
   return p ? p.slice(k.length + 3) : d
 }
-const only = (getArg('only') || process.env.ONLY || 'vite,next15,next16,cra').split(',')
+const only = (getArg('only') || process.env.ONLY || 'vite5,vite6,vite7,next15,next16,cra').split(',')
 const pm = getArg('pm', process.env.PM || 'npm')
 const DWELL = Number(process.env.DWELL ?? 10_000)
 const PAUSE = process.env.PAUSE === '1'

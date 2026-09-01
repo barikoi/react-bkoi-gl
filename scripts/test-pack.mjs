@@ -35,6 +35,19 @@ try {
   tarballPath = path.join(repoRoot, tarballName)
   console.log(`[test:pack] tarball: ${tarballName}`)
 
+  // Static gate checks on the packed artifact (the pre-publish standard tools):
+  // - publint: package.json/exports/files correctness of THIS repo's manifest
+  // - attw --pack: TypeScript type resolution of the TARBALL across module
+  //   modes (node10/node16/bundler) — catches dual CJS/ESM type problems the
+  //   runtime smoke below cannot see.
+  console.log('[test:pack] publint...')
+  run('npx', ['publint', '--strict'], { cwd: repoRoot, stdio: 'inherit' })
+  console.log('[test:pack] arethetypeswrong --pack...')
+  // Entrypoint "." only: ./styles (css) and ./worker (mjs) carry no types and
+  // node10 can't read `exports` subpaths at all — not type contracts. The
+  // dual CJS/ESM typing of the main entry IS the contract attw checks here.
+  run('npx', ['attw', '--pack', tarballName, '--entrypoints', '.'], { cwd: repoRoot, stdio: 'inherit' })
+
   sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'bkoi-pack-'))
   run('tar', ['-xzf', tarballPath, '-C', sandbox])
 

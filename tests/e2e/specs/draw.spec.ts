@@ -8,17 +8,6 @@
 // so the headed review window keeps rendering the same map throughout.
 import { test, expect, gotoCase, waitForLog, section } from '../fixtures/map.js'
 
-// Human-review pacing. The draw module is all gestures, so the default 10s
-// end-of-test hold only shows the last frame. For a reviewable run, opt into
-// pauses at each interaction boundary so the reviewer watches each draw in
-// flight. Headed-only and off by default (CI/headless unaffected).
-// Usage: DRAW_HOLD_MS=1800 npx playwright test draw.spec.ts --headed
-const DRAW_HOLD_MS = Number(process.env.DRAW_HOLD_MS || 0)
-const dwell = async (page, ms = DRAW_HOLD_MS) => {
-  const headed = test.info().project.use.headless === false
-  if (headed && ms > 0) await page.waitForTimeout(ms)
-}
-
 async function drawReady(page) {
   // maplibre-gl-draw connects lazily (16ms loaded() poll); its cold source is
   // the concrete readiness signal — same gate as the browser-mode spec.
@@ -86,7 +75,6 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
   await expect(page.locator('.mapbox-gl-draw_combine')).toHaveCount(0)
 
   // style prop lands on the control container
-  await dwell(page)
   const group = page.locator('.maplibregl-ctrl-top-left .maplibregl-ctrl-group')
   const styles = await group.evaluate(el => ({
     opacity: el.style.opacity,
@@ -97,11 +85,9 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
 
   // Point: tool → canvas click → onDrawCreate
   await activateTool(page, '.mapbox-gl-draw_point')
-  await dwell(page, 1200) // point tool armed
   await page.mouse.click(x, y)
   let creates = await waitForLog(page, 'create')
   expect(creates[0].features).toContain('Point')
-  await dwell(page, 1200) // point drawn, auto-selected
 
   // Drag the auto-selected point → onDrawUpdate (feature moved). Retry:
   // re-click the point's location to (re)select it, wait for the selected
@@ -118,14 +104,12 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
     updates = await waitForLog(page, 'update', { timeout: 5_000 }).catch(() => [])
   }
   expect(updates[0].features).toContain('Point')
-  await dwell(page, 1000) // point dragged away
 
   // Trash while the point is still selected → onDrawDelete (whole feature;
   // trash in direct_select on a polygon only deletes the active vertex)
   await page.locator('.mapbox-gl-draw_trash').click()
   const deletes = await waitForLog(page, 'delete')
   expect(deletes[0].features).toContain('Point')
-  await dwell(page, 1000)
 
   // LineString: two clicks + double-click finishes → onDrawCreate
   await activateTool(page, '.mapbox-gl-draw_line')
@@ -135,7 +119,6 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
   creates = await waitForLog(page, 'create')
   const last = creates[creates.length - 1]
   expect(last.features).toContain('LineString')
-  await dwell(page, 1200)
 
   // Polygon: three clicks + double-click closes → onDrawCreate; the
   // completion auto-select fires onDrawSelectionChange with the new feature
@@ -200,7 +183,6 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
       { timeout: 15_000 }
     )
     .toEqual({ points: 0, lines: 1, polys: 1 })
-  await dwell(page, 1200) // see final basic state before the swap
 
   // ---- PHASE 2: advanced config (in-page swap, same map) ----------------
   await page.evaluate(() => window.dispatchEvent(new Event('draw:advanced')))
@@ -209,7 +191,6 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
 
   // displayControlsDefault: the full toolbar renders, including tools that
   // phase 1 explicitly disables
-  await dwell(page, 1200) // advanced toolbar visible
   await expect(page.locator('.mapbox-gl-draw_combine')).toBeVisible()
   await expect(page.locator('.mapbox-gl-draw_polygon')).toBeVisible()
   await expect(page.locator('.mapbox-gl-draw_uncombine')).toBeVisible()
@@ -233,7 +214,6 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
   await activateTool(page, '.mapbox-gl-draw_point')
   const [mode] = await waitForLog(page, 'draw-modechange')
   expect(mode.mode).toBe('draw_point')
-  await dwell(page) // mode-change observed
 
   // Trash on the advanced toolbar: draw a point, select, delete
   await page.mouse.click(x, y)

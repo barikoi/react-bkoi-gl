@@ -3,7 +3,7 @@
  * Framework compatibility runner — see tests/framework/README.md.
  *
  * Usage:
- *   node tests/framework/run.mjs [--only=vite,next15,next16,cra] [--pm=npm|pnpm|yarn|bun]
+ *   node tests/framework/run.mjs [--only=vite5,vite6,vite7,next15,next16,cra] [--pm=npm|pnpm|yarn|bun]
  *   npm run test:framework
  *
  * Per app: install base deps with the chosen PM, install the packed tarball,
@@ -13,7 +13,7 @@
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import { APPS, ensureTarball, fixTarballDep, here, installPm, installTarball, loadEnvKey, serveApp, sh } from './lib.mjs'
+import { APPS, ensureTarball, fixTarballDep, here, installPm, installTarball, loadEnvKey, serveApp, shAsync } from './lib.mjs'
 
 // ---------- args ----------
 const args = process.argv.slice(2)
@@ -21,7 +21,7 @@ const getArg = (k, d) => {
   const p = args.find((a) => a.startsWith(`--${k}=`))
   return p ? p.slice(k.length + 3) : d
 }
-const only = getArg('only', 'vite,next15,next16,cra').split(',')
+const only = getArg('only', 'vite5,vite6,vite7,next15,next16,cra').split(',')
 const pm = getArg('pm', 'npm')
 const apiKey = loadEnvKey()
 
@@ -83,7 +83,8 @@ for (const key of only) {
       if (url) {
         const out = path.join(here, `result-${key}.json`)
         try {
-          sh(`node ${['verify.mjs', '--name', `${key}/${cell.name} pm=${pm}`, '--url', url, '--out', out].map((a) => `"${a}"`).join(' ')}`, here, 240_000)
+          const fail = await shAsync(`node ${['verify.mjs', '--name', `${key}/${cell.name} pm=${pm}`, '--url', url, '--out', out].map((a) => `"${a}"`).join(' ')}`, here, 240_000)
+          if (fail) throw fail
         } catch {
           status = 'fail'; note = 'verification failed'
         }

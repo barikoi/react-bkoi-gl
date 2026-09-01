@@ -1,8 +1,8 @@
-// Generates e2e/report/coverage.md — the README-claim coverage matrix:
+// Generates tests/e2e/report/coverage.md — the README-claim coverage matrix:
 // README section → e2e case → covering spec → status, plus a mapping of
 // docs.barikoi.com/examples to our case coverage.
 // Run after `npx playwright test` (reads spec files statically; statuses come
-// from the last run via e2e/report/review-*.json when present).
+// from the last run via tests/e2e/report/review-*.json when present).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs'
 
 // spec files recursively (specs/ has nested dirs: controls/, examples/)
@@ -12,30 +12,40 @@ const specFiles = []
     if (e.isDirectory()) walk(`${dir}/${e.name}`)
     else specFiles.push(`${dir}/${e.name}`)
   }
-})('e2e/specs')
+})('tests/e2e/specs')
 
 // case-id → spec references (static grep: gotoCase(page, '<id>'))
 const caseToSpecs = {}
 for (const s of specFiles) {
   const src = readFileSync(s, 'utf8')
   for (const m of src.matchAll(/gotoCase\(page,\s*'([^']+)'\)/g)) {
-    ;(caseToSpecs[m[1]] ||= []).push(s.replace('e2e/specs/', ''))
+    ;(caseToSpecs[m[1]] ||= []).push(s.replace('tests/e2e/specs/', ''))
   }
 }
 
 // Last review evidence (logo/attribution state per case), if any.
 let review = null
-const reports = existsSync('e2e/report') ? readdirSync('e2e/report').filter((f) => f.startsWith('review-')).sort() : []
-if (reports.length) review = JSON.parse(readFileSync(`e2e/report/${reports.at(-1)}`, 'utf8'))
+const reports = existsSync('tests/e2e/report')
+  ? readdirSync('tests/e2e/report')
+      .filter(f => f.startsWith('review-'))
+      .sort()
+  : []
+if (reports.length) review = JSON.parse(readFileSync(`tests/e2e/report/${reports.at(-1)}`, 'utf8'))
 
 // README claim matrix (section anchor → case ids).
 const matrix = [
-  ['Map Component — style, view state, defaults', ['map/basic', 'map/no-defaults', 'map/alt-style']],
+  [
+    'Map Component — style, view state, defaults',
+    ['map/basic', 'map/no-defaults', 'map/alt-style'],
+  ],
   ['Map Component — controlled viewState', ['map/controlled']],
   ['Map Component — events (drag/hover/zoom/resize/idle)', ['map/events', 'map/events-extended']],
   ['Map Component — MapRef methods', ['map/ref-methods']],
   ['Marker Component — default, custom, draggable', ['marker-popup/marker-basic']],
-  ['Popup Component — basic, close, marker-attached', ['marker-popup/popup-basic', 'marker-popup/popup-marker-attached']],
+  [
+    'Popup Component — basic, close, marker-attached',
+    ['marker-popup/popup-basic', 'marker-popup/popup-marker-attached'],
+  ],
   ['Source/Layer — GeoJSON circle/fill/line', ['sources-layers/geojson']],
   ['Layer — data-driven styling, filter', ['sources-layers/data-driven']],
   ['Layer events — mouseenter/leave, click', ['sources-layers/layer-events']],
@@ -49,7 +59,7 @@ const matrix = [
   ['Controls — Globe', ['controls-globe/globe']],
   ['Controls — Minimap', ['controls-minimap/minimap']],
   ['Controls — Terrain', ['controls-terrain/terrain']],
-  ['DrawControl — toolbar, draw point/polygon, delete', ['draw/basic']],
+  ['DrawControl — toolbar, draw point/polygon, delete', ['draw/all']],
   ['Hooks — useMap, useControl', ['hooks/use-map', 'hooks/use-control']],
   ['Styles — react-bkoi-gl/styles (logo paint)', ['map/basic']],
   ['Available Map Styles — osm-liberty, osm_barikoi_v2', ['map/basic', 'map/alt-style']],
@@ -71,7 +81,11 @@ const barikoiExamples = [
   ['layers-and-styling/multiple-geojson', 'sources-layers/data-driven', '✅'],
   ['layers-and-styling/icon-layer', 'sources-layers/symbol-icon', '✅'],
   ['layers-and-styling/vector-tile-layer', 'sources-layers/vector', '✅'],
-  ['advanced-features/animate-map-camera', 'examples/animate-camera (exact port: orbit + flyover + reset)', '✅'],
+  [
+    'advanced-features/animate-map-camera',
+    'examples/animate-camera (exact port: orbit + flyover + reset)',
+    '✅',
+  ],
   ['advanced-features/fly-location', 'map/ref-methods (flyTo)', '✅'],
   ['advanced-features/fit-bound', 'map/ref-methods (fitBounds)', '✅'],
   ['advanced-features/animate-point-along-line', 'examples/animation', '✅'],
@@ -85,10 +99,10 @@ const barikoiExamples = [
 const rows = matrix
   .map(([claim, cases]) => {
     const cells = cases
-      .map((c) => {
+      .map(c => {
         const specsFor = caseToSpecs[c]
         const status = specsFor ? '✅' : '❌ no spec'
-        const rev = review?.results.find((r) => r.id === c)
+        const rev = review?.results.find(r => r.id === c)
         const revMark = rev ? (rev.ok ? '' : ' ⚠️review') : ''
         return `\`${c}\` ${status}${specsFor ? ` (${specsFor.join(', ')})` : ''}${revMark}`
       })
@@ -123,10 +137,10 @@ ${bkoiRows}
 - \`npm run e2e\` — headless, full spec suite (CI gate)
 - \`npm run e2e:headed\` — same specs, visible browser (fast, auto-advancing)
 - \`npm run e2e:review\` — ONE browser, one case at a time with dwell, so a
-  human can inspect each README claim live; writes \`e2e/report/review-*.json\`
+  human can inspect each README claim live; writes \`tests/e2e/report/review-*.json\`
   (logo paint + attribution text + page errors per case)
 `
 
-mkdirSync('e2e/report', { recursive: true })
-writeFileSync('e2e/report/coverage.md', md)
-console.log('wrote e2e/report/coverage.md')
+mkdirSync('tests/e2e/report', { recursive: true })
+writeFileSync('tests/e2e/report/coverage.md', md)
+console.log('wrote tests/e2e/report/coverage.md')

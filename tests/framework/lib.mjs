@@ -11,6 +11,21 @@ export const repoRoot = path.resolve(here, '../..')
 export const sh = (cmd, cwd, timeoutMs = 600_000, env = process.env) =>
   execSync(cmd, { cwd, stdio: 'inherit', timeout: timeoutMs, env })
 
+// Async variant: MUST be used while any in-process server (serveStatic) is
+// serving — execSync blocks the event loop and the server goes dead for the
+// whole child lifetime (once made every framework verification time out).
+export const shAsync = (cmd, cwd, timeoutMs = 600_000, env = process.env) =>
+  new Promise((resolve) => {
+    const child = spawn(cmd, { cwd, stdio: 'inherit', timeout: timeoutMs, env, shell: true })
+    const t = setTimeout(() => child.kill('SIGKILL'), timeoutMs)
+    child.on('exit', (code, signal) => {
+      clearTimeout(t)
+      if (code === 0) return resolve()
+      resolve(new Error(`command failed: ${cmd} (exit ${code}, signal ${signal})`))
+    })
+    child.on('error', (e) => { clearTimeout(t); resolve(e) })
+  })
+
 export function loadEnvKey() {
   const envFile = path.join(repoRoot, '.env')
   if (fs.existsSync(envFile)) {
@@ -64,6 +79,30 @@ export function installPm(cwd, pm) {
   // folder move invalidates it (ENOENT on install). Drop it and resolve fresh
   // from package.json's relative file: ref. pnpm/yarn/bun locks are relative.
   if (pm === 'npm') fs.rmSync(path.join(cwd, 'package-lock.json'), { force: true })
+  // A node_modules laid out by ANOTHER package manager (pnpm's .modules.yaml
+  // marker / .pnpm store) breaks this manager — npm's arborist reads pnpm's
+  // workspace:* specs and dies with EUNSUPPORTEDPROTOCOL. Reset the tree.
+  const pnpmMarker = path.join(cwd, 'node_modules', '.modules.yaml')
+  if (fs.existsSync(pnpmMarker) && pm !== 'pnpm') {
+    console.log('[fw] foreign node_modules (pnpm layout) — resetting for ' + pm)
+    fs.rmSync(path.join(cwd, 'node_modules'), { recursive: true, force: true })
+  }
+  if (pm === 'pnpm') {
+    // pnpm ≥10 blocks dependency postinstall scripts (ERR_PNPM_IGNORED_BUILDS)
+    // and pnpm 11 fails the install outright (strictDepBuilds=true default).
+    // v11 wants `allowBuilds` (name→bool map, added v10.26) in
+    // pnpm-workspace.yaml; v10 read `onlyBuiltDependencies` — NEVER both at
+    // once: pnpm 11 sees the legacy key, rewrites the value to a placeholder
+    // and the next install fails again. esbuild needs its binary fetched at
+    // install time or `vite build` produces no output.
+    const ws = path.join(cwd, 'pnpm-workspace.yaml')
+    const major = Number(execSync('pnpm --version', { encoding: 'utf8' }).split('.')[0])
+    const body =
+      major >= 11
+        ? 'allowBuilds:\n  esbuild: true\n  core-js: true\n  core-js-pure: true\n'
+        : 'onlyBuiltDependencies:\n  - esbuild\n  - core-js\n  - core-js-pure\n'
+    fs.writeFileSync(ws, body)
+  }
   const base = {
     npm: 'npm install --no-audit --no-fund',
     pnpm: 'pnpm install',
@@ -131,6 +170,13 @@ export async function waitUp(url, timeoutMs = 45_000) {
 }
 
 export const APPS = {
+  vite5: {
+    dir: 'vite5-app',
+    label: 'Vite 5 (build + static serve)',
+    envPrefix: 'VITE_',
+    buildCells: [{ name: 'vite build', cmd: 'npx vite build' }],
+    serve: { type: 'static', dir: 'dist' },
+  },
   vite6: {
     dir: 'vite6-app',
     label: 'Vite 6 (build + static serve)',
@@ -138,7 +184,7 @@ export const APPS = {
     buildCells: [{ name: 'vite build', cmd: 'npx vite build' }],
     serve: { type: 'static', dir: 'dist' },
   },
-  vite: {
+  vite7: {
     dir: 'vite-app',
     label: 'Vite 7 (build + static serve)',
     envPrefix: 'VITE_',
@@ -236,7 +282,7 @@ export async function serveApp(cwd, app, slug) {
   }
 }
 
-const CELL_OUT = { vite: 'dist', cra: 'build', next15: '.next', next16: '.next' }
+const CELL_OUT = { vite5: 'dist', vite6: 'dist', vite7: 'dist', cra: 'build', next15: '.next', next16: '.next' }
 
 export function cellSnapPath(cwd, slug) {
   return path.join(cwd, '.fw-snap', slug)
