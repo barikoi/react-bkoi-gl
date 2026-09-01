@@ -5,7 +5,8 @@ name: CI
 # locally and are enforced by `prepublishOnly` before publishing.
 on:
   push:
-    branches: [master]
+    # TEST: maplibre-v6.6.0 added so the workflow runs on this branch — remove after merge
+    branches: [master, maplibre-v6.6.0]
   pull_request:
     branches: [master]
 
