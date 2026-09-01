@@ -114,4 +114,5 @@ and e2e specs exist to cover each claim.
 - Framework review transitions are instant because builds are snapshotted into
   `tests/framework/<app>/.fw-snap/<cell>` (gitignored); rerun without
   `SKIP_BUILD` after library changes or you review stale builds.
-- `.env` (gitignored) must define `BARIKOI_API_KEY` or `API_KEY`.
+- `.env` (gitignored) must define `BARIKOI_API_KEY` (exact name, matching
+  `.env.example`).

@@ -307,7 +307,7 @@ function MapExample() {
   return (
     <Map
       ref={mapRef}
-      mapStyle="https://map.barikoi.com/styles/osm-liberty/style.json?key=YOUR_API_KEY"
+      mapStyle="https://map.barikoi.com/styles/osm-liberty/style.json?key=YOUR_BARIKOI_API_KEY"
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -380,7 +380,7 @@ function MarkerExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -453,7 +453,7 @@ function PopupExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -568,7 +568,7 @@ function SourceExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.40,
         latitude: 23.83,
@@ -676,7 +676,7 @@ function LayerExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -765,7 +765,7 @@ import "react-bkoi-gl/styles";
 function NavigationExample() {
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -804,7 +804,7 @@ import "react-bkoi-gl/styles";
 function FullscreenExample() {
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -853,7 +853,7 @@ function GeolocateExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -898,7 +898,7 @@ import "react-bkoi-gl/styles";
 function ScaleExample() {
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -937,7 +937,7 @@ import "react-bkoi-gl/styles";
 function TerrainExample() {
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1010,7 +1010,7 @@ function DrawExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1077,7 +1077,7 @@ function MinimapExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1147,7 +1147,7 @@ function GlobeExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1212,7 +1212,7 @@ function CanvasExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1282,7 +1282,7 @@ function InteractiveLayerExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1360,7 +1360,7 @@ function App() {
   return (
     <MapProvider>
       <Map
-        mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+        mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
         initialViewState={{
           longitude: 90.3938,
           latitude: 23.8216,
@@ -1414,7 +1414,7 @@ function CustomControlComponent() {
 function App() {
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1510,7 +1510,7 @@ function EventExample() {
 
   return (
     <Map
-      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`}
+      mapStyle={`https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`}
       initialViewState={{
         longitude: 90.3938,
         latitude: 23.8216,
@@ -1651,7 +1651,7 @@ function App() {
   return (
     <MapProvider>
       <Map
-        mapStyle={`https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${API_KEY}`}
+        mapStyle={`https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${BARIKOI_API_KEY}`}
         initialViewState={{
           longitude: HOME[0],
           latitude: HOME[1],
@@ -1685,9 +1685,9 @@ import "react-bkoi-gl/styles";
 - `barikoi-dark-mode` - Dark style (used by the [Camera Animation](#camera-animation) example)
 
 ```tsx
-const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${API_KEY}`;
-const mapStyle = `https://map.barikoi.com/styles/osm_barikoi_v2/style.json?key=${API_KEY}`;
-const mapStyle = `https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${API_KEY}`;
+const mapStyle = `https://map.barikoi.com/styles/osm-liberty/style.json?key=${BARIKOI_API_KEY}`;
+const mapStyle = `https://map.barikoi.com/styles/osm_barikoi_v2/style.json?key=${BARIKOI_API_KEY}`;
+const mapStyle = `https://map.barikoi.com/styles/barikoi-dark-mode/style.json?key=${BARIKOI_API_KEY}`;
 ```
 
 ---

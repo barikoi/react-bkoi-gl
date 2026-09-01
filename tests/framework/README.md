@@ -42,8 +42,8 @@ node tests/framework/run.mjs --only=vite5,vite6,vite7  --pm=yarn
 node tests/framework/run.mjs --only=vite5,vite6,vite7  --pm=bun
 ```
 
-Requires `BARIKOI_API_KEY` (or `API_KEY`) in the repo `.env` — real Barikoi
-style + tiles are the contract under test.
+Requires `BARIKOI_API_KEY` in the repo `.env` (exact name, matching
+`.env.example`) — real Barikoi style + tiles are the contract under test.
 
 ## Layout notes
 
