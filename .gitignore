@@ -4,6 +4,7 @@ node_modules
 .nyc_output/
 coverage
 coverage.json
+test-results.json
 npm-debug.log
 package-lock.json
 test/**/yarn.lock

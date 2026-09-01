@@ -269,7 +269,7 @@ expensive and the maintainer tests locally):
   build before any publish.
 - The README coverage badge is a self-contained `coverage-badge.svg`
   (committed, relative-path reference — renders on private repos);
-  `npm run coverage` regenerates it locally.
+  `npm test` / `npm run coverage` regenerate them locally (coverage + tests badges).
 - `package-lock.json` is gitignored by policy — installs use `npm install`,
   resolving from the exact version pins in `package.json`.
 
