@@ -260,17 +260,17 @@ resolution across `node_modules`.
 
 ### CI Pipeline
 
-Single workflow: `.github/workflows/ci.yaml`, **master only** (pushes to
-`master` and PRs targeting `master`):
+**None.** All quality gates run locally (deliberate decision — CI minutes are
+expensive and the maintainer tests locally):
 
-- Node 20 + 22 matrix running typecheck → lint → build → `vitest run --coverage`.
-- On `master` pushes, the `coverage-badge` job regenerates `coverage.json`
-  (`scripts/make-coverage-badge.mjs`) and commits it if changed — the README
-  coverage badge reads that file via the shields.io endpoint.
-- No secrets required.
-- SonarQube was removed entirely (workflow + properties) — coverage is the
-  quality gate.
-- `package-lock.json` is gitignored by policy — CI installs with `npm install`,
+- Full gate before release: `npm run typecheck` → `npm run lint` →
+  `npm test` (typecheck + full vitest, unit + browser) → `npm run e2e` →
+  `npm run test:pack`. `prepublishOnly` enforces typecheck + lint + tests +
+  build before any publish.
+- The README coverage badge is a self-contained `coverage-badge.svg`
+  (committed, relative-path reference — renders on private repos);
+  `npm run coverage` regenerates it locally.
+- `package-lock.json` is gitignored by policy — installs use `npm install`,
   resolving from the exact version pins in `package.json`.
 
 ---
