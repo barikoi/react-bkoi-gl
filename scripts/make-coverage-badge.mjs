@@ -3,9 +3,10 @@
  * Generates a shields.io JSON endpoint file (coverage.json) from
  * Vitest's coverage/coverage-summary.json (v8 provider, json-summary reporter).
  *
- * Used locally and in CI: the file is committed to the default branch
- * and the README badge reads it via
- * https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/.../coverage.json
+ * Color thresholds match the barikoiapis-golang CI so coverage colors are
+ * consistent across Barikoi repos. CI publishes the file to the orphan
+ * `badges` branch (force-pushed); locally it is written to the repo root for
+ * preview and is gitignored.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +25,18 @@ try {
 
 const pct = summary.total && summary.total.lines ? summary.total.lines.pct : 0;
 
-const color = pct >= 90 ? 'brightgreen' : pct >= 75 ? 'yellowgreen' : pct >= 60 ? 'yellow' : 'red';
+// Same bands as barikoiapis-golang's CI (go tool cover)
+const pctInt = Math.floor(pct);
+const color =
+  pctInt >= 90
+    ? 'brightgreen'
+    : pctInt >= 80
+      ? 'green'
+      : pctInt >= 70
+        ? 'yellow'
+        : pctInt >= 60
+          ? 'orange'
+          : 'red';
 
 const badge = {
   schemaVersion: 1,

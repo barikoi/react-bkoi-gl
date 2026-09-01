@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    # TEST: maplibre-v6.6.0 added so the branch badge has a status — remove after merge
     branches: [master, maplibre-v6.6.0]
   pull_request:
     branches: [master]
@@ -10,6 +11,9 @@ jobs:
   test:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    # the badges-branch force-push needs write access
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -43,43 +47,23 @@ jobs:
       - name: Test with coverage
         run: npx vitest run --coverage
 
-  coverage-badge:
-    name: Update coverage badge
-    needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
-
-      - name: Test with coverage
-        run: npx vitest run --coverage
-
-      - name: Generate coverage.json badge endpoint
-        run: node scripts/make-coverage-badge.mjs
-
-      - name: Commit badge if changed
+      # Coverage badge — barikoiapis-golang pattern: publish coverage.json to a
+      # dedicated orphan `badges` branch (force-pushed, single commit) instead of
+      # committing to the default branch. The README badge reads that branch, so
+      # it is branch-independent and the repo history stays clean.
+      # TEST: also publishes from maplibre-v6.6.0 until it merges — revert to
+      # master-only afterwards.
+      - name: Publish coverage badge
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/maplibre-v6.6.0') && matrix.node == 22
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet coverage.json; then
-            echo "coverage.json unchanged — nothing to commit"
-          else
-            git add coverage.json
-            git commit -m "chore: update coverage badge [skip ci]"
-            git push
-          fi
+          node scripts/make-coverage-badge.mjs
+          badge=$(cat coverage.json)
+          pct=$(node -p 'JSON.parse(process.argv[1]).message' "$badge")
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan badges
+          git rm -rf -q .
+          printf '%s\n' "$badge" > coverage.json
+          git add coverage.json
+          git commit -q -m "coverage: ${pct}"
+          git push -fq origin HEAD:badges
