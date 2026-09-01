@@ -87,9 +87,13 @@ function setupYarnBerry(sandbox) {
 }
 
 function pnpSmoke(sandbox) {
+  // PnP registers the workspace under its REAL path; on macOS os.tmpdir()
+  // (/var/folders) is a symlink to /private/var/folders, and an issuer built
+  // from the symlinked path misses the PnP location map (every resolve fails).
+  const realSandbox = fs.realpathSync(sandbox)
   return `const assert = (ok, what) => { if (!ok) { console.error('FAIL ' + what); process.exit(1) } }
 const { createRequire } = require('node:module')
-const req = createRequire('${sandbox}/package.json')
+const req = createRequire('${realSandbox}/package.json')
 const main = req.resolve('react-bkoi-gl')
 const styles = req.resolve('react-bkoi-gl/styles')
 const worker = req.resolve('react-bkoi-gl/worker')
