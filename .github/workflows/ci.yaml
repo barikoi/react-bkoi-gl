@@ -1,5 +1,8 @@
 name: CI
 
+# Minimal gate (barikoiapis-golang pattern): one job, one Node version,
+# lint + unit tests. Browser tests, e2e, build, and the pack gate run
+# locally and are enforced by `prepublishOnly` before publishing.
 on:
   push:
     branches: [master]
@@ -7,29 +10,19 @@ on:
     branches: [master]
 
 jobs:
-  test:
-    name: Node ${{ matrix.node }}
+  check:
+    name: Lint & Test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [20, 22]
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
 
       # package-lock.json is gitignored by policy; plain install resolves from package.json exact pins
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-
-      - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
 
       - name: Typecheck
         run: npm run typecheck
@@ -37,8 +30,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
-
-      - name: Test with coverage
-        run: npx vitest run --coverage
+      # Unit project only (jsdom, mocked engine) — no Playwright download
+      - name: Unit tests
+        run: npx vitest run --project unit
