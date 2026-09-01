@@ -84,7 +84,7 @@ const writeBadge = (file, svg) => {
   console.log(`[make-badges] wrote ${file}`);
 };
 
-// --- coverage badge (color bands match barikoiapis-golang's CI) ---
+// --- coverage badge ---
 const summary = readJson('coverage/coverage-summary.json');
 if (summary) {
   const pct = summary.total?.lines?.pct ?? 0;

@@ -7,7 +7,6 @@
   <img src="coverage-badge.svg" alt="test coverage">
   <img src="tests-badge.svg" alt="tests">
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
-  <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/types/react-bkoi-gl.svg?label=types" alt="npm types"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/dw/react-bkoi-gl.svg?label=downloads" alt="npm weekly downloads"></a>
