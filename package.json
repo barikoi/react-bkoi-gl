@@ -44,7 +44,7 @@
     "build": "node scripts/build-worker.mjs --ts-only && tsup && node scripts/build-worker.mjs && node scripts/build-styles.js",
     "lint": "eslint src/",
     "test": "npm run typecheck && vitest run",
-    "coverage": "vitest run --coverage",
+    "coverage": "vitest run --coverage && node scripts/make-coverage-badge.mjs",
     "prepublishOnly": "npm run typecheck && npm run lint && vitest run && npm run build",
     "prepare": "husky",
     "test:unit": "vitest run --project unit",

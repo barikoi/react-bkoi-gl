@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    # TEST: maplibre-v6.6.0 added so the branch badge has a status — remove after merge
-    branches: [master, maplibre-v6.6.0]
+    branches: [master]
   pull_request:
     branches: [master]
 
@@ -11,9 +10,6 @@ jobs:
   test:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
-    # the badges-branch force-push needs write access
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -46,24 +42,3 @@ jobs:
 
       - name: Test with coverage
         run: npx vitest run --coverage
-
-      # Coverage badge — barikoiapis-golang pattern: publish coverage.json to a
-      # dedicated orphan `badges` branch (force-pushed, single commit) instead of
-      # committing to the default branch. The README badge reads that branch, so
-      # it is branch-independent and the repo history stays clean.
-      # TEST: also publishes from maplibre-v6.6.0 until it merges — revert to
-      # master-only afterwards.
-      - name: Publish coverage badge
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/maplibre-v6.6.0') && matrix.node == 22
-        run: |
-          node scripts/make-coverage-badge.mjs
-          badge=$(cat coverage.json)
-          pct=$(node -p 'JSON.parse(process.argv[1]).message' "$badge")
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan badges
-          git rm -rf -q .
-          printf '%s\n' "$badge" > coverage.json
-          git add coverage.json
-          git commit -q -m "coverage: ${pct}"
-          git push -fq origin HEAD:badges
