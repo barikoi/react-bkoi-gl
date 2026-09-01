@@ -11,15 +11,19 @@ vi.mock('../../../src/utils/assert', () => ({
     if (!condition) {
       throw new Error(message)
     }
-  })
+  }),
 }))
 
 describe('Layer Events', () => {
   let mockMapInstance
+  let mockCanvas
   let mapContextValue
 
   beforeEach(() => {
     vi.clearAllMocks()
+
+    // stable canvas identity — handlers mutate the same object later reads see
+    mockCanvas = { style: {} }
 
     mockMapInstance = {
       on: vi.fn(),
@@ -33,7 +37,7 @@ describe('Layer Events', () => {
       setFilter: vi.fn(),
       setLayerZoomRange: vi.fn(),
       moveLayer: vi.fn(),
-      getCanvas: vi.fn(() => ({ style: {} })),
+      getCanvas: vi.fn(() => mockCanvas),
       style: { _loaded: true },
     }
 
@@ -52,7 +56,7 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onClick={onClick} />
+        <Layer id='test-layer' type='circle' onClick={onClick} />
       </MapContext.Provider>
     )
 
@@ -64,11 +68,15 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onMouseEnter={onMouseEnter} />
+        <Layer id='test-layer' type='circle' onMouseEnter={onMouseEnter} />
       </MapContext.Provider>
     )
 
-    expect(mockMapInstance.on).toHaveBeenCalledWith('mouseenter', 'test-layer', expect.any(Function))
+    expect(mockMapInstance.on).toHaveBeenCalledWith(
+      'mouseenter',
+      'test-layer',
+      expect.any(Function)
+    )
   })
 
   test('registers mouseleave event handler when onMouseLeave is provided', () => {
@@ -76,11 +84,15 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onMouseLeave={onMouseLeave} />
+        <Layer id='test-layer' type='circle' onMouseLeave={onMouseLeave} />
       </MapContext.Provider>
     )
 
-    expect(mockMapInstance.on).toHaveBeenCalledWith('mouseleave', 'test-layer', expect.any(Function))
+    expect(mockMapInstance.on).toHaveBeenCalledWith(
+      'mouseleave',
+      'test-layer',
+      expect.any(Function)
+    )
   })
 
   test('registers mousemove event handler when onMouseMove is provided', () => {
@@ -88,7 +100,7 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onMouseMove={onMouseMove} />
+        <Layer id='test-layer' type='circle' onMouseMove={onMouseMove} />
       </MapContext.Provider>
     )
 
@@ -100,7 +112,7 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onMouseDown={onMouseDown} />
+        <Layer id='test-layer' type='circle' onMouseDown={onMouseDown} />
       </MapContext.Provider>
     )
 
@@ -112,7 +124,7 @@ describe('Layer Events', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onMouseUp={onMouseUp} />
+        <Layer id='test-layer' type='circle' onMouseUp={onMouseUp} />
       </MapContext.Provider>
     )
 
@@ -122,7 +134,7 @@ describe('Layer Events', () => {
   test('does not register event handlers when no event props are provided', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" paint={{ 'circle-radius': 8 }} />
+        <Layer id='test-layer' type='circle' paint={{ 'circle-radius': 8 }} />
       </MapContext.Provider>
     )
 
@@ -141,7 +153,7 @@ describe('Layer Events', () => {
 
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>
-        <Layer id="test-layer" type="circle" onClick={onClick} />
+        <Layer id='test-layer' type='circle' onClick={onClick} />
       </MapContext.Provider>
     )
 
@@ -158,8 +170,8 @@ describe('Layer Events', () => {
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>
         <Layer
-          id="test-layer"
-          type="circle"
+          id='test-layer'
+          type='circle'
           onClick={onClick}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
@@ -170,7 +182,78 @@ describe('Layer Events', () => {
     unmount()
 
     expect(mockMapInstance.off).toHaveBeenCalledWith('click', 'test-layer', expect.any(Function))
-    expect(mockMapInstance.off).toHaveBeenCalledWith('mouseenter', 'test-layer', expect.any(Function))
-    expect(mockMapInstance.off).toHaveBeenCalledWith('mouseleave', 'test-layer', expect.any(Function))
+    expect(mockMapInstance.off).toHaveBeenCalledWith(
+      'mouseenter',
+      'test-layer',
+      expect.any(Function)
+    )
+    expect(mockMapInstance.off).toHaveBeenCalledWith(
+      'mouseleave',
+      'test-layer',
+      expect.any(Function)
+    )
+  })
+
+  // Invoke the registered listeners and assert handler bodies run
+  describe('handler invocation', () => {
+    const fire = (map, event, layerId = 'test-layer') => {
+      const call = map.on.mock.calls.find(([ev, id]) => ev === event && id === layerId)
+      return call ? call[2] : undefined
+    }
+
+    const renderLayer = props =>
+      render(
+        <MapContext.Provider value={mapContextValue}>
+          <Layer id='test-layer' type='circle' {...props} />
+        </MapContext.Provider>
+      )
+
+    test('mouseenter with onClick present sets the pointer cursor', () => {
+      const onClick = vi.fn()
+      const onMouseEnter = vi.fn()
+      renderLayer({ onClick, onMouseEnter })
+
+      fire(mockMapInstance, 'mouseenter')({ type: 'mouseenter' })
+
+      expect(onMouseEnter).toHaveBeenCalled()
+      expect(mockMapInstance.getCanvas().style.cursor).toBe('pointer')
+    })
+
+    test('mouseenter without onClick leaves the cursor untouched', () => {
+      const onMouseEnter = vi.fn()
+      renderLayer({ onMouseEnter })
+
+      fire(mockMapInstance, 'mouseenter')({ type: 'mouseenter' })
+
+      expect(onMouseEnter).toHaveBeenCalled()
+      expect(mockMapInstance.getCanvas().style.cursor).toBeUndefined()
+    })
+
+    test('mouseleave resets the cursor', () => {
+      const onMouseLeave = vi.fn()
+      renderLayer({ onClick: vi.fn(), onMouseEnter: vi.fn(), onMouseLeave })
+      mockMapInstance.getCanvas().style.cursor = 'pointer'
+
+      fire(mockMapInstance, 'mouseleave')()
+
+      expect(onMouseLeave).toHaveBeenCalled()
+      expect(mockMapInstance.getCanvas().style.cursor).toBe('')
+    })
+
+    test.each([
+      ['mousedown', 'onMouseDown'],
+      ['mouseup', 'onMouseUp'],
+      ['mousemove', 'onMouseMove'],
+      ['contextmenu', 'onContextMenu'],
+      ['dblclick', 'onDoubleClick'],
+    ])('%s invokes the matching callback', (event, callbackName) => {
+      const callback = vi.fn()
+      renderLayer({ [callbackName]: callback })
+
+      const evt = { type: event, features: [] }
+      fire(mockMapInstance, event)(evt)
+
+      expect(callback).toHaveBeenCalledWith(evt)
+    })
   })
 })

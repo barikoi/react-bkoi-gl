@@ -25,7 +25,9 @@ describe('GlobeControl', () => {
       off: vi.fn(),
       addControl: vi.fn(),
       removeControl: vi.fn(),
-      hasControl: vi.fn(function () { return false }),
+      hasControl: vi.fn(function () {
+        return false
+      }),
       setProjection: vi.fn(),
       getProjection: vi.fn(() => ({ type: 'mercator' })),
     }
@@ -53,22 +55,21 @@ describe('GlobeControl', () => {
   test('accepts position prop', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
-        <GlobeControl position="top-left" />
+        <GlobeControl position='top-left' />
       </MapContext.Provider>
     )
 
-    expect(useControlMod.useControl).toHaveBeenCalledWith(
-      expect.any(Function),
-      { position: 'top-left' }
-    )
+    expect(useControlMod.useControl).toHaveBeenCalledWith(expect.any(Function), {
+      position: 'top-left',
+    })
   })
 
   test('accepts button customization options', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
         <GlobeControl
-          buttonClassName="custom-class"
-          buttonTitle="Toggle Globe"
+          buttonClassName='custom-class'
+          buttonTitle='Toggle Globe'
           buttonStyle={{ background: 'red' }}
         />
       </MapContext.Provider>
@@ -232,5 +233,101 @@ describe('GlobeControl', () => {
     capturedControl.setGlobe(false)
     expect(capturedControl._button.getAttribute('aria-label')).toBe('Switch to Globe View')
     expect(capturedControl._button.getAttribute('title')).toBe('Switch to Globe View')
+  })
+
+  test('a failing setProjection warns and keeps the control responsive', () => {
+    const useControl = useControlMod.useControl
+    let capturedControl
+    useControl.mockImplementation(createControl => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl />
+      </MapContext.Provider>
+    )
+
+    expect(() => capturedControl.onAdd(mockMapInstance)).not.toThrow()
+
+    mockMapInstance.setProjection = vi.fn(() => {
+      throw new Error('setProjection unavailable')
+    })
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect(() => capturedControl._toggleGlobe()).not.toThrow()
+    expect(warnSpy).toHaveBeenCalledWith(
+      'GlobeControl: setProjection not available',
+      expect.any(Error)
+    )
+    warnSpy.mockRestore()
+  })
+
+  test('onAdd falls back to map view when projection detection throws', () => {
+    const useControl = useControlMod.useControl
+    let capturedControl
+    useControl.mockImplementation(createControl => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl />
+      </MapContext.Provider>
+    )
+
+    const throwingMap = {
+      getProjection() {
+        throw new Error('projection not supported')
+      },
+    }
+
+    const container = capturedControl.onAdd(throwingMap)
+    expect(container).toBe(capturedControl._container)
+    expect(capturedControl.isGlobe()).toBe(false)
+  })
+
+  test('onAdd detects an already-active globe projection', () => {
+    const useControl = useControlMod.useControl
+    let capturedControl
+    useControl.mockImplementation(createControl => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl />
+      </MapContext.Provider>
+    )
+
+    capturedControl.onAdd({ getProjection: () => ({ type: 'globe' }) })
+    expect(capturedControl.isGlobe()).toBe(true)
+    expect(capturedControl._button.getAttribute('aria-label')).toBe('Switch to Map View')
+  })
+
+  test('onRemove detaches the container and clears the map reference', () => {
+    const useControl = useControlMod.useControl
+    let capturedControl
+    useControl.mockImplementation(createControl => {
+      capturedControl = createControl()
+      return capturedControl
+    })
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <GlobeControl />
+      </MapContext.Provider>
+    )
+
+    const container = capturedControl.onAdd(mockMapInstance)
+    document.body.appendChild(container)
+    expect(document.body.contains(container)).toBe(true)
+
+    capturedControl.onRemove()
+    expect(document.body.contains(container)).toBe(false)
+    expect(capturedControl._map).toBeNull()
   })
 })

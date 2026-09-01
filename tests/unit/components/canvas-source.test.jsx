@@ -7,7 +7,7 @@ import { Layer } from '../../../src/components/layer'
 
 // Mock the Layer component
 vi.mock('../../../src/components/layer', () => ({
-  Layer: vi.fn(props => <div data-testid="mocked-layer" data-source={props.source} />),
+  Layer: vi.fn(props => <div data-testid='mocked-layer' data-source={props.source} />),
 }))
 
 describe('CanvasSource', () => {
@@ -50,11 +50,7 @@ describe('CanvasSource', () => {
   test('creates canvas source with required props', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource
-          id="test-canvas"
-          coordinates={coordinates}
-          canvas={mockCanvas}
-        />
+        <CanvasSource id='test-canvas' coordinates={coordinates} canvas={mockCanvas} />
       </MapContext.Provider>
     )
 
@@ -72,7 +68,7 @@ describe('CanvasSource', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
         <CanvasSource
-          id="test-canvas"
+          id='test-canvas'
           coordinates={coordinates}
           canvas={mockCanvas}
           animate={true}
@@ -91,10 +87,7 @@ describe('CanvasSource', () => {
   test('generates id if not provided', () => {
     render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource
-          coordinates={coordinates}
-          canvas={mockCanvas}
-        />
+        <CanvasSource coordinates={coordinates} canvas={mockCanvas} />
       </MapContext.Provider>
     )
 
@@ -111,12 +104,8 @@ describe('CanvasSource', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource
-          id="test-canvas"
-          coordinates={coordinates}
-          canvas={mockCanvas}
-        >
-          <Layer id="test-layer" type="raster" />
+        <CanvasSource id='test-canvas' coordinates={coordinates} canvas={mockCanvas}>
+          <Layer id='test-layer' type='raster' />
         </CanvasSource>
       </MapContext.Provider>
     )
@@ -135,11 +124,7 @@ describe('CanvasSource', () => {
 
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource
-          id="test-canvas"
-          coordinates={coordinates}
-          canvas={mockCanvas}
-        />
+        <CanvasSource id='test-canvas' coordinates={coordinates} canvas={mockCanvas} />
       </MapContext.Provider>
     )
 
@@ -162,11 +147,7 @@ describe('CanvasSource', () => {
 
     const { unmount } = render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource
-          id="test-canvas"
-          coordinates={coordinates}
-          canvas={mockCanvas}
-        />
+        <CanvasSource id='test-canvas' coordinates={coordinates} canvas={mockCanvas} />
       </MapContext.Provider>
     )
 
@@ -200,7 +181,7 @@ describe('CanvasSource', () => {
 
     render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource id="racing-canvas" coordinates={coordinates} canvas={mockCanvas} />
+        <CanvasSource id='racing-canvas' coordinates={coordinates} canvas={mockCanvas} />
       </MapContext.Provider>
     )
 
@@ -210,7 +191,73 @@ describe('CanvasSource', () => {
 
     // Map 'load' fires (isStyleLoaded still false in v6) → source added
     listeners.load[0]()
-    expect(racingMap.addSource).toHaveBeenCalledWith('racing-canvas', expect.objectContaining({ type: 'canvas' }))
+    expect(racingMap.addSource).toHaveBeenCalledWith(
+      'racing-canvas',
+      expect.objectContaining({ type: 'canvas' })
+    )
+  })
+
+  test('styledata after the style loads adds the source via the re-armed listener', () => {
+    const listeners = {}
+    let styleLoaded = false
+    const lateMap = {
+      ...mockMapInstance,
+      on: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      once: vi.fn((event, handler) => {
+        listeners[event] = listeners[event] || []
+        listeners[event].push(handler)
+      }),
+      off: vi.fn(),
+      isStyleLoaded: vi.fn(() => styleLoaded),
+      addSource: vi.fn(),
+    }
+    mapContextValue = { map: { getMap: () => lateMap } }
+
+    render(
+      <MapContext.Provider value={mapContextValue}>
+        <CanvasSource id='late-canvas' coordinates={coordinates} canvas={mockCanvas} />
+      </MapContext.Provider>
+    )
+
+    // First styledata: not loaded yet → deferred
+    listeners.styledata[0]()
+    expect(lateMap.addSource).not.toHaveBeenCalled()
+
+    // Style completes; the same listener now adds the source
+    styleLoaded = true
+    listeners.styledata[0]()
+    expect(lateMap.addSource).toHaveBeenCalledWith(
+      'late-canvas',
+      expect.objectContaining({ type: 'canvas' })
+    )
+  })
+
+  test('rerender with new coordinates calls setCoordinates on the source', () => {
+    const source = { setCoordinates: vi.fn() }
+    mockMapInstance.getSource.mockImplementation(() => source)
+
+    const { rerender } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <CanvasSource id='coord-canvas' coordinates={coordinates} canvas={mockCanvas} />
+      </MapContext.Provider>
+    )
+
+    const nextCoordinates = [
+      [91.38, 24.83],
+      [91.41, 24.83],
+      [91.41, 24.81],
+      [91.38, 24.81],
+    ]
+    rerender(
+      <MapContext.Provider value={mapContextValue}>
+        <CanvasSource id='coord-canvas' coordinates={nextCoordinates} canvas={mockCanvas} />
+      </MapContext.Provider>
+    )
+
+    expect(source.setCoordinates).toHaveBeenCalledWith(nextCoordinates)
   })
 
   test('renders children only after the async style load (regression)', async () => {
@@ -230,15 +277,17 @@ describe('CanvasSource', () => {
       }),
       off: vi.fn(),
       isStyleLoaded: vi.fn(() => false),
-      addSource: vi.fn(() => { added = true }),
+      addSource: vi.fn(() => {
+        added = true
+      }),
       getSource: vi.fn(() => (added ? { type: 'canvas' } : null)),
     }
     mapContextValue = { map: { getMap: () => racingMap } }
 
     const { container } = render(
       <MapContext.Provider value={mapContextValue}>
-        <CanvasSource id="late-canvas" coordinates={coordinates} canvas={mockCanvas}>
-          <Layer id="late-layer" type="raster" />
+        <CanvasSource id='late-canvas' coordinates={coordinates} canvas={mockCanvas}>
+          <Layer id='late-layer' type='raster' />
         </CanvasSource>
       </MapContext.Provider>
     )
@@ -248,7 +297,9 @@ describe('CanvasSource', () => {
 
     // After 'load': source added, children render with the source id
     const { act } = await import('@testing-library/react')
-    act(() => { listeners.load[0]() })
+    act(() => {
+      listeners.load[0]()
+    })
     const layer = container.querySelector('[data-testid="mocked-layer"]')
     expect(layer).not.toBeNull()
     expect(layer.getAttribute('data-source')).toBe('late-canvas')

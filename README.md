@@ -1,6 +1,8 @@
 <h1 align="center">react-bkoi-gl | <a href="https://docs.barikoi.com">Docs</a></h1>
 
 <p align="center">
+  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml/badge.svg?branch=master&event=push" alt="CI"></a>
+  <a href="https://github.com/barikoi/react-bkoi-gl/actions/workflows/ci.yaml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/barikoi/react-bkoi-gl/master/coverage.json" alt="coverage"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/v/react-bkoi-gl.svg?logo=npm&logoColor=white" alt="npm version"></a>  
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-%E2%89%A518-149eca?logo=react&logoColor=white" alt="React ≥18"></a>

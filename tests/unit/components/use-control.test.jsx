@@ -1,152 +1,155 @@
 // Jest-based tests for useControl hook
-import React from 'react';
-import { renderHook } from '@testing-library/react';
-import { useControl } from '../../../src/components/use-control';
-import { MapContext } from '../../../src/components/map';
+import React from 'react'
+import { renderHook } from '@testing-library/react'
+import { useControl } from '../../../src/components/use-control'
+import { MapContext } from '../../../src/components/map'
 
 describe('useControl Hook', () => {
-  let mockMap;
-  let mockContext;
-  let mockControl;
-  
+  let mockMap
+  let mockContext
+  let mockControl
+
   beforeEach(() => {
     mockControl = {
-      remove: vi.fn()
-    };
-    
+      remove: vi.fn(),
+    }
+
     mockMap = {
       hasControl: vi.fn().mockReturnValue(false),
       addControl: vi.fn(),
-      removeControl: vi.fn()
-    };
-    
+      removeControl: vi.fn(),
+    }
+
     mockContext = {
       map: mockMap,
-      mapLib: {}
-    };
-  });
-  
+      mapLib: {},
+    }
+  })
+
   const wrapper = ({ children }) => (
-    <MapContext.Provider value={mockContext}>
-      {children}
-    </MapContext.Provider>
-  );
-  
+    <MapContext.Provider value={mockContext}>{children}</MapContext.Provider>
+  )
+
   test('adds control to map during initialization', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+
     // Execute
-    const { result } = renderHook(() => useControl(onCreate), { wrapper });
-    
+    const { result } = renderHook(() => useControl(onCreate), { wrapper })
+
     // Verify
-    expect(onCreate).toHaveBeenCalledWith(mockContext);
-    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, undefined);
-    expect(result.current).toBe(mockControl);
-  });
-  
+    expect(onCreate).toHaveBeenCalledWith(mockContext)
+    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, undefined)
+    expect(result.current).toBe(mockControl)
+  })
+
   test('adds control with position option', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    const options = { position: 'top-left' };
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    const options = { position: 'top-left' }
+
     // Execute
-    renderHook(() => useControl(onCreate, options), { wrapper });
-    
+    renderHook(() => useControl(onCreate, options), { wrapper })
+
     // Verify
-    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'top-left');
-  });
-  
+    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'top-left')
+  })
+
   test('calls onAdd function after adding control', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    const onAdd = vi.fn();
-    const onRemove = vi.fn();
-    const options = { position: 'bottom-right' };
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    const onAdd = vi.fn()
+    const onRemove = vi.fn()
+    const options = { position: 'bottom-right' }
+
     // Execute
-    renderHook(() => useControl(onCreate, onAdd, onRemove, options), { wrapper });
-    
+    renderHook(() => useControl(onCreate, onAdd, onRemove, options), { wrapper })
+
     // Verify
-    expect(onAdd).toHaveBeenCalledWith(mockContext);
-    expect(onRemove).not.toHaveBeenCalled();
-  });
-  
+    expect(onAdd).toHaveBeenCalledWith(mockContext)
+    expect(onRemove).not.toHaveBeenCalled()
+  })
+
   test('overloaded version with onRemove as second parameter', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    const onRemove = vi.fn();
-    const options = { position: 'bottom-right' };
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    const onRemove = vi.fn()
+    const options = { position: 'bottom-right' }
+
     // Execute
-    renderHook(() => useControl(onCreate, onRemove, options), { wrapper });
-    
+    renderHook(() => useControl(onCreate, onRemove, options), { wrapper })
+
     // Verify
-    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'bottom-right');
-    expect(onRemove).not.toHaveBeenCalled(); // Not called until unmount
-  });
-  
+    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'bottom-right')
+    expect(onRemove).not.toHaveBeenCalled() // Not called until unmount
+  })
+
   test('overloaded version with options as second parameter', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    const options = { position: 'bottom-right' };
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    const options = { position: 'bottom-right' }
+
     // Execute
-    renderHook(() => useControl(onCreate, options), { wrapper });
-    
+    renderHook(() => useControl(onCreate, options), { wrapper })
+
     // Verify
-    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'bottom-right');
-  });
-  
+    expect(mockMap.addControl).toHaveBeenCalledWith(mockControl, 'bottom-right')
+  })
+
   test('removes control when component unmounts', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    const onRemove = vi.fn();
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    const onRemove = vi.fn()
+
     // Setup removeControl to fire when called
-    mockMap.removeControl.mockImplementation((control) => {
+    mockMap.removeControl.mockImplementation(control => {
       // This simulates what would happen in the real map
-      return true;
-    });
-    
+      return true
+    })
+
     // Execute
-    const { unmount } = renderHook(() => useControl(onCreate, onRemove), { wrapper });
-    
+    const { unmount } = renderHook(() => useControl(onCreate, onRemove), { wrapper })
+
     // Set hasControl to return true so remove will be called
-    mockMap.hasControl.mockReturnValue(true);
-    
+    mockMap.hasControl.mockReturnValue(true)
+
     // Unmount to trigger cleanup
-    unmount();
-    
+    unmount()
+
     // Verify
-    expect(onRemove).toHaveBeenCalledWith(mockContext);
-    expect(mockMap.removeControl).toHaveBeenCalledWith(mockControl);
-  });
-  
+    expect(onRemove).toHaveBeenCalledWith(mockContext)
+    expect(mockMap.removeControl).toHaveBeenCalledWith(mockControl)
+  })
+
   test('does not try to remove control if map no longer has it', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    mockMap.hasControl.mockReturnValue(false);
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    mockMap.hasControl.mockReturnValue(false)
+
     // Execute
-    const { unmount } = renderHook(() => useControl(onCreate), { wrapper });
-    
+    const { unmount } = renderHook(() => useControl(onCreate), { wrapper })
+
     // Unmount to trigger cleanup
-    unmount();
-    
+    unmount()
+
     // Verify
-    expect(mockMap.removeControl).not.toHaveBeenCalled();
-  });
-  
+    expect(mockMap.removeControl).not.toHaveBeenCalled()
+  })
+
   test('avoids adding control twice if already on map', () => {
     // Setup
-    const onCreate = vi.fn().mockReturnValue(mockControl);
-    mockMap.hasControl.mockReturnValue(true);
-    
+    const onCreate = vi.fn().mockReturnValue(mockControl)
+    mockMap.hasControl.mockReturnValue(true)
+
     // Execute
-    renderHook(() => useControl(onCreate), { wrapper });
-    
+    renderHook(() => useControl(onCreate), { wrapper })
+
     // Verify
-    expect(mockMap.addControl).not.toHaveBeenCalled();
-  });
-}); 
+    expect(mockMap.addControl).not.toHaveBeenCalled()
+  })
+})
+test('throws when used outside a Map component', () => {
+  expect(() => renderHook(() => useControl(() => mockControl))).toThrow(
+    'useControl must be used within a Map component'
+  )
+})

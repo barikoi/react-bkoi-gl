@@ -15,9 +15,9 @@ vi.mock('maplibre-gl-draw', () => ({
       off: vi.fn(),
       getDefaultPosition: vi.fn().mockReturnValue('top-right'),
       _container: document.createElement('div'),
-      remove: vi.fn()
+      remove: vi.fn(),
     }
-  })
+  }),
 }))
 
 describe('DrawControl', () => {
@@ -54,7 +54,7 @@ describe('DrawControl', () => {
       off: vi.fn(),
       getDefaultPosition: vi.fn().mockReturnValue('top-right'),
       _container: document.createElement('div'),
-      remove: vi.fn()
+      remove: vi.fn(),
     }
 
     // Create mock mapLib with MapboxDraw constructor
@@ -62,22 +62,22 @@ describe('DrawControl', () => {
 
     // Create mock map
     mockMap = {
-      hasControl: vi.fn().mockImplementation((ctrl) => addedControls.has(ctrl)),
-      addControl: vi.fn().mockImplementation((ctrl) => addedControls.add(ctrl)),
-      removeControl: vi.fn().mockImplementation((ctrl) => addedControls.delete(ctrl)),
+      hasControl: vi.fn().mockImplementation(ctrl => addedControls.has(ctrl)),
+      addControl: vi.fn().mockImplementation(ctrl => addedControls.add(ctrl)),
+      removeControl: vi.fn().mockImplementation(ctrl => addedControls.delete(ctrl)),
       on: vi.fn(),
       off: vi.fn(),
       getCanvas: vi.fn(() => ({ style: {} })),
       getContainer: vi.fn(() => mapContainer),
       getZoom: vi.fn(() => 10),
       getCenter: vi.fn(() => ({ lng: 90, lat: 23 })),
-      getMap: vi.fn().mockReturnThis()
+      getMap: vi.fn().mockReturnThis(),
     }
 
     // Create context value
     mapContextValue = {
       map: mockMap,
-      mapLib: mockMapLib
+      mapLib: mockMapLib,
     }
 
     // Reset the mock implementation to return our instance (regular function:
@@ -92,7 +92,7 @@ describe('DrawControl', () => {
   describe('rendering', () => {
     test('adds the control to the map', () => {
       const props = {
-        position: 'top-left'
+        position: 'top-left',
       }
 
       render(
@@ -101,16 +101,13 @@ describe('DrawControl', () => {
         </MapContext.Provider>
       )
 
-      expect(mockMap.addControl).toHaveBeenCalledWith(
-        mockDrawControlInstance,
-        'top-left'
-      )
+      expect(mockMap.addControl).toHaveBeenCalledWith(mockDrawControlInstance, 'top-left')
     })
 
     test('applies style to the control container', () => {
       const props = {
         position: 'top-left',
-        style: { display: 'none', zIndex: 5 }
+        style: { display: 'none', zIndex: 5 },
       }
 
       render(
@@ -119,9 +116,7 @@ describe('DrawControl', () => {
         </MapContext.Provider>
       )
 
-      const group = mapContainer.querySelector(
-        '.maplibregl-ctrl-top-left .maplibregl-ctrl-group'
-      )
+      const group = mapContainer.querySelector('.maplibregl-ctrl-top-left .maplibregl-ctrl-group')
       expect(group.style.display).toBe('none')
       expect(group.style.zIndex).toBe('5')
     })
@@ -129,7 +124,7 @@ describe('DrawControl', () => {
     test('applies style to the control container for bottom positions', () => {
       const props = {
         position: 'bottom-right',
-        style: { opacity: 0.5 }
+        style: { opacity: 0.5 },
       }
 
       render(
@@ -328,7 +323,7 @@ describe('DrawControl', () => {
 
       render(
         <MapContext.Provider value={mapContextValue}>
-          <DrawControl position="top-right" {...callbacks} />
+          <DrawControl position='top-right' {...callbacks} />
         </MapContext.Provider>
       )
 
@@ -340,9 +335,7 @@ describe('DrawControl', () => {
       })
 
       expect(callbacks[callbackName]).toHaveBeenCalledTimes(1)
-      expect(callbacks[callbackName]).toHaveBeenCalledWith(
-        expect.objectContaining({ type: event })
-      )
+      expect(callbacks[callbackName]).toHaveBeenCalledWith(expect.objectContaining({ type: event }))
     })
 
     test('resets the canvas cursor after geometry-affecting events in simple_select mode', () => {
@@ -352,7 +345,7 @@ describe('DrawControl', () => {
 
       render(
         <MapContext.Provider value={mapContextValue}>
-          <DrawControl position="top-right" onDrawCreate={vi.fn()} />
+          <DrawControl position='top-right' onDrawCreate={vi.fn()} />
         </MapContext.Provider>
       )
 
@@ -369,7 +362,7 @@ describe('DrawControl', () => {
     test('unsubscribes every draw event with the registered handler on unmount', () => {
       const { unmount } = render(
         <MapContext.Provider value={mapContextValue}>
-          <DrawControl position="top-right" />
+          <DrawControl position='top-right' />
         </MapContext.Provider>
       )
 
@@ -391,7 +384,7 @@ describe('DrawControl', () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       expect(() => {
-        render(<DrawControl position="top-right" />)
+        render(<DrawControl position='top-right' />)
       }).toThrow('DrawControl must be used within a Map component')
 
       spy.mockRestore()
