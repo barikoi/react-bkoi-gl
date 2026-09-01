@@ -21,7 +21,16 @@ jobs:
         with:
           node-version: 22
 
-      # package-lock.json is gitignored by policy; plain install resolves from package.json exact pins
+      # package-lock.json is gitignored by policy, so setup-node's cache (which
+      # requires a lockfile) can't be used — cache the npm tarball store keyed
+      # on package.json instead. Cold install ~1m; cached ~20-30s.
+      - name: Cache npm tarballs
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
