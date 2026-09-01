@@ -193,9 +193,6 @@ No configuration is needed in either bundler mode — `next dev` / `next build` 
 
 ---
 
-
----
-
 ## Logging
 
 All `console.warn` / `console.error` calls route through an injectable `logger`, so you can capture warnings in production or feed them to your telemetry provider.
@@ -499,7 +496,7 @@ Defines a data source for the map. Supports GeoJSON, vector tiles, raster tiles,
 | Prop | Type | Description |
 |------|------|-------------|
 | `id` | `string` | Unique source identifier |
-| `type` | `string` | Source type: `'geojson'`, `'vector'`, `'raster'`, `'image'`, `'video'` |
+| `type` | `string` | Source type: `'geojson'`, `'vector'`, `'raster'`, `'raster-dem'`, `'image'`, `'video'` |
 | `data` | `object \| string` | GeoJSON data or URL (for geojson type) |
 | `url` | `string` | Tile URL (for vector/raster) |
 | `tiles` | `string[]` | Tile URLs array |
@@ -946,12 +943,15 @@ function TerrainExample() {
       }}
       style={{ width: '100%', height: '100vh' }}
     >
+      {/* Terrain needs a raster-dem source — Barikoi serves none, so use an
+          open DEM (Terrarium, AWS-hosted) like the e2e-tested example below */}
       <Source
         id="terrain"
         type="raster-dem"
-        url="mapbox://mapbox.mapbox-terrain-dem-v1"
-        tileSize={512}
-        maxzoom={14}
+        tiles={['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png']}
+        encoding="terrarium"
+        tileSize={256}
+        maxzoom={15}
       />
       <TerrainControl source="terrain" />
     </Map>
