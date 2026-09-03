@@ -76,8 +76,8 @@ export interface MinimapControlOptions {
   lockZoom?: number
   /** Sync pitch with parent */
   pitchAdjust?: boolean
-  /** Custom container styles */
-  containerStyle?: Record<string, string>
+  /** Custom container styles. Numeric values are treated as pixels (React `style` prop convention). */
+  containerStyle?: Record<string, string | number>
   /** Position on map */
   position?: ControlPosition
   /** Parent rectangle configuration */
@@ -88,12 +88,12 @@ export interface MinimapControlOptions {
   toggleButton?: ToggleButtonConfig
   /** Start minimized */
   initialMinimized?: boolean
-  /** Width when minimized */
-  collapsedWidth?: string
-  /** Height when minimized */
-  collapsedHeight?: string
-  /** Border radius */
-  borderRadius?: string
+  /** Width when minimized. Numbers are treated as pixels. */
+  collapsedWidth?: string | number
+  /** Height when minimized. Numbers are treated as pixels. */
+  collapsedHeight?: string | number
+  /** Border radius. Numbers are treated as pixels. */
+  borderRadius?: string | number
   /** Interaction configuration */
   interactions?: Partial<MinimapInteractions>
   /** Toggle callback */
@@ -104,18 +104,18 @@ export interface MinimapControlOptions {
   showText?: string
   /** Enable responsive sizing */
   responsive?: boolean
-  /** Responsive width */
-  responsiveWidth?: string
-  /** Responsive height */
-  responsiveHeight?: string
-  /** Minimum width */
-  minWidth?: string
-  /** Minimum height */
-  minHeight?: string
-  /** Maximum width */
-  maxWidth?: string
-  /** Maximum height */
-  maxHeight?: string
+  /** Responsive width. Numbers are treated as pixels. */
+  responsiveWidth?: string | number
+  /** Responsive height. Numbers are treated as pixels. */
+  responsiveHeight?: string | number
+  /** Minimum width. Numbers are treated as pixels. */
+  minWidth?: string | number
+  /** Minimum height. Numbers are treated as pixels. */
+  minHeight?: string | number
+  /** Maximum width. Numbers are treated as pixels. */
+  maxWidth?: string | number
+  /** Maximum height. Numbers are treated as pixels. */
+  maxHeight?: string | number
 }
 
 export type MinimapControlProps = MinimapControlOptions
@@ -240,23 +240,32 @@ function sanitizeElement(el: Element): void {
 }
 
 /**
+ * Normalize a CSS value: numbers are treated as pixels, following React's
+ * `style` prop convention. Strings pass through unchanged.
+ */
+function cssValue(value: string | number): string {
+  return typeof value === 'number' ? `${value}px` : value
+}
+
+/**
  * Safe wrapper around CSS.supports to prevent runtime crashes in environments
  * that do not support it (e.g., Server-Side Rendering or Jest/jsdom).
  */
-function supportsCSS(property: string, value: string): boolean {
+function supportsCSS(property: string, value: string | number): boolean {
+  const css = cssValue(value)
   if (
-    value.includes(';') ||
-    value.includes('{') ||
-    value.includes('}') ||
-    value.includes('\\') ||
-    /url\s*\(/i.test(value)
+    css.includes(';') ||
+    css.includes('{') ||
+    css.includes('}') ||
+    css.includes('\\') ||
+    /url\s*\(/i.test(css)
   ) {
     return false
   }
 
   if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function') {
     try {
-      return CSS.supports(property, value)
+      return CSS.supports(property, css)
     } catch {
       return false
     }
@@ -461,13 +470,13 @@ class Minimap implements IControl {
 
     if (this.options.containerStyle) {
       for (const [key, value] of Object.entries(this.options.containerStyle)) {
-        container.style.setProperty(key, value)
+        container.style.setProperty(key, cssValue(value))
       }
     }
 
     if (this.isMinimized) {
-      container.style.width = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
-      container.style.height = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
+      container.style.width = cssValue(this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE)
+      container.style.height = cssValue(this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE)
     }
 
     const preventDefault = (e: Event) => e.preventDefault()
@@ -477,27 +486,27 @@ class Minimap implements IControl {
   }
 
   private getContainerStyles(): string {
-    let width = this.options.containerStyle?.width || DEFAULT_WIDTH
+    let width = cssValue(this.options.containerStyle?.width || DEFAULT_WIDTH)
     if (!supportsCSS('width', width)) {
       width = DEFAULT_WIDTH
     }
 
-    let height = this.options.containerStyle?.height || DEFAULT_HEIGHT
+    let height = cssValue(this.options.containerStyle?.height || DEFAULT_HEIGHT)
     if (!supportsCSS('height', height)) {
       height = DEFAULT_HEIGHT
     }
 
-    let collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
+    let collapsedWidth = cssValue(this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE)
     if (!supportsCSS('width', collapsedWidth)) {
       collapsedWidth = DEFAULT_COLLAPSED_SIZE
     }
 
-    let collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
+    let collapsedHeight = cssValue(this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE)
     if (!supportsCSS('height', collapsedHeight)) {
       collapsedHeight = DEFAULT_COLLAPSED_SIZE
     }
 
-    let borderRadius = this.options.borderRadius || DEFAULT_BORDER_RADIUS
+    let borderRadius = cssValue(this.options.borderRadius || DEFAULT_BORDER_RADIUS)
     if (!supportsCSS('border-radius', borderRadius)) {
       borderRadius = DEFAULT_BORDER_RADIUS
     }
@@ -535,24 +544,26 @@ class Minimap implements IControl {
     `
   }
 
-  private validateContainerStyle(style?: Record<string, string>): Record<string, string> {
+  private validateContainerStyle(style?: Record<string, string | number>): Record<string, string> {
     const defaults = { border: '1px solid #000', width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
     if (!style) return defaults
 
     const validated: Record<string, string> = {}
     if (style.width) {
-      validated.width = supportsCSS('width', style.width) ? style.width : defaults.width
+      const width = cssValue(style.width)
+      validated.width = supportsCSS('width', width) ? width : defaults.width
     } else {
       validated.width = defaults.width
     }
     if (style.height) {
-      validated.height = supportsCSS('height', style.height) ? style.height : defaults.height
+      const height = cssValue(style.height)
+      validated.height = supportsCSS('height', height) ? height : defaults.height
     } else {
       validated.height = defaults.height
     }
     for (const [key, value] of Object.entries(style)) {
       if (key !== 'width' && key !== 'height') {
-        validated[key] = value
+        validated[key] = cssValue(value)
       }
     }
     return validated
@@ -680,8 +691,8 @@ class Minimap implements IControl {
       const vw = window.innerWidth / 100
       const vh = window.innerHeight / 100
 
-      const responsiveWidth = this.options.responsiveWidth || '20vw'
-      const responsiveHeight = this.options.responsiveHeight || '20vh'
+      const responsiveWidth = cssValue(this.options.responsiveWidth || '20vw')
+      const responsiveHeight = cssValue(this.options.responsiveHeight || '20vh')
 
       let width: number
       let height: number
@@ -702,10 +713,10 @@ class Minimap implements IControl {
         height = parseFloat(responsiveHeight)
       }
 
-      const minW = parseFloat(this.options.minWidth || '200px')
-      const minH = parseFloat(this.options.minHeight || '150px')
-      const maxW = parseFloat(this.options.maxWidth || DEFAULT_WIDTH)
-      const maxH = parseFloat(this.options.maxHeight || DEFAULT_HEIGHT)
+      const minW = parseFloat(cssValue(this.options.minWidth || '200px'))
+      const minH = parseFloat(cssValue(this.options.minHeight || '150px'))
+      const maxW = parseFloat(cssValue(this.options.maxWidth || DEFAULT_WIDTH))
+      const maxH = parseFloat(cssValue(this.options.maxHeight || DEFAULT_HEIGHT))
 
       width = Math.max(minW, Math.min(maxW, width))
       height = Math.max(minH, Math.min(maxH, height))
@@ -732,8 +743,8 @@ class Minimap implements IControl {
   toggle(): void {
     this.isMinimized = !this.isMinimized
 
-    const collapsedWidth = this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE
-    const collapsedHeight = this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE
+    const collapsedWidth = cssValue(this.options.collapsedWidth || DEFAULT_COLLAPSED_SIZE)
+    const collapsedHeight = cssValue(this.options.collapsedHeight || DEFAULT_COLLAPSED_SIZE)
 
     if (this.isMinimized) {
       this.container.classList.add('minimized')
@@ -744,8 +755,8 @@ class Minimap implements IControl {
       if (this.options.responsive && this.resizeHandler) {
         this.resizeHandler()
       } else {
-        const expandedWidth = this.options.containerStyle?.width || DEFAULT_WIDTH
-        const expandedHeight = this.options.containerStyle?.height || DEFAULT_HEIGHT
+        const expandedWidth = cssValue(this.options.containerStyle?.width || DEFAULT_WIDTH)
+        const expandedHeight = cssValue(this.options.containerStyle?.height || DEFAULT_HEIGHT)
         this.container.style.width = expandedWidth
         this.container.style.height = expandedHeight
       }

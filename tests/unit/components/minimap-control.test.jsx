@@ -515,6 +515,93 @@ describe('MinimapControl', () => {
     })
   })
 
+  describe('numeric CSS values (React style prop convention)', () => {
+    const makeParentMap = () => ({
+      getZoom: () => 10,
+      getCenter: () => ({ toArray: () => [90, 23] }),
+      getBearing: () => 0,
+      getPitch: () => 0,
+      getStyle: () => ({}),
+      on: vi.fn(),
+      off: vi.fn(),
+      getCanvas: () => ({ width: 800, height: 600 }),
+      unproject: p => ({ toArray: () => p }),
+    })
+
+    test('treats numeric containerStyle dimensions as pixels instead of crashing', () => {
+      const minimap = new Minimap({
+        containerStyle: { width: 180, height: 120 },
+        collapsedWidth: 40,
+        collapsedHeight: 40,
+        borderRadius: 8,
+      })
+
+      const container = minimap.onAdd(makeParentMap())
+      document.body.appendChild(container)
+
+      // Previously threw "value.includes is not a function" inside supportsCSS
+      const styleEl = container.querySelector('style')
+      expect(styleEl).not.toBeNull()
+      expect(styleEl.textContent).toContain('width: 180px')
+      expect(styleEl.textContent).toContain('height: 120px')
+      expect(styleEl.textContent).toContain('border-radius: 8px')
+
+      minimap.onRemove()
+    })
+
+    test('applies numeric collapsed dimensions as px on the inline container style', () => {
+      const minimap = new Minimap({
+        initialMinimized: true,
+        collapsedWidth: 44,
+        collapsedHeight: 44,
+      })
+
+      const container = minimap.onAdd(makeParentMap())
+      document.body.appendChild(container)
+
+      expect(container.style.width).toBe('44px')
+      expect(container.style.height).toBe('44px')
+
+      minimap.onRemove()
+    })
+
+    test('string values still pass through unchanged', () => {
+      const minimap = new Minimap({
+        containerStyle: { width: '50%', height: '200px', border: '2px solid red' },
+      })
+
+      const container = minimap.onAdd(makeParentMap())
+      document.body.appendChild(container)
+
+      const styleEl = container.querySelector('style')
+      expect(styleEl.textContent).toContain('width: 50%')
+      expect(container.style.border).toContain('2px solid red')
+
+      minimap.onRemove()
+    })
+
+    test('treats numeric responsive dimensions as pixels', async () => {
+      const minimap = new Minimap({
+        responsive: true,
+        responsiveWidth: 300,
+        responsiveHeight: 200,
+        minWidth: 100,
+        minHeight: 100,
+        maxWidth: 500,
+        maxHeight: 400,
+      })
+
+      const container = minimap.onAdd(makeParentMap())
+      document.body.appendChild(container)
+
+      // setupResponsiveSizing runs from the engine's async 'load' event
+      await waitFor(() => expect(container.style.width).toBe('300px'))
+      expect(container.style.height).toBe('200px')
+
+      minimap.onRemove()
+    })
+  })
+
   describe('interaction configuration', () => {
     test('accepts interaction options', () => {
       const props = {

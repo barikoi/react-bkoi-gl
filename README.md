@@ -155,6 +155,13 @@ jest.mock('maplibre-gl', () => ({
 }), { virtual: true })
 ```
 
+**Do not build with `CI=true`.** maplibre-gl v6 resolves its worker with
+`new URL(`./…`, import.meta.url)`, which webpack 5 reports as a "Critical
+dependency: the request of a dependency is an expression" warning — and
+react-scripts treats every webpack warning as an error when `process.env.CI`
+is set. Run plain `npx react-scripts build` in CI (or unset `CI` for the build
+step only); `CI=true react-scripts test` is unaffected.
+
 ## Next.js & SSR
 
 `react-bkoi-gl` renders into a `<canvas>` and must run client-side. In Next.js App Router, mark consumer components with `"use client"`:
@@ -178,6 +185,8 @@ export default function MapView() {
 ```
 
 The library uses `useId`, `useSyncExternalStore`, and `useLayoutEffect` — all client-only hooks. SSR will warn or crash without the directive.
+
+Note that `"use client"` marks a hydration boundary, not an SSR switch — Next.js still prerenders these components on the server. Keep `window`/`document` out of module scope in your own code; guard with `typeof window !== 'undefined'` or move the access into effects and event handlers.
 
 For Pages Router, dynamic-import with `ssr: false`:
 
@@ -204,6 +213,8 @@ setLogger({
   error: (err, ...args) => Sentry.captureException(err),
 });
 ```
+
+The logger interface is intentionally minimal — `warn` and `error` only; there are no `debug`/`info` levels, and passing them is a TypeScript error. Engine error events surface via the `<Map onError>` prop; when no handler is set they route through `logger.error`.
 
 Non-fatal warnings (transient rendering errors before the style finishes loading, etc.) are also surfaced via the `<Map onWarning={...}>` prop when you want per-instance handling.
 
@@ -1053,7 +1064,7 @@ Displays a small overview map for navigation.
 | `lockZoom` | `number` | - | Lock to specific zoom level |
 | `pitchAdjust` | `boolean` | `false` | Sync pitch with parent |
 | `style` | `string \| StyleSpecification` | - | Custom minimap style |
-| `containerStyle` | `object` | - | Custom container styles |
+| `containerStyle` | `object` | - | Custom container styles; numeric values are treated as pixels (React `style` prop convention) |
 | `toggleable` | `boolean` | `true` | Allow toggling minimap |
 | `initialMinimized` | `boolean` | `false` | Start minimized |
 | `responsive` | `boolean` | `true` | Enable responsive sizing |
