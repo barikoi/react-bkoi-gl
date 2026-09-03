@@ -461,6 +461,33 @@ describe('Layer Component', () => {
     expect(mockMapInstance.setFilter).not.toHaveBeenCalled()
   })
 
+  test('custom layer update short-circuits before any engine property writes', () => {
+    // Force the update path (map.getLayer -> truthy) so updateLayer runs
+    mockMapInstance.getLayer.mockReturnValue(true)
+    const customLayer = {
+      id: 'custom-layer',
+      type: 'custom',
+      onAdd: vi.fn(),
+      render: vi.fn(),
+      onRemove: vi.fn(),
+    }
+
+    const { rerender } = render(
+      <MapContext.Provider value={mapContextValue}>
+        <Layer {...customLayer} />
+      </MapContext.Provider>
+    )
+
+    rerender(
+      <MapContext.Provider value={mapContextValue}>
+        <Layer {...customLayer} renderingMode='2d' />
+      </MapContext.Provider>
+    )
+
+    expect(mockMapInstance.setPaintProperty).not.toHaveBeenCalled()
+    expect(mockMapInstance.setLayoutProperty).not.toHaveBeenCalled()
+  })
+
   test('renders outside a Map component throw a descriptive error', () => {
     expect(() => {
       render(<Layer id='orphan-layer' type='circle' />)

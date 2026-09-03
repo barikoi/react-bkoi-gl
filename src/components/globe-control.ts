@@ -100,7 +100,10 @@ class GlobeControlImpl implements IControl {
         button.setAttribute('type', 'button')
       }
     } else {
+      // Elements reaching this branch passed validation via role="button",
+      // so the role attribute is always present — kept for defense.
       if (!button.getAttribute('role')) {
+        /* v8 ignore next */
         button.setAttribute('role', 'button')
       }
       if (!button.getAttribute('tabindex')) {

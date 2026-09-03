@@ -3,6 +3,7 @@ import {
   transformToViewState,
   applyViewStateToTransform,
   mapToViewState,
+  viewStateChanges,
 } from '../../../src/utils/transform'
 
 describe('transform', () => {
@@ -52,6 +53,29 @@ describe('transform', () => {
         pitch: 30,
         padding: { left: 10, right: 10, top: 10, bottom: 10 },
       })
+    })
+  })
+
+  describe('viewStateChanges', () => {
+    const makeMap = (overrides = {}) => ({
+      getCenter: () => ({ lng: 0, lat: 0 }),
+      getZoom: () => 8,
+      getBearing: () => 0,
+      getPitch: () => 0,
+      getPadding: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+      ...overrides,
+    })
+
+    test('flags padding when it differs from the map transform', () => {
+      const padding = { top: 10, bottom: 10, left: 5, right: 5 }
+      const changes = viewStateChanges(makeMap(), { viewState: { padding } })
+      expect(changes.padding).toEqual(padding)
+    })
+
+    test('skips padding when it matches the map transform', () => {
+      const padding = { top: 0, bottom: 0, left: 0, right: 0 }
+      const changes = viewStateChanges(makeMap(), { viewState: { padding } })
+      expect(changes.padding).toBeUndefined()
     })
   })
 

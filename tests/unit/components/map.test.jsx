@@ -235,6 +235,23 @@ describe('Map Component', () => {
     expect(setGlobals).toHaveBeenCalledWith(mockMapLib, expect.anything())
   })
 
+  test('forwards removed props to the maplibre instance on re-render', async () => {
+    wrapperInstances.length = 0
+    const mapLib = { Map: MockMap }
+
+    const { rerender } = render(<Map id='test-map' mapLib={mapLib} maxPitch={60} />)
+    await waitFor(() => expect(screen.getByTestId('logo-control')).toBeTruthy())
+
+    const wrapper = wrapperInstances[wrapperInstances.length - 1]
+    wrapper.setProps.mockClear()
+
+    // Remove a prop entirely — the diff must still detect the change
+    rerender(<Map id='test-map' mapLib={mapLib} />)
+
+    await waitFor(() => expect(wrapper.setProps).toHaveBeenCalled())
+    expect(wrapper.setProps.mock.calls[0][0]).not.toHaveProperty('maxPitch')
+  })
+
   test('loads maplibre asynchronously if provided as promise', async () => {
     const mockMapLib = {
       Map: MockMap,

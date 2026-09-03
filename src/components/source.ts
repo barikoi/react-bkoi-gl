@@ -242,6 +242,7 @@ function _Source(props: SourceProps, ref: React.Ref<AnySourceImplementation | nu
         }
       }
     }
+    /* v8 ignore next -- unreachable: a falsy map crashes in createSource first */
     return undefined
   }, [map])
 

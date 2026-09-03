@@ -713,6 +713,46 @@ describe('Maplibre Class', () => {
       expect(mockMapInstance.fitBounds).toHaveBeenCalledWith(bounds, { duration: 0 })
     })
 
+    test('reuse applies initialViewState without bounds via jumpTo', () => {
+      Maplibre.savedMaps = [maplibreInstance]
+
+      const reused = Maplibre.reuse(
+        { initialViewState: { longitude: 90, latitude: 23, zoom: 10 } },
+        document.createElement('div')
+      )
+
+      expect(reused).toBe(maplibreInstance)
+      // No bounds -> the camera sync goes through _updateViewState (jumpTo)
+      expect(mockMapInstance.jumpTo).toHaveBeenCalledWith(expect.objectContaining({ zoom: 10 }))
+    })
+
+    test('redraw falls back to triggerRepaint when _render is unavailable', () => {
+      delete mockMapInstance._render
+      mockMapInstance.triggerRepaint = vi.fn()
+
+      maplibreInstance.redraw()
+
+      expect(mockMapInstance.triggerRepaint).toHaveBeenCalled()
+    })
+
+    test('setStyle receives localIdeographFontFamily when the prop is present', () => {
+      maplibreInstance.setProps({
+        mapStyle: 'http://example.com/new-style.json',
+        localIdeographFontFamily: 'Arial',
+      })
+
+      expect(mockMapInstance.setStyle).toHaveBeenCalledWith('http://example.com/new-style.json', {
+        diff: true,
+        localIdeographFontFamily: 'Arial',
+      })
+    })
+
+    test('changing a handler to an options object enables it with the new value', () => {
+      maplibreInstance.setProps({ scrollZoom: { speed: 2 } })
+
+      expect(mockMapInstance.scrollZoom.enable).toHaveBeenCalledWith({ speed: 2 })
+    })
+
     test('the gl prop hijacks canvas getContext only for the constructor call', () => {
       const originalGetContext = HTMLCanvasElement.prototype.getContext
       const fakeGl = { tag: 'webgl-context' }

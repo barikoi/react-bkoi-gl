@@ -147,8 +147,12 @@ function _Map(props: MapProps, ref: React.Ref<MapRef>) {
     const prevProps = prevPropsRef.current
     const currentProps = latestPropsRef.current
     if (!prevProps) {
+      // prevPropsRef is seeded with the initial props, so this only fires if
+      // React ever hands us a falsy props object — kept for defense.
+      /* v8 ignore start */
       prevPropsRef.current = currentProps
       return
+      /* v8 ignore stop */
     }
 
     let propsChanged = false

@@ -240,6 +240,16 @@ describe('Layer Events', () => {
       expect(mockMapInstance.getCanvas().style.cursor).toBe('')
     })
 
+    test('click invokes the onClick callback', () => {
+      const onClick = vi.fn()
+      renderLayer({ onClick })
+
+      const evt = { type: 'click', features: [] }
+      fire(mockMapInstance, 'click')(evt)
+
+      expect(onClick).toHaveBeenCalledWith(evt)
+    })
+
     test.each([
       ['mousedown', 'onMouseDown'],
       ['mouseup', 'onMouseUp'],

@@ -27,6 +27,7 @@ const FILE_URL: string | null = (() => {
     return new URL('./bkoi-map-worker.mjs', import.meta.url).toString()
   } catch {
     // import.meta unavailable (bare-CJS) — Blob fallback handles everything.
+    /* v8 ignore next */
     return null
   }
 })()
@@ -46,12 +47,37 @@ function blobWorkerUrl(): string {
   return blobUrl
 }
 
+type WorkerUrlLib = {
+  setWorkerUrl?: (value: string) => void
+  getWorkerUrl?: () => string
+}
+
+/**
+ * Resolve the worker URL once: probe a bundler-emitted http(s) asset and fall
+ * back to the inlined Blob worker when it is missing or not JavaScript.
+ * Extracted from `ensureWorkerUrl` so every probe path is unit-testable —
+ * under vitest `FILE_URL` is file:// and the probe never runs.
+ * @internal
+ */
+export async function settleWorkerUrl(fileUrl: string | null, lib: WorkerUrlLib): Promise<void> {
+  if (fileUrl && /^https?:/.test(fileUrl)) {
+    try {
+      const res = await fetch(fileUrl, { method: 'HEAD' })
+      const type = res.headers.get('content-type') || ''
+      if (res.ok && /javascript|ecmascript/i.test(type)) {
+        lib.setWorkerUrl?.(fileUrl)
+        return
+      }
+    } catch {
+      // probe failed — fall through to the Blob worker
+    }
+  }
+  lib.setWorkerUrl?.(blobWorkerUrl())
+}
+
 export function ensureWorkerUrl(mapLib: unknown): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve()
-  const lib = mapLib as {
-    setWorkerUrl?: (value: string) => void
-    getWorkerUrl?: () => string
-  }
+  const lib = mapLib as WorkerUrlLib
   if (!lib.setWorkerUrl) return Promise.resolve()
 
   const current = lib.getWorkerUrl?.()
@@ -60,27 +86,6 @@ export function ensureWorkerUrl(mapLib: unknown): Promise<void> {
     return Promise.resolve()
   }
 
-  if (!FILE_URL) {
-    lib.setWorkerUrl(blobWorkerUrl())
-    return Promise.resolve()
-  }
-
-  settled ??= (async () => {
-    // Only http(s) URLs can be bundler-emitted assets; file:// (tests,
-    // file:// pages) can neither be probed nor host a Worker — use the Blob.
-    if (/^https?:/.test(FILE_URL)) {
-      try {
-        const res = await fetch(FILE_URL, { method: 'HEAD' })
-        const type = res.headers.get('content-type') || ''
-        if (res.ok && /javascript|ecmascript/i.test(type)) {
-          lib.setWorkerUrl(FILE_URL)
-          return
-        }
-      } catch {
-        // probe failed — fall through to the Blob worker
-      }
-    }
-    lib.setWorkerUrl(blobWorkerUrl())
-  })()
+  settled ??= settleWorkerUrl(FILE_URL, lib)
   return settled
 }

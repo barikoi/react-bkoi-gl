@@ -346,6 +346,7 @@ function _Layer(props: LayerProps) {
         }
       }
     }
+    /* v8 ignore next -- unreachable: a falsy map crashes in createLayer first */
     return undefined
   }, [map])
 

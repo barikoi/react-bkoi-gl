@@ -580,6 +580,19 @@ describe('MinimapControl', () => {
       minimap.onRemove()
     })
 
+    test('falls back to default dimensions when width/height are omitted', () => {
+      const minimap = new Minimap({ containerStyle: { border: '2px solid red' } })
+
+      const container = minimap.onAdd(makeParentMap())
+      document.body.appendChild(container)
+
+      const styleEl = container.querySelector('style')
+      expect(styleEl.textContent).toContain('width: 400px')
+      expect(styleEl.textContent).toContain('height: 300px')
+
+      minimap.onRemove()
+    })
+
     test('treats numeric responsive dimensions as pixels', async () => {
       const minimap = new Minimap({
         responsive: true,
