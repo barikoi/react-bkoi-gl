@@ -54,9 +54,11 @@ and e2e specs exist to cover each claim.
 | Dev server (style/api experiments) | `npm run e2e:serve` (vite, :5175) |
 | Typecheck / lint | `npm run typecheck` / `npm run lint` |
 | Build | `npm run build` (tsup + CSS) |
-| Unit tests (mocked maplibre) | `npm run test:unit` — 317 tests |
+| Unit tests (mocked maplibre) | `npm run test:unit` — 409 tests |
 | Browser tests (real maplibre, headless, local style) | `npm run test:browser` — 9 tests |
-| E2E (Playwright vs built `dist/`) | `npm run e2e` (chains `npm run build`) |
+| E2E (Playwright vs built `dist/`) | `npm run e2e` (chains `npm run build` + README-example extraction) |
+| README example validation | `npm run check:readme` — strict tsc over every fenced example vs built `.d.ts` (the `readme-examples` e2e case mounts them verbatim at runtime) |
+| Showcase screenshots | `npm run screenshots` — needs `npm run e2e:serve`; output gitignored |
 | Pack tarball smoke | `npm run test:pack` |
 | Framework repros (Vite/Next 15/Next 16/CRA consumer apps) | `npm run test:framework` (npm; `--pm=pnpm|yarn|bun`, `--only=<app>`; long: run detached) |
 | Framework headed review (same UX as e2e:review) | `npm run test:framework:review` (`ONLY=`, `DWELL=`, `PAUSE=1`, `PM=`, `SKIP_INSTALL=1`) |

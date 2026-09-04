@@ -8,10 +8,14 @@
  * Inputs (each optional — a badge is generated for every input present):
  *   - coverage/coverage-summary.json  (vitest json-summary reporter)  → coverage-badge.svg
  *   - test-results.json               (vitest json reporter)           → tests-badge.svg
+ *   - dist/index.js                   (tsup output, post-build)        → size-badge.svg
+ *   - node_modules/maplibre-gl        (installed engine version)       → maplibre-badge.svg
  *
- * Wired into `npm test` and `npm run coverage`, which regenerate them locally.
+ * Wired into `npm test`, `npm run coverage`, and `npm run build`, which
+ * regenerate them locally.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -102,6 +106,26 @@ if (summary) {
   );
 } else {
   console.warn('[make-badges] coverage/coverage-summary.json not found — run vitest --coverage first (skipping coverage badge)');
+}
+
+// --- size badge (main ESM entry, min+gzip — same metric bundlephobia reports) ---
+// dist ships unminified (tsup default); minify with esbuild only to measure.
+try {
+  const entry = readFileSync(path.join(root, 'dist/index.js'), 'utf8');
+  const { transform } = await import('esbuild');
+  const { code } = await transform(entry, { minify: true, format: 'esm' });
+  const kib = Math.round(gzipSync(code, { level: 9 }).length / 1024);
+  writeBadge('size-badge.svg', renderBadge('size', `${kib} KiB min+gzip`, 'blue'));
+} catch {
+  console.warn('[make-badges] dist/index.js (or esbuild) not available — run npm run build first (skipping size badge)');
+}
+
+// --- MapLibre engine version badge (exact installed version — never drifts) ---
+const engine = readJson('node_modules/maplibre-gl/package.json');
+if (engine?.version) {
+  writeBadge('maplibre-badge.svg', renderBadge('MapLibre', `v${engine.version}`, 'blue'));
+} else {
+  console.warn('[make-badges] maplibre-gl not installed — run npm install (skipping MapLibre badge)');
 }
 
 // --- tests badge ---

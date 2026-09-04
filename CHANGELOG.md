@@ -35,6 +35,7 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 - **Framework compatibility suite** — real consumer apps (Vite 5/6/7, Next.js 15/16 in webpack + Turbopack modes, CRA 5) install the packed tarball across npm/pnpm/yarn/bun on React 18 and 19, verified headlessly for actual tile rendering.
 - **Line coverage raised from 88% to 98%** across the full unit + browser run.
 - **Pre-publish gates** — pack tarball smoke test, `publint --strict`, `@arethetypeswrong/cli` (dual CJS/ESM types across resolution modes), and a package-manager resolution matrix (`npm`, `pnpm`, `yarn` classic, `yarn` PnP, `bun`).
+- **README examples are executable contracts** — `npm run check:readme` typechecks every fenced example against the built `.d.ts` (strict), and the e2e suite mounts the extracted examples verbatim in a real browser (`readme-examples` case + spec).
 
 ## [2.2.1] - 09-07-2026
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="149" height="20" role="img" aria-label="size: 177 KiB min+gzip">
+  <title>size: 177 KiB min+gzip</title>
+  <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
+  <clipPath id="r"><rect width="149" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="36" height="20" fill="#555"/>
+    <rect x="36" width="113" height="20" fill="#007ec6"/>
+    <rect width="149" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" font-family='Verdana,Geneva,DejaVu Sans,sans-serif' font-size='11' text-anchor='middle'>
+    <text x="18" y="15">size</text>
+    <text x="92.5" y="15">177 KiB min+gzip</text>
+  </g>
+</svg>

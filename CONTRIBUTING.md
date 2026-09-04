@@ -49,6 +49,8 @@ npm install
 | `npm run test:pack` | Pack-tarball smoke (installs the tarball, asserts exports/files) |
 | `npm run e2e` | Playwright suite vs built `dist/` (chains build) |
 | `npm run e2e:serve` / `e2e:review` / `e2e:coverage` | e2e host app / headed review / claim-coverage matrix |
+| `npm run check:readme` | Typecheck every README example against the built package (chains build) |
+| `npm run screenshots` | Capture showcase screenshots into `screenshots/` (needs `e2e:serve`) |
 | `npm run test:framework` / `test:framework:review` | Framework compatibility matrix / its headed review |
 | `npm run playwright:install` | One-time Chromium install for browser tests |
 | `npm run prepublishOnly` | Publish gate: typecheck + lint + test + build |
@@ -206,6 +208,51 @@ Copy an existing spec — `tests/browser/controls.spec.jsx` and
   maplibre-gl-draw polls `map.loaded()` at 16 ms) wait for a concrete signal
   (`map.getSource('mapbox-gl-draw-cold')`) and raise the per-file timeout via
   `vi.setConfig({ testTimeout: 30000 })`.
+
+### README Example Validation (`scripts/check-readme-examples.mjs`)
+
+Every fenced example in `README.md` is a published contract — it must compile
+against the shipped `.d.ts`. `npm run check:readme` enforces this mechanically:
+
+1. Rebuilds `dist/` (the examples are checked against the **built** types,
+   not `src/` — the same types a consumer's `tsc` sees).
+2. `scripts/check-readme-examples.mjs` extracts every fenced code block into
+   `tmp/readme-examples/` (gitignored). Complete examples land verbatim;
+   the two intentional fragments (MapRef methods cheat-sheet, pick-one style
+   URL list) get byte-identical text wrapped in scaffold declarations. Env
+   globals a consumer app has (`BARIKOI_API_KEY`, `next/dynamic`, `Sentry`,
+   `process`) are shims.
+3. Runs `tsc --strict` over the extracted files — **zero errors required**.
+
+Run it after touching any README example or the component props an example
+uses. An example that doesn't compile is a bug — fix the docs or the types,
+whichever is wrong (that is how `<Popup>`-in-`<Marker>` got optional coords).
+
+The harness also emits `tmp/readme-examples/manifest.json`, and the second
+half of the contract is **runtime**: the `readme-examples` e2e case mounts
+every extractable example verbatim (one per URL, via `&example=ExampleNN`)
+against the built `dist/` and asserts a rendered canvas with zero page
+errors — `readme-examples.spec.ts`, 23 tests, part of `npm run e2e`
+(which chains the extraction, so the manifest always exists there).
+Framework-specific examples (`next/dynamic`) are explicitly `skip`-flagged
+in the manifest and asserted known, never silently dropped.
+
+### Screenshots (`scripts/capture-screenshots.mjs`)
+
+Captures showcase JPEGs of six e2e cases into `screenshots/`
+(gitignored, not shipped in the tarball). Requires the e2e host app on :5175
+(which serves the built `dist/`):
+
+```bash
+npm run e2e:serve        # terminal 1
+npm run screenshots      # terminal 2
+```
+
+Each case: waits for the live map instance, then a 10s render settle
+(remote tiles stream in; `isStyleLoaded()` is deliberately not used —
+error/retrying raster tiles hang that poll), then a retina JPEG at quality
+78. Re-run whenever a case's visuals change; currently these shots are for
+local review only.
 
 ### Testing Pitfalls (read before writing tests)
 
@@ -393,6 +440,7 @@ test), `commit-msg` (commitlint + Signed-off-by trailer + identity check),
    ```bash
    npm test
    npm run coverage
+   npm run check:readme   # README examples: strict typecheck + runtime mounts in e2e
    ```
 2. **Lint the package config:**
    ```bash
