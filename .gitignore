@@ -19,6 +19,8 @@ yarn-error.log
 .codelens
 # e2e
 playwright-report/
+screenshots/
+tmp/
 tests/e2e/report/
 test-results/
 !.env.example

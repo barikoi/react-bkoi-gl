@@ -8,6 +8,7 @@ import * as draw from './draw.jsx'
 import * as hooks from './hooks.jsx'
 import * as advanced from './advanced.jsx'
 import * as examples from './examples.jsx'
+import { ReadmeExamples } from './readme-examples.jsx'
 
 export const CASES = {
   // Map module
@@ -58,6 +59,9 @@ export const CASES = {
   'examples/video': examples.ExampleVideoSource,
   'examples/camera-controls': examples.ExampleCameraControls,
   'examples/animate-camera': examples.ExampleAnimateCamera,
+  // Verbatim README examples (extracted by npm run check:readme) — one mount
+  // per URL via &example=ExampleNN; driven by readme-examples.spec.ts.
+  'readme-examples': ReadmeExamples,
   // Barikoi docs advanced-features examples
   'advanced/live-data': advanced.AdvancedLiveData,
   'advanced/measure-distance': advanced.AdvancedMeasureDistance,
