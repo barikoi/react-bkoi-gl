@@ -11,10 +11,10 @@ import { MapContext } from './map'
 import { compareClassNames } from '../utils/compare-class-names'
 
 export type PopupProps = PopupOptions & {
-  /** Longitude of the anchor location */
-  longitude: number
-  /** Latitude of the anchor location */
-  latitude: number
+  /** Longitude of the anchor location. Required unless the popup is rendered as a child of `<Marker>`, which injects its own coordinates. */
+  longitude?: number
+  /** Latitude of the anchor location. Required unless the popup is rendered as a child of `<Marker>`, which injects its own coordinates. */
+  latitude?: number
 
   /** CSS style override, applied to the control's container */
   style?: React.CSSProperties
@@ -34,7 +34,10 @@ export const Popup: React.FC<PopupProps> = memo(
     const popup: PopupInstance = useMemo(() => {
       const options = { ...props }
       const pp = new mapLib.Popup(options)
-      pp.setLngLat([props.longitude, props.latitude])
+      // Coordinates may be absent when mounted inside <Marker> (injected there
+      // before the popup opens); setLngLat throws on undefined, so defer.
+      if (props.longitude != null && props.latitude != null)
+        pp.setLngLat([props.longitude, props.latitude])
       return pp
     }, [])
 
@@ -69,7 +72,7 @@ export const Popup: React.FC<PopupProps> = memo(
     }, [props.style])
 
     useEffect(() => {
-      if (popup.isOpen()) {
+      if (popup.isOpen() && props.longitude != null && props.latitude != null) {
         if (popup.getLngLat().lng !== props.longitude || popup.getLngLat().lat !== props.latitude) {
           popup.setLngLat([props.longitude, props.latitude])
         }
