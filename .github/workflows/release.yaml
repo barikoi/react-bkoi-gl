@@ -1,0 +1,135 @@
+# Release CI/CD for react-bkoi-gl (npm library).
+# Mirrors akg-frontend's Production flow: version from CHANGELOG.md,
+# build+publish, GitHub Release with release notes, Discord notification.
+# Docker build is replaced by the full test gate + `npm publish`.
+# Auth comes from the repo's .npmrc / runner npm config — no NPM_TOKEN secret.
+
+name: Release
+
+on:
+  push:
+    branches: ['main']
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  prepare:
+    name: Prepare Build Info
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_notes: ${{ steps.release-notes.outputs.notes }}
+      already_published: ${{ steps.check.outputs.already_published }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Extract version from changelog
+        id: version
+        run: |
+          if [ ! -f "CHANGELOG.md" ] || [ ! -r "CHANGELOG.md" ]; then
+            echo "ERROR: CHANGELOG.md not found or not readable"
+            exit 1
+          fi
+
+          CHANGELOG_LINE=$(grep '^## \[' CHANGELOG.md | head -1)
+          if [ -z "$CHANGELOG_LINE" ]; then
+            echo "ERROR: No version entry found in CHANGELOG.md"
+            exit 1
+          fi
+
+          VERSION=$(echo "$CHANGELOG_LINE" | cut -d'[' -f2 | cut -d']' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' > /dev/null; then
+            echo "ERROR: Version '$VERSION' is not semver (x.y.z)"
+            exit 1
+          fi
+
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "ERROR: CHANGELOG version ($VERSION) != package.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+
+          echo "Successfully extracted version from CHANGELOG.md: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: release-notes
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          NOTES=$(awk "/^## \\[${VERSION//./\\.}\\]/{flag=1; next} /^## \\[/{if(flag) exit} flag" CHANGELOG.md | sed '1d')
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check if version is already on npm
+        id: check
+        run: |
+          if npm view react-bkoi-gl@${{ steps.version.outputs.version }} version > /dev/null 2>&1; then
+            echo "Version ${{ steps.version.outputs.version }} already published — skipping publish/release"
+            echo "already_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "already_published=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Test and Build
+    needs: prepare
+    if: needs.prepare.outputs.already_published == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Typecheck and lint
+        run: npm run typecheck && npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Build
+        run: npm run build
+
+      - name: README example check
+        run: node scripts/check-readme-examples.mjs && tsc -p tmp/readme-examples/tsconfig.json
+
+      - name: Pack tarball smoke test
+        run: npm run test:pack
+
+      - name: Publish to npm
+        run: npm publish --access public
+
+  release:
+    name: Create GitHub Release
+    needs: [prepare, build]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: v${{ needs.prepare.outputs.version }}
+          body: |
+            ## What's Changed
+            ${{ needs.prepare.outputs.release_notes }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
