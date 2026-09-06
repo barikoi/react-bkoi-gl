@@ -14,7 +14,7 @@
  * Wired into `npm test`, `npm run coverage`, and `npm run build`, which
  * regenerate them locally.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -88,8 +88,38 @@ const writeBadge = (file, svg) => {
   console.log(`[make-badges] wrote ${file}`);
 };
 
+// Newest mtime under src/ and tests/ — a test-run artifact older than this is
+// stale (code changed since the run) and must not overwrite the badges.
+// Guards against `npm run build` regenerating badges from a pre-change
+// test-results.json / coverage-summary.json.
+function newestMtime(dir) {
+  let newest = 0;
+  for (const entry of readdirSync(path.join(root, dir), { withFileTypes: true })) {
+    const p = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'node_modules') continue;
+      newest = Math.max(newest, newestMtime(p));
+    } else {
+      newest = Math.max(newest, statSync(path.join(root, p)).mtimeMs);
+    }
+  }
+  return newest;
+}
+const codeNewest = Math.max(newestMtime('src'), newestMtime('tests'));
+
+// Read a test-run artifact only if it is newer than the code itself.
+const readFreshJson = file => {
+  try {
+    const full = path.join(root, file);
+    if (statSync(full).mtimeMs < codeNewest) return null;
+    return JSON.parse(readFileSync(full, 'utf8'));
+  } catch {
+    return null;
+  }
+};
+
 // --- coverage badge ---
-const summary = readJson('coverage/coverage-summary.json');
+const summary = readFreshJson('coverage/coverage-summary.json');
 if (summary) {
   const pct = summary.total?.lines?.pct ?? 0;
   const pctInt = Math.floor(pct);
@@ -129,7 +159,7 @@ if (engine?.version) {
 }
 
 // --- tests badge ---
-const results = readJson('test-results.json');
+const results = readFreshJson('test-results.json');
 if (results) {
   const total = results.numTotalTests ?? 0;
   const passed = results.numPassedTests ?? 0;
