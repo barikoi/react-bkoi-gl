@@ -451,8 +451,9 @@ test), `commit-msg` (commitlint + Signed-off-by trailer + identity check),
    ```bash
    npx @arethetypeswrong/cli --pack .
    ```
-   `@arethetypeswrong` will flag CSS subpath imports as unresolvable —
-   that's expected for a library shipping styles, not a real problem.
+   `@arethetypeswrong` will flag the `/styles` and `/worker` subpaths as
+   unresolvable under node10 / CJS — that's expected for a library shipping
+   browser-only assets (CSS and a worker script), not a real problem.
 4. **Build:**
    ```bash
    npm run build

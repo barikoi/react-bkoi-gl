@@ -25,7 +25,10 @@
       "import": "./dist/styles/react-bkoi-gl.css",
       "default": "./dist/styles/react-bkoi-gl.css"
     },
-    "./worker": "./dist/bkoi-map-worker.mjs"
+    "./worker": {
+    "types": "./dist/bkoi-map-worker.d.mts",
+    "default": "./dist/bkoi-map-worker.mjs"
+  }
   },
   "author": "barikoi",
   "readme": "README.md",

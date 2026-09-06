@@ -111,7 +111,10 @@ const codeNewest = Math.max(newestMtime('src'), newestMtime('tests'));
 const readFreshJson = file => {
   try {
     const full = path.join(root, file);
-    if (statSync(full).mtimeMs < codeNewest) return null;
+    if (statSync(full).mtimeMs < codeNewest) {
+      console.warn(`[make-badges] ${file} predates the newest src/tests change — rerun the tests (skipping)`);
+      return null;
+    }
     return JSON.parse(readFileSync(full, 'utf8'));
   } catch {
     return null;
