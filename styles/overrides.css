@@ -11,7 +11,7 @@
 /* General control styling */
 .maplibregl-ctrl {
   display: block !important;
-  margin: 10px 10px 0 0;
+  margin: 10px 10px 0 0px !important;
   pointer-events: auto;
   transform: none;
 }

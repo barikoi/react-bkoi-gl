@@ -67,7 +67,7 @@ export function ControlsNavigation() {
   return (
     <Section title='NavigationControl — zoom buttons + compass'>
       <TestMap section='navigation'>
-        <NavigationControl position='top-right' showCompass showZoom visualizePitch />
+        <NavigationControl position='bottom-left' showCompass showZoom visualizePitch />
       </TestMap>
     </Section>
   )
@@ -95,7 +95,7 @@ export function ControlsFullscreen() {
   return (
     <Section title='FullscreenControl'>
       <TestMap section='fullscreen'>
-        <FullscreenControl position='top-right' />
+        <FullscreenControl position='bottom-left' />
       </TestMap>
     </Section>
   )
@@ -110,7 +110,7 @@ export function ControlsGeolocate() {
         initialViewState={{ longitude: 90.3938, latitude: 23.8216, zoom: 10 }}
       >
         <GeolocateControl
-          position='top-right'
+          position='bottom-left'
           trackUserLocation
           showAccuracyCircle
           onGeolocate={e =>
@@ -153,7 +153,7 @@ export function ControlsGlobe() {
         }}
       >
         <GlobeControl
-          position='top-right'
+          position='bottom-left'
           onProjectionChange={isGlobe => window.__log({ type: 'projection', isGlobe })}
         />
       </TestMap>
@@ -267,7 +267,7 @@ export function ControlsTerrain() {
           tileSize={256}
           maxzoom={15}
         />
-        <TerrainControl position='top-right' source='terrain-dem' />
+        <TerrainControl position='bottom-left' source='terrain-dem' />
       </TestMap>
     </Section>
   )
