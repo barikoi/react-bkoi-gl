@@ -9,7 +9,19 @@
  * two in sync (the fixtures cannot import from here: app.css ships to Vite).
  */
 
-export const headedLaunch = { headless: false, args: ['--start-maximized'] }
+export const headedLaunch = {
+  headless: false,
+  args: [
+    '--start-maximized',
+    // Keep rendering while the window is occluded or in the background:
+    // maplibre paints via requestAnimationFrame, and Chromium freezes rAF/
+    // compositing for backgrounded windows — camera changes and demos would
+    // apply invisibly until the window is raised ("nothing fires visually").
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--disable-background-timer-throttling',
+  ],
+}
 export const headedContext = { viewport: null }
 
 /** Exact #e2e-hud styles from tests/e2e/app/app.css (bottom-center pill). */

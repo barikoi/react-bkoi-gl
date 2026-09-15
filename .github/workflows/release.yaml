@@ -1,86 +1,61 @@
-# Release CI/CD for react-bkoi-gl (npm library).
-# Mirrors akg-frontend's Production flow: version from CHANGELOG.md,
-# build+publish, GitHub Release with release notes, Discord notification.
-# Docker build is replaced by the full test gate + `npm publish`.
-# Auth comes from the repo's .npmrc / runner npm config — no NPM_TOKEN secret.
+# Single CI/CD workflow for react-bkoi-gl — NO npm publishing.
+# On every push to master and every PR:
+#   - CodeQL security scanning (parallel job),
+#   - the remote half of the gate: typecheck, lint, unit tests with coverage
+#     (uploaded to Codecov), build, README example check, pack smoke test.
+# Additionally, on pushes to master only, the gate job:
+#   1. regenerates the two local README badge SVGs from build metrics
+#      (bundle size via `npm run build`; engine version from the lockfile)
+#      and commits them back with [skip ci],
+#   2. extracts the top CHANGELOG.md entry (scripts/extract-changelog.mjs)
+#      and creates the v<x.y.z> GitHub Release with that section as notes,
+#      skipping creation when the release already exists.
+# The changelog is the source of truth for the version; a CHANGELOG ⇄
+# package.json version mismatch fails the run.
 
 name: Release
 
 on:
   push:
-    branches: ['main']
+    branches: ['master']
+  pull_request:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: '22'
 
 jobs:
-  prepare:
-    name: Prepare Build Info
+  codeql:
+    name: CodeQL analysis
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      release_notes: ${{ steps.release-notes.outputs.notes }}
-      already_published: ${{ steps.check.outputs.already_published }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Extract version from changelog
-        id: version
-        run: |
-          if [ ! -f "CHANGELOG.md" ] || [ ! -r "CHANGELOG.md" ]; then
-            echo "ERROR: CHANGELOG.md not found or not readable"
-            exit 1
-          fi
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
 
-          CHANGELOG_LINE=$(grep '^## \[' CHANGELOG.md | head -1)
-          if [ -z "$CHANGELOG_LINE" ]; then
-            echo "ERROR: No version entry found in CHANGELOG.md"
-            exit 1
-          fi
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
 
-          VERSION=$(echo "$CHANGELOG_LINE" | cut -d'[' -f2 | cut -d']' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-
-          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' > /dev/null; then
-            echo "ERROR: Version '$VERSION' is not semver (x.y.z)"
-            exit 1
-          fi
-
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "ERROR: CHANGELOG version ($VERSION) != package.json version ($PACKAGE_VERSION)"
-            exit 1
-          fi
-
-          echo "Successfully extracted version from CHANGELOG.md: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Extract release notes from CHANGELOG
-        id: release-notes
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          NOTES=$(awk "/^## \\[${VERSION//./\\.}\\]/{flag=1; next} /^## \\[/{if(flag) exit} flag" CHANGELOG.md | sed '1d')
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Check if version is already on npm
-        id: check
-        run: |
-          if npm view react-bkoi-gl@${{ steps.version.outputs.version }} version > /dev/null 2>&1; then
-            echo "Version ${{ steps.version.outputs.version }} already published — skipping publish/release"
-            echo "already_published=true" >> $GITHUB_OUTPUT
-          else
-            echo "already_published=false" >> $GITHUB_OUTPUT
-          fi
-
-  build:
-    name: Test and Build
-    needs: prepare
-    if: needs.prepare.outputs.already_published == 'false'
+  gate:
+    name: Typecheck, lint, test, build, release
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -95,14 +70,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
-
       - name: Typecheck and lint
         run: npm run typecheck && npm run lint
 
-      - name: Unit tests
-        run: npm run test:unit
+      - name: Unit tests with coverage
+        run: npx vitest run --project unit --coverage
+
+      # Token optional for public repos; set CODECOV_TOKEN if the org
+      # requires token-authenticated uploads.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build
         run: npm run build
@@ -113,23 +93,52 @@ jobs:
       - name: Pack tarball smoke test
         run: npm run test:pack
 
-      - name: Publish to npm
-        run: npm publish --access public
+      # ---- push to master only: badges + GitHub Release ----
 
-  release:
-    name: Create GitHub Release
-    needs: [prepare, build]
-    if: needs.build.result == 'success'
-    runs-on: ubuntu-latest
-    steps:
+      - name: Commit refreshed badges
+        if: github.event_name == 'push'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -- '*-badge.svg'
+          if git diff --cached --quiet; then
+            echo 'Badges unchanged — nothing to commit'
+          else
+            git commit -m 'chore(badges): regenerate from CI metrics [skip ci]'
+            git push
+          fi
+
+      - name: Extract version and release notes from CHANGELOG
+        if: github.event_name == 'push'
+        id: changelog
+        run: node scripts/extract-changelog.mjs
+
+      - name: Check version matches package.json
+        if: github.event_name == 'push'
+        run: |
+          VERSION='${{ steps.changelog.outputs.version }}'
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "ERROR: CHANGELOG version ($VERSION) != package.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+
+      - name: Check if release already exists
+        if: github.event_name == 'push'
+        id: exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.changelog.outputs.version }}" > /dev/null 2>&1; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub Release
+        if: github.event_name == 'push' && steps.exists.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.prepare.outputs.version }}
-          name: v${{ needs.prepare.outputs.version }}
-          body: |
-            ## What's Changed
-            ${{ needs.prepare.outputs.release_notes }}
-          draft: false
-          prerelease: false
-          generate_release_notes: false
+          tag_name: v${{ steps.changelog.outputs.version }}
+          name: v${{ steps.changelog.outputs.version }}
+          body: ${{ steps.changelog.outputs.notes }}

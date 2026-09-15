@@ -220,10 +220,13 @@ export function ExampleVideoSource() {
             'https://upload.wikimedia.org/wikipedia/commons/transcoded/8/87/Schlossbergbahn.webm/Schlossbergbahn.webm.480p.vp9.webm',
           ]}
           coordinates={[
-            [-122.51596391201019, 37.56238816766053],
-            [-122.51467645168304, 37.56410183312965],
-            [-122.51309394836426, 37.563391708549425],
-            [-122.51423120498657, 37.56161849366671],
+            // Axis-aligned rectangle (north-up, not the rotated drone-footage
+            // quad) whose projected aspect matches the video's intrinsic
+            // 854×481 (≈16:9): Δlat 0.0024, Δlng = 1.775 × Δlat / cos(lat).
+            [-122.517187, 37.56408],
+            [-122.511813, 37.56408],
+            [-122.511813, 37.56168],
+            [-122.517187, 37.56168],
           ]}
         />
         <Layer id='video-layer' type='raster' source='drone' />
@@ -354,7 +357,13 @@ export function ExampleAnimateCamera() {
         ref={mapRef}
         section='animate-camera'
         mapStyle={BARIKOI_STYLE('barikoi-dark-mode')}
-        initialViewState={{ longitude: AMC_HOME[0], latitude: AMC_HOME[1], zoom: 16, pitch: 60, bearing: 0 }}
+        initialViewState={{
+          longitude: AMC_HOME[0],
+          latitude: AMC_HOME[1],
+          zoom: 16,
+          pitch: 60,
+          bearing: 0,
+        }}
         onLoad={startOrbit}
       />
     </Section>

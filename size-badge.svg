@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="149" height="20" role="img" aria-label="size: 176 KiB min+gzip">
-  <title>size: 176 KiB min+gzip</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="149" height="20" role="img" aria-label="size: 189 KiB min+gzip">
+  <title>size: 189 KiB min+gzip</title>
   <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
   <clipPath id="r"><rect width="149" height="20" rx="3" fill="#fff"/></clipPath>
   <g clip-path="url(#r)">
@@ -9,6 +9,6 @@
   </g>
   <g fill="#fff" font-family='Verdana,Geneva,DejaVu Sans,sans-serif' font-size='11' text-anchor='middle'>
     <text x="18" y="15">size</text>
-    <text x="92.5" y="15">176 KiB min+gzip</text>
+    <text x="92.5" y="15">189 KiB min+gzip</text>
   </g>
 </svg>

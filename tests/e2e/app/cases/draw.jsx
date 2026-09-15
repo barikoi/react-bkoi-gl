@@ -30,7 +30,7 @@ export function DrawAll() {
       <TestMap section='draw-all'>
         {advanced ? (
           <DrawControl
-            position='top-left'
+            position='bottom-left'
             displayControlsDefault
             defaultMode='simple_select'
             styles={[
@@ -48,7 +48,7 @@ export function DrawAll() {
           />
         ) : (
           <DrawControl
-            position='top-left'
+            position='bottom-left'
             style={{ opacity: 0.9, zIndex: 5 }}
             controls={{
               polygon: true,

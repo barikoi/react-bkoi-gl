@@ -37,6 +37,7 @@ export const CASES = {
   'controls-camera/scale': controls.ControlsScale,
   'controls-camera/fullscreen': controls.ControlsFullscreen,
   'controls-camera/geolocate': controls.ControlsGeolocate,
+  'controls-camera/all-controls': controls.ControlsAll,
   // Controls — group B (globe)
   'controls-globe/globe': controls.ControlsGlobe,
   // Controls — group C (minimap)

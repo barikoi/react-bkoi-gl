@@ -75,7 +75,7 @@ test('draw/all: basic + advanced DrawControl on one map', async ({ page }) => {
   await expect(page.locator('.mapbox-gl-draw_combine')).toHaveCount(0)
 
   // style prop lands on the control container
-  const group = page.locator('.maplibregl-ctrl-top-left .maplibregl-ctrl-group')
+  const group = page.locator('.maplibregl-ctrl-bottom-left .maplibregl-ctrl-group')
   const styles = await group.evaluate(el => ({
     opacity: el.style.opacity,
     zIndex: el.style.zIndex,

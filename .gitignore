@@ -6,7 +6,6 @@ coverage
 coverage.json
 test-results.json
 npm-debug.log
-package-lock.json
 test/**/yarn.lock
 */**/package-lock.json
 yarn-error.log

@@ -5,6 +5,7 @@
 //   D /?case=controls-terrain
 import { useRef } from 'react'
 import {
+  DrawControl,
   GeolocateControl,
   GlobeControl,
   Layer,
@@ -68,6 +69,66 @@ export function ControlsNavigation() {
     <Section title='NavigationControl — zoom buttons + compass'>
       <TestMap section='navigation'>
         <NavigationControl position='bottom-left' showCompass showZoom visualizePitch />
+      </TestMap>
+    </Section>
+  )
+}
+
+// Every feature on ONE map, spread across the corners — verifies the uniform
+// 10px padding and stacking across all four positions with the full surface:
+//   top-left:     DrawControl (advanced toolbar) + Geolocate
+//   top-right:    Navigation (zoom + compass)
+//   bottom-left:  Scale (stacked above the Barikoi logo)
+//   bottom-right: Fullscreen + Globe + Terrain stacked, Minimap below
+export function ControlsAll() {
+  const log =
+    (type, extra = {}) =>
+    e =>
+      window.__log({ type, ...extra, ...e })
+  return (
+    <Section title='All controls — draw (advanced) + minimap + globe + terrain + camera controls, one per corner'>
+      <TestMap section='all-controls'>
+        <Source
+          id='terrain-dem'
+          type='raster-dem'
+          tiles={[TERRARIUM_TILES]}
+          tileSize={256}
+          maxzoom={15}
+        />
+        <DrawControl
+          position='top-left'
+          displayControlsDefault
+          defaultMode='simple_select'
+          styles={[
+            {
+              id: 'gl-draw-custom-point',
+              type: 'circle',
+              filter: ['all', ['==', '$type', 'Point'], ['!=', 'meta', 'midpoint']],
+              paint: { 'circle-color': '#e6a817', 'circle-radius': 8 },
+            },
+          ]}
+          onDrawCreate={log('create')}
+          onDrawDelete={log('delete')}
+          onDrawSelectionChange={log('selectionchange')}
+          onDrawModeChange={e => window.__log({ type: 'draw-modechange', mode: e.mode })}
+        />
+        <GeolocateControl position='top-left' trackUserLocation showAccuracyCircle />
+        <NavigationControl position='top-right' showCompass showZoom visualizePitch />
+        <ScaleControl position='bottom-left' />
+        <FullscreenControl position='bottom-right' />
+        <GlobeControl
+          position='bottom-right'
+          onProjectionChange={isGlobe => window.__log({ type: 'projection', isGlobe })}
+        />
+        <TerrainControl position='bottom-right' source='terrain-dem' />
+        <MinimapControl
+          position='bottom-right'
+          zoomAdjust={-5}
+          toggleable
+          initialMinimized={false}
+          containerStyle={{ width: '180px', height: '130px' }}
+          onToggle={isMinimized => window.__log({ type: 'minimap-toggle', isMinimized })}
+        />
       </TestMap>
     </Section>
   )

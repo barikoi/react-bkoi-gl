@@ -1,6 +1,6 @@
 {
   "name": "react-bkoi-gl",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "engines": {
     "node": ">=18.18.0"
   },
@@ -26,9 +26,9 @@
       "default": "./dist/styles/react-bkoi-gl.css"
     },
     "./worker": {
-    "types": "./dist/bkoi-map-worker.d.mts",
-    "default": "./dist/bkoi-map-worker.mjs"
-  }
+      "types": "./dist/bkoi-map-worker.d.mts",
+      "default": "./dist/bkoi-map-worker.mjs"
+    }
   },
   "author": "barikoi",
   "readme": "README.md",
@@ -41,8 +41,6 @@
     "dist",
     "LICENSE",
     "README.md",
-    "coverage-badge.svg",
-    "tests-badge.svg",
     "size-badge.svg",
     "maplibre-badge.svg"
   ],
@@ -50,8 +48,8 @@
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build-worker.mjs --ts-only && tsup && node scripts/build-worker.mjs && node scripts/build-styles.js && node scripts/make-badges.mjs",
     "lint": "eslint src/",
-    "test": "npm run typecheck && vitest run --reporter=default --reporter=json --outputFile=test-results.json && node scripts/make-badges.mjs",
-    "coverage": "vitest run --coverage --reporter=default --reporter=json --outputFile=test-results.json && node scripts/make-badges.mjs",
+    "test": "npm run typecheck && vitest run",
+    "coverage": "vitest run --coverage",
     "prepublishOnly": "npm run typecheck && npm run lint && vitest run && npm run build",
     "prepare": "husky",
     "test:unit": "vitest run --project unit",
@@ -69,7 +67,7 @@
     "test:framework:review": "node tests/framework/review.mjs"
   },
   "dependencies": {
-    "maplibre-gl": "6.6.0"
+    "maplibre-gl": "6.9.1"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

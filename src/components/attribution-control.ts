@@ -45,14 +45,16 @@ function _AttributionControl(props: AttributionControlProps) {
         return
       }
 
-      // Already applied (ours)? maplibre rebuilds the inner container on every
-      // styledata/sourcedata/terrain event (tile loads land seconds after
-      // load) — a one-shot rewrite gets wiped and the Barikoi copyright
-      // disappears. Mark our version; re-apply whenever maplibre swaps the DOM.
-      if (inner.dataset.bkoiAttrib === '1') return
+      // Already applied (ours)? maplibre rebuilds the inner container's
+      // content on every styledata/sourcedata/terrain event (tile loads land
+      // seconds after load; setStyle rebuilds it too) — a one-shot rewrite
+      // gets wiped and the Barikoi copyright disappears. Detect OUR markup by
+      // the Barikoi link: a data-marker on the element itself would survive
+      // maplibre's innerHTML wipes and wrongly block the re-apply (the bug
+      // behind “attribution goes short after setStyle”).
+      if (inner.querySelector('a[href="https://barikoi.com"]')) return
 
       inner.textContent = ''
-      inner.dataset.bkoiAttrib = '1'
 
       const createLink = (text: string, href: string) => {
         const a = document.createElement('a')
@@ -71,6 +73,12 @@ function _AttributionControl(props: AttributionControlProps) {
       inner.appendChild(
         createLink('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright')
       )
+
+      // maplibre adds `maplibregl-attrib-empty` (CSS: display:none) when the
+      // style carries no attribution. We just filled the control, so clear the
+      // class — otherwise a style without attribution keeps the control hidden
+      // even though the Barikoi copyright is now present.
+      ctrl._container.classList.remove('maplibregl-attrib-empty')
     }
 
     // maplibre AttributionControl re-renders its DOM on styledata/sourcedata/

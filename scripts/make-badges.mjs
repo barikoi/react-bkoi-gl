@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 /**
- * Generates the README's zero-dependency badges — self-contained shields-style
- * SVGs committed to the repo and referenced by relative path, so they render
- * on a PRIVATE repo (github.com, signed-in) with no external service, no CI,
- * and no repo-visibility dependency.
+ * Generates the README's two local badges — self-contained shields-style
+ * SVGs committed to the repo and referenced by relative path.
  *
- * Inputs (each optional — a badge is generated for every input present):
- *   - coverage/coverage-summary.json  (vitest json-summary reporter)  → coverage-badge.svg
- *   - test-results.json               (vitest json reporter)           → tests-badge.svg
- *   - dist/index.js                   (tsup output, post-build)        → size-badge.svg
- *   - node_modules/maplibre-gl        (installed engine version)       → maplibre-badge.svg
+ * Coverage and test status are NOT local anymore (public-repo standard):
+ * coverage is served by Codecov (CI uploads coverage/lcov.info), test status
+ * by the CI workflow badge. These two remain local because they have no
+ * public-service equivalent:
+ *   - dist/index.js     (tsup output, post-build)   → size-badge.svg
+ *   - node_modules/maplibre-gl (installed version)  → maplibre-badge.svg
  *
- * Wired into `npm test`, `npm run coverage`, and `npm run build`, which
- * regenerate them locally.
+ * Wired into `npm run build`.
  */
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -88,59 +86,6 @@ const writeBadge = (file, svg) => {
   console.log(`[make-badges] wrote ${file}`);
 };
 
-// Newest mtime under src/ and tests/ — a test-run artifact older than this is
-// stale (code changed since the run) and must not overwrite the badges.
-// Guards against `npm run build` regenerating badges from a pre-change
-// test-results.json / coverage-summary.json.
-function newestMtime(dir) {
-  let newest = 0;
-  for (const entry of readdirSync(path.join(root, dir), { withFileTypes: true })) {
-    const p = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === 'node_modules') continue;
-      newest = Math.max(newest, newestMtime(p));
-    } else {
-      newest = Math.max(newest, statSync(path.join(root, p)).mtimeMs);
-    }
-  }
-  return newest;
-}
-const codeNewest = Math.max(newestMtime('src'), newestMtime('tests'));
-
-// Read a test-run artifact only if it is newer than the code itself.
-const readFreshJson = file => {
-  try {
-    const full = path.join(root, file);
-    if (statSync(full).mtimeMs < codeNewest) {
-      console.warn(`[make-badges] ${file} predates the newest src/tests change — rerun the tests (skipping)`);
-      return null;
-    }
-    return JSON.parse(readFileSync(full, 'utf8'));
-  } catch {
-    return null;
-  }
-};
-
-// --- coverage badge ---
-const summary = readFreshJson('coverage/coverage-summary.json');
-if (summary) {
-  const pct = summary.total?.lines?.pct ?? 0;
-  const pctInt = Math.floor(pct);
-  const color =
-    pctInt >= 90 ? 'brightgreen' : pctInt >= 80 ? 'green' : pctInt >= 70 ? 'yellow' : pctInt >= 60 ? 'orange' : 'red';
-
-  writeBadge('coverage-badge.svg', renderBadge('coverage', `${pct.toFixed(2)}%`, color));
-
-  // shields.io JSON endpoint file — unused while the repo is private, kept for
-  // the day it goes public (live badge URL documented in the README comment)
-  writeFileSync(
-    path.join(root, 'coverage.json'),
-    `${JSON.stringify({ schemaVersion: 1, label: 'coverage', message: `${pct.toFixed(2)}%`, color }, null, 2)}\n`
-  );
-} else {
-  console.warn('[make-badges] coverage/coverage-summary.json not found — run vitest --coverage first (skipping coverage badge)');
-}
-
 // --- size badge (main ESM entry, min+gzip — same metric bundlephobia reports) ---
 // dist ships unminified (tsup default); minify with esbuild only to measure.
 try {
@@ -159,16 +104,4 @@ if (engine?.version) {
   writeBadge('maplibre-badge.svg', renderBadge('MapLibre', `v${engine.version}`, 'blue'));
 } else {
   console.warn('[make-badges] maplibre-gl not installed — run npm install (skipping MapLibre badge)');
-}
-
-// --- tests badge ---
-const results = readFreshJson('test-results.json');
-if (results) {
-  const total = results.numTotalTests ?? 0;
-  const passed = results.numPassedTests ?? 0;
-  const failed = total - passed;
-  const message = failed > 0 ? `${failed} of ${total} failing` : `${total} passing`;
-  writeBadge('tests-badge.svg', renderBadge('tests', message, failed > 0 ? 'red' : 'brightgreen'));
-} else {
-  console.warn('[make-badges] test-results.json not found — run vitest with --reporter=json (skipping tests badge)');
 }

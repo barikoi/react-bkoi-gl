@@ -413,15 +413,22 @@ class Minimap implements IControl {
       // and a one-shot listener loses the race (same pitfall as Source add).
       // 'load' is the guaranteed terminal signal — the final styledata may
       // land while isStyleLoaded() is still false.
+      // ALSO listen to 'sourcedata': tile loads complete via sourcedata, and
+      // the LAST styledata can fire while tiles are still loading — then
+      // isStyleLoaded() flips true without any further styledata, and a
+      // styledata-only listener never fires again (minimap stayed blank
+      // whenever the parent had enough sources, e.g. terrain + draw).
       const tryCreate = () => {
         if (this.parentMap.isStyleLoaded()) {
           this.parentMap.off('styledata', tryCreate)
+          this.parentMap.off('sourcedata', tryCreate)
           this.parentMap.off('load', tryCreate)
           this.pendingStyleListener = undefined
           createMinimap()
         }
       }
       parentMap.on('styledata', tryCreate)
+      parentMap.on('sourcedata', tryCreate)
       parentMap.on('load', tryCreate)
       this.pendingStyleListener = tryCreate
     }
@@ -432,6 +439,7 @@ class Minimap implements IControl {
   onRemove(): void {
     if (this.pendingStyleListener) {
       this.parentMap.off('styledata', this.pendingStyleListener)
+      this.parentMap.off('sourcedata', this.pendingStyleListener)
       this.parentMap.off('load', this.pendingStyleListener)
       this.pendingStyleListener = undefined
     }
