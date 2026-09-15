@@ -8,6 +8,10 @@ on:
   push:
     branches: ["master"]
 
+concurrency:
+  group: code-review-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
