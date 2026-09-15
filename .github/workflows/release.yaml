@@ -8,8 +8,9 @@
 #      (bundle size via `npm run build`; engine version from the lockfile)
 #      and commits them back with [skip ci],
 #   2. extracts the top CHANGELOG.md entry (scripts/extract-changelog.mjs)
-#      and creates the v<x.y.z> GitHub Release with that section as notes,
-#      skipping creation when the release already exists.
+#      and creates or updates the v<x.y.z> GitHub Release with that section as
+#      notes (an existing release's body is refreshed, so later CHANGELOG
+#      edits reach the published release).
 # The changelog is the source of truth for the version; a CHANGELOG ⇄
 # package.json version mismatch fails the run.
 
@@ -123,20 +124,8 @@ jobs:
             exit 1
           fi
 
-      - name: Check if release already exists
+      - name: Create or update GitHub Release
         if: github.event_name == 'push'
-        id: exists
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "v${{ steps.changelog.outputs.version }}" > /dev/null 2>&1; then
-            echo 'exists=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'exists=false' >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create GitHub Release
-        if: github.event_name == 'push' && steps.exists.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.changelog.outputs.version }}
