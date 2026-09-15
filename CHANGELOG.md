@@ -31,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   edge in any corner (one rule, `!important`), except the maplibre-native
   attribution control; the Barikoi logo inset is exact without a transform.
 
+### Security
+- Pinned `esbuild` to 0.28.2 via `overrides`, clearing Dependabot
+  GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read on Windows).
+- Package-manager resolution test no longer shells out (`bash -c`): install
+  commands are argv arrays, clearing CodeQL
+  `js/shell-command-injection-from-environment`.
+
 ## [3.0.0] - 06-09-2026
 
 Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See the [v5→v6 migration guide](https://maplibre.org/maplibre-gl-js/docs/guides/v5-to-v6-migration-guide/).

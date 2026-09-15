@@ -38,13 +38,16 @@ const run = (cmd, cmdArgs, opts = {}) =>
 
 const expectedVersion = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'))).version
 
-// Install commands per PM: peers + the tarball in one transaction.
+// Install commands per PM: peers + the tarball in one transaction. Each is an
+// argv pair (program + args) — never a shell string, so paths from os.tmpdir()
+// or the repo root can't be interpreted by a shell (CodeQL
+// js/shell-command-injection-from-environment).
 const installCmd = (pm, tarball) =>
   ({
-    npm: `npm install --no-audit --no-fund "${tarball}" react@18.3.1 react-dom@18.3.1`,
-    pnpm: `pnpm add "${tarball}" react@18.3.1 react-dom@18.3.1`,
-    yarn: `yarn add "file:${tarball}" react@18.3.1 react-dom@18.3.1`,
-    bun: `bun add "${tarball}" react@18.3.1 react-dom@18.3.1`,
+    npm: ['npm', ['install', '--no-audit', '--no-fund', tarball, 'react@18.3.1', 'react-dom@18.3.1']],
+    pnpm: ['pnpm', ['add', tarball, 'react@18.3.1', 'react-dom@18.3.1']],
+    yarn: ['yarn', ['add', `file:${tarball}`, 'react@18.3.1', 'react-dom@18.3.1']],
+    bun: ['bun', ['add', tarball, 'react@18.3.1', 'react-dom@18.3.1']],
   })[pm]
 
 // Runs INSIDE the sandbox. Import by name (exports map via the PM's layout),
@@ -74,7 +77,7 @@ console.log('exports + subpaths OK')
 // bundlers resolve PnP via .pnp.cjs, not Node ESM. So this cell asserts the
 // meaningful contract: tarball installs, and CJS require.resolve finds '.',
 // './styles', './worker' through the PnP virtual store + peers load.
-function setupYarnBerry(sandbox) {
+function setupYarnBerry(sandbox, tarball) {
   fs.writeFileSync(
     path.join(sandbox, '.yarnrc.yml'),
     'nodeLinker: pnp\nenableGlobalCache: true\n'
@@ -83,7 +86,7 @@ function setupYarnBerry(sandbox) {
   // to Yarn 4 and address it VIA COREPACK, which reads the packageManager
   // field corepack use just wrote (no .yarn/releases path assumptions).
   run('corepack', ['use', 'yarn@4'], { cwd: sandbox, stdio: 'inherit' })
-  return 'COREPACK_ENABLE_STRICT=0 corepack yarn'
+  return ['corepack', ['yarn', 'add', `react-bkoi-gl@file:${tarball}`, 'react@18.3.1', 'react-dom@18.3.1']]
 }
 
 function pnpSmoke(sandbox) {
@@ -130,10 +133,17 @@ for (const pm of pms) {
     let install = installCmd(pm === 'yarn-berry' ? 'yarn' : pm, tarball)
     if (pm === 'yarn-berry') {
       console.log(`\n[test:resolution] ${pm}: setting up Yarn Berry (PnP linker)...`)
-      install = `${setupYarnBerry(sandbox)} add react-bkoi-gl@"file:${tarball}" react@18.3.1 react-dom@18.3.1`
+      install = setupYarnBerry(sandbox, tarball)
     }
     console.log(`[test:resolution] ${pm}: installing tarball + peers...`)
-    run('bash', ['-c', install], { cwd: sandbox, stdio: 'inherit', timeout: 300_000 })
+    run(install[0], install[1], {
+      cwd: sandbox,
+      stdio: 'inherit',
+      timeout: 300_000,
+      // corepack needs the env var only for the yarn-berry cell; harmless (and
+      // unset) for every other PM.
+      env: { ...process.env, COREPACK_ENABLE_STRICT: '0' },
+    })
 
     const isPnp = pm === 'yarn-berry'
     if (isPnp) {

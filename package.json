@@ -173,6 +173,7 @@
     "url": "https://github.com/barikoi/react-bkoi-gl/issues"
   },
   "overrides": {
+    "esbuild": "0.28.2",
     "@testing-library/react-hooks": {
       "react": "$react",
       "react-dom": "$react-dom",
