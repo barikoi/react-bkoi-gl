@@ -164,24 +164,9 @@ Full details — per-bundler internals, self-hosting, `setWorkerUrl` / `workerUr
 
 ### CRA & Jest
 
-react-scripts 5's Jest cannot load the ES2022 map engine; mock the library in unit tests (standard for WebGL components):
-
-```js
-jest.mock('maplibre-gl', () => ({
-  Map: function Map() {},
-  setWorkerUrl: jest.fn(),
-  getWorkerUrl: jest.fn(() => ''),
-  getVersion: jest.fn(() => '0.0.0'),
-  GPUInitializationError: class GPUInitializationError extends Error {},
-}), { virtual: true })
-```
-
-**Do not build with `CI=true`.** maplibre-gl v6 resolves its worker with
-`new URL(`./…`, import.meta.url)`, which webpack 5 reports as a "Critical
-dependency: the request of a dependency is an expression" warning — and
-react-scripts treats every webpack warning as an error when `process.env.CI`
-is set. Run plain `npx react-scripts build` in CI (or unset `CI` for the build
-step only); `CI=true react-scripts test` is unaffected.
+CRA 5 needs no bundler config, but Jest and CI builds have known pitfalls —
+mock the library in unit tests, never build with `CI=true`:
+**[docs/frameworks/cra.md](./docs/frameworks/cra.md)**.
 
 ## Next.js & SSR
 

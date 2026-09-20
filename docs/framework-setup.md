@@ -130,26 +130,16 @@ Next apps run on React 19 (App Router requirement), Vite/CRA on React 18.
 
 ### Findings baked into these tests
 
-- **CRA + Jest**: jest cannot resolve the engine (exports-only package, no
-  `main`) AND CRA's 2022 babel preset cannot parse its ES2022 syntax (static
-  class blocks — `@babel/plugin-transform-class-static-block` scoped
-  transforms do not survive react-scripts' jest config merge). The supported
-  recipe is mocking the library in unit tests (see README "CRA & Jest").
-- **CRA + `CI=true`**: react-scripts promotes webpack warnings to build errors
-  when `CI` is set, and the engine's `new URL(./…, import.meta.url)` worker
-  resolution trips webpack 5's "Critical dependency" warning. Build without
-  `CI=true` (only the build step — `CI=true react-scripts test` is fine).
+- **CRA**: Jest, `CI=true` builds, and monorepo lint crashes all have known
+  workarounds — see [frameworks/cra.md](./frameworks/cra.md).
 - **`office_11` console error in every framework result**: the hosted
   osm-liberty style's `Barikoi Poi icons` layer references a `source-layer`
   the POI tiles (`tiles.bmapsbd.com/poi`) never ship, so the engine emits
   `Source layer "office_11" does not exist` per tile load. Known upstream
   style issue — not a framework or library failure (see README
   "Known error" section for the consumer-side filter).
-- **CRA inside a monorepo**: react-scripts' build lint crashes on conflicting
-  parent `@typescript-eslint` installs
-  (`Cannot read properties of undefined (reading 'allowShortCircuit')`) —
-  build with `DISABLE_ESLINT_PLUGIN=true`; nested-app artifact, not a library
-  issue.
+- **CRA inside a monorepo**: build with `DISABLE_ESLINT_PLUGIN=true` —
+  details in [frameworks/cra.md](./frameworks/cra.md).
 - **Serve lifecycle**: `npx next start` orphans its child on the port when the
   parent is killed; the runner spawns `node_modules/.bin/next` directly in its
   own process group and `fuser -k`s the port before and after.
