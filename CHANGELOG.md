@@ -8,35 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.0] - 15-09-2026
 
 ### Changed
-- **`maplibre-gl` 6.6.0 → 6.9.1.** Notable engine fixes: no layout thrash
-  per pan/zoom frame from the scale control; raster tiles no longer stuck
-  mid fade-in; terrain occludes symbols/markers correctly; `project()`
-  returns off-screen points for behind-camera locations; WebGL2 context
-  failure throws `GPUInitializationError` from the `Map` constructor.
-- README badges now come from CI: workflow status (gate + CodeQL + release),
-  Codecov coverage, GitHub Release and stars. Only bundle size and engine
-  version remain local SVGs. `package-lock.json` is committed for `npm ci`.
-- **Single Release workflow, no publishing.** Every push/PR runs the gate
-  (typecheck, lint, unit coverage → Codecov, build, README example check,
-  pack smoke) plus CodeQL; pushes to `master` regenerate the local badges
-  and create the GitHub Release from the CHANGELOG. `npm publish` stays
-  manual (see CONTRIBUTING).
+- **`maplibre-gl` 6.6.0 → 6.9.1** (engine fixes: scale-control layout thrash, stuck raster fade-ins, terrain symbol occlusion, `project()` for behind-camera points, `GPUInitializationError` on WebGL2 failure).
+- README badges moved to CI (status, coverage, release, stars); `package-lock.json` committed for `npm ci`.
+- Single Release workflow: gate + CodeQL on every push/PR; `master` pushes regenerate badges and create the GitHub Release from the CHANGELOG. `npm publish` stays manual.
 
 ### Fixed
-- **Attribution survives `setStyle`.** The rewrite is re-applied after every
-  style change, so the full "© Barikoi © OpenMapTiles © OpenStreetMap
-  contributors" line no longer collapses to the new style's short one.
-- **Video example renders north-up at the correct aspect ratio** (854×481).
-- **Uniform control padding** — every control group sits 10px from the map
-  edge in any corner (one rule, `!important`), except the maplibre-native
-  attribution control; the Barikoi logo inset is exact without a transform.
+- Attribution rewrite is re-applied after `setStyle`, so the full Barikoi/OSM attribution line survives style changes.
+- Video example renders north-up at the correct aspect ratio.
+- Uniform 10px control padding in every corner (single `!important` rule, attribution excepted).
 
 ### Security
-- Pinned `esbuild` to 0.28.2 via `overrides`, clearing Dependabot
-  GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read on Windows).
-- Package-manager resolution test no longer shells out (`bash -c`): install
-  commands are argv arrays, clearing CodeQL
-  `js/shell-command-injection-from-environment`.
+- Pinned `esbuild` to 0.28.2 via `overrides` (GHSA-g7r4-m6w7-qqqr).
+- Package-manager resolution test uses argv arrays instead of `bash -c` (CodeQL shell-injection finding cleared).
 
 ## [3.0.0] - 06-09-2026
 
