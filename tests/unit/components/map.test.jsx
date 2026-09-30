@@ -1,6 +1,6 @@
 // Jest-based tests for Map component
 import React from 'react'
-import { render, screen, act, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, act, waitFor, fireEvent, configure } from '@testing-library/react'
 import { Map } from '../../../src/components/map'
 import Maplibre from '../../../src/maplibre/maplibre'
 import { LogoControl } from '../../../src/components/logo-control'
@@ -8,6 +8,13 @@ import { AttributionControl } from '../../../src/components/attribution-control'
 import createRef from '../../../src/maplibre/create-ref'
 import setGlobals from '../../../src/utils/set-globals'
 import { MountedMapsContext } from '../../../src/components/use-map'
+
+// The mocked mount resolves in milliseconds, but a full-suite run boots the
+// browser project's chromium concurrently on a 4-core machine, which can
+// starve this worker past waitFor's 1s default (seen as spurious failures of
+// every "children render after load" test). The mock either renders children
+// or never does — a longer wait cannot mask a real regression.
+configure({ asyncUtilTimeout: 5000 })
 
 // Mock the dependent components
 vi.mock('../../../src/components/logo-control', () => ({

@@ -1120,14 +1120,14 @@ describe('MinimapControl', () => {
       minimap.onRemove()
     })
 
-    test('minimap move syncs the parent camera in the opposite direction', async () => {
+    test('minimap user interaction syncs the parent camera; programmatic move does not', async () => {
       const minimap = new Minimap({ zoomAdjust: -4 })
       const parentMap = makeParentMap()
       minimap.onAdd(parentMap)
       await waitForLoad(minimap)
 
-      const minimapMove = minimap.map.on.mock.calls.find(c => c[0] === 'move')[1]
-      minimapMove()
+      const minimapDrag = minimap.map.on.mock.calls.find(c => c[0] === 'dragend')[1]
+      minimapDrag()
 
       expect(parentMap.jumpTo).toHaveBeenCalledWith({
         center: expect.objectContaining({ toArray: expect.any(Function) }),
@@ -1135,6 +1135,13 @@ describe('MinimapControl', () => {
         bearing: 0,
         pitch: 0,
       })
+
+      // Regression: the minimap's programmatic follow jump fires its own
+      // 'move' — syncing on 'move' created a feedback loop that yanked the
+      // parent back and cancelled parent camera animations (flyTo, easeTo,
+      // fitBounds). The minimap must have no 'move' listener at all.
+      const moveHandlers = minimap.map.on.mock.calls.filter(c => c[0] === 'move')
+      expect(moveHandlers).toHaveLength(0)
       minimap.onRemove()
     })
 

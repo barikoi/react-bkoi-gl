@@ -889,6 +889,12 @@ class Minimap implements IControl {
         sync('parent')
       }
     }
+    // Minimap → parent sync must fire on USER interaction only (drag/zoom/
+    // rotate end), never on the minimap's 'move'. The programmatic jumpTo that
+    // makes the minimap follow the parent also fires 'move', so a 'move'-based
+    // sync creates a feedback loop that yanks the parent back — cancelling any
+    // parent camera animation (flyTo, easeTo, fitBounds) and pinning the
+    // camera to the initial view.
     const minimapCallback = () => {
       if (!this.isMinimized) {
         sync('minimap')
@@ -897,12 +903,16 @@ class Minimap implements IControl {
 
     const on = () => {
       this.parentMap.on('move', parentCallback)
-      this.map.on('move', minimapCallback)
+      this.map.on('dragend', minimapCallback)
+      this.map.on('zoomend', minimapCallback)
+      this.map.on('rotateend', minimapCallback)
     }
 
     const off = () => {
       this.parentMap.off('move', parentCallback)
-      this.map.off('move', minimapCallback)
+      this.map.off('dragend', minimapCallback)
+      this.map.off('zoomend', minimapCallback)
+      this.map.off('rotateend', minimapCallback)
     }
 
     const sync = (which: 'parent' | 'minimap') => {

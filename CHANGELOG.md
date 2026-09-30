@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   section (`TextDecoder` polyfill in `setupTests`).
 
 ### Fixed
+- **MinimapControl no longer fights the parent camera.** The minimap → parent
+  sync was wired to the minimap's `move` event, so the programmatic jump that
+  makes the minimap follow the parent echoed back and cancelled any parent
+  camera animation (`flyTo`, `easeTo`, `fitBounds`) — the camera snapped back
+  to `initialViewState` whenever a minimap was mounted. It now syncs on user
+  interaction only (`dragend` / `zoomend` / `rotateend` on the minimap);
+  parent → minimap following is unchanged.
 - **Worker bundle no longer minified** — minifying maplibre's worker corrupts
   tile parsing at runtime ("Invalid code point NaN", "codePointAt is not a
   function" depending on maplibre version); maplibre ships it unminified.
