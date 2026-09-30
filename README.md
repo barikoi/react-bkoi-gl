@@ -164,22 +164,9 @@ Full details — per-bundler internals, self-hosting, `setWorkerUrl` / `workerUr
 
 ### CRA & Jest
 
-Since v3.2 the engine ships **bundled inside the package** (lowered to es2020), so react-scripts 5's frozen babel parses it and unit tests can import the real library. jsdom lacks `TextDecoder`, which engine module scope needs — polyfill it once in `src/setupTests.js` (CRA wires this up automatically):
-
-```js
-if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = require('util').TextDecoder;
-}
-```
-
-> The old v3.1 pattern — `jest.mock('maplibre-gl', …, { virtual: true })` — is a **no-op now**: the engine is bundled, so there is no bare `'maplibre-gl'` specifier left for Jest to intercept. To keep the engine out of a unit test, mock `react-bkoi-gl` itself.
-
-**Do not build with `CI=true`.** maplibre-gl v6 resolves its worker with
-`new URL(`./…`, import.meta.url)`, which webpack 5 reports as a "Critical
-dependency: the request of a dependency is an expression" warning — and
-react-scripts treats every webpack warning as an error when `process.env.CI`
-is set. Run plain `npx react-scripts build` in CI (or unset `CI` for the build
-step only); `CI=true react-scripts test` is unaffected.
+CRA 5 needs no bundler config, but Jest and CI builds have known pitfalls —
+mock the library in unit tests, never build with `CI=true`:
+**[docs/frameworks/cra.md](./docs/frameworks/cra.md)**.
 
 ## Next.js & SSR
 

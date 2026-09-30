@@ -13,8 +13,14 @@ mkdirSync(dir, { recursive: true })
 let n = 0
 const files = []
 const runtime = [] // manifest for the readme-examples e2e case
-// Blocks that cannot run in a plain browser page (framework-specific imports).
-const RUNTIME_SKIP = new Map([[6, 'Next.js-specific (next/dynamic + relative app import)']])
+// Blocks that cannot run in a plain browser page (framework-specific imports),
+// detected by content so README edits that add/remove fences don't shift ids.
+const isNextSpecific = (code) => /from 'next\/dynamic'/.test(code)
+// Fragment block: the useRef/mapRef imperative-API snippet (no component).
+const isMapRefFragment = (code) => code.startsWith('const mapRef = useRef')
+// Pick-one list: every line is a standalone mapStyle assignment.
+const isMapStyleList = (code) =>
+  code.trim().length > 0 && code.trim().split('\n').every((l) => /^const mapStyle = `.*`;$/.test(l.trim()))
 blocks.forEach(([, lang, code], i) => {
   // Skip non-app blocks: shell install commands, the CRA jest.mock config,
   // and the bare styles import (validated by the shim + e2e styles case).
@@ -26,7 +32,7 @@ blocks.forEach(([, lang, code], i) => {
 
   // Fragment scaffolding — README text stays byte-identical; only surrounding
   // declarations are added so fragments compile in the same file.
-  if (i === 26) {
+  if (isMapRefFragment(code)) {
     out =
       "import { useRef } from 'react';\nimport type { MapRef } from 'react-bkoi-gl';\n" +
       'declare const lng: number, lat: number, zoom: number, bearing: number, pitch: number;\n' +
@@ -35,7 +41,7 @@ blocks.forEach(([, lang, code], i) => {
       'if (true) {\n' +
       code +
       '\n}\n}\n'
-  } else if (i === 29) {
+  } else if (isMapStyleList(code)) {
     // Pick-one list: assert each line separately.
     const lines = code.trim().split('\n').filter(Boolean)
     lines.forEach((line, j) => {
@@ -49,14 +55,18 @@ blocks.forEach(([, lang, code], i) => {
   // Runtime manifest entry + named-export footer for the e2e case: find the
   // component functions the example defines so the case page can mount them
   // verbatim. Fragment blocks (26) and style consts (29) contribute no mounts.
-  const scaffolded = i === 26
+  const scaffolded = isMapRefFragment(code)
   const components = scaffolded ? [] : [...code.matchAll(/^function ([A-Z]\w+)\(/gm)].map(m => m[1])
   const hasDefault = /^export default /m.test(code)
   if (components.length && !hasDefault) out += `\nexport { ${components.join(', ')} };\n`
   runtime.push({
     id: `Example${String(i).padStart(2, '0')}`,
-    mode: RUNTIME_SKIP.has(i) ? 'skip' : components.length || hasDefault ? 'mount' : 'import-only',
-    reason: RUNTIME_SKIP.get(i) ?? null,
+    mode: isNextSpecific(code)
+      ? 'skip'
+      : components.length || hasDefault
+        ? 'mount'
+        : 'import-only',
+    reason: isNextSpecific(code) ? 'Next.js-specific (next/dynamic + relative app import)' : null,
     components,
   })
 
