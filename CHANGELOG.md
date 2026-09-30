@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **The maplibre engine now ships bundled inside the package** (was: external
+  `import "maplibre-gl"`), lowered to es2020. Why: maplibre's published main
+  entry is a two-file ESM graph that Next 13's SWC transform corrupts in both
+  client and SSR bundles (`class extends lr` — shared-chunk scope renaming),
+  and its prebuilt es2022 dist breaks CRA 5's parser and Next 13's minifier.
+  A self-contained, es2020 single-file bundle fixes all three at the source.
+  Public API unchanged; consumers never resolved `maplibre-gl` from app code
+  anyway (pnpm-strict safe). `jest.mock('maplibre-gl', …, { virtual: true })`
+  is now a no-op — mock `react-bkoi-gl` itself; see the updated CRA & Jest
+  section (`TextDecoder` polyfill in `setupTests`).
+
+### Fixed
+- **Worker bundle no longer minified** — minifying maplibre's worker corrupts
+  tile parsing at runtime ("Invalid code point NaN", "codePointAt is not a
+  function" depending on maplibre version); maplibre ships it unminified.
+- **Worker + main bundle target es2020** (was es2022) — no static class blocks
+  or `#private` fields ship to consumers, so older toolchains (Next 13's SWC,
+  CRA 5's parser, Safari 15.0–16.3) never see es2022 syntax.
+
+### Added
+- **Next.js 13 and 14 to the framework compatibility matrix** (`next13-app`,
+  `next14-app`), alongside 15/16. Next 13 needs prod minification off and the
+  worker-asset no-emit rule; Next 14 needs the worker-asset rule — README
+  "Next.js blank map?" documents both configs, validated by the matrix.
+
 ## [3.1.0] - 15-09-2026
 
 ### Changed

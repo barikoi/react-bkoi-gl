@@ -18,7 +18,7 @@
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/node/v/react-bkoi-gl?label=node" alt="node"></a>
   <a href="https://www.npmjs.com/package/react-bkoi-gl"><img src="https://img.shields.io/npm/l/react-bkoi-gl.svg?label=license" alt="license"></a>
   <img src="maplibre-badge.svg" alt="MapLibre engine version">
-  <img src="https://img.shields.io/badge/Next.js-15%20%7C%2016-black?logo=nextdotjs" alt="Next.js 15 | 16">
+  <img src="https://img.shields.io/badge/Next.js-13%20%7C%2014%20%7C%2015%20%7C%2016-black?logo=nextdotjs" alt="Next.js 13 | 14 | 15 | 16">
   <img src="https://img.shields.io/badge/Vite-5%20%7C%206%20%7C%207-646CFF?logo=vite&logoColor=white" alt="Vite 5 | 6 | 7">
   <img src="https://img.shields.io/badge/CRA-5-09D3AC?logo=react&logoColor=white" alt="CRA 5">
   <img src="https://img.shields.io/badge/WebGL-2-orange?logo=webgl" alt="WebGL2">
@@ -48,13 +48,13 @@ Powered by <a href="https://barikoi.com/">Barikoi - Maps for Businesses</a>
 - **Globe and Terrain controls** — first-class components to toggle globe projection and 3D terrain
 - Full control set: Navigation, Scale, Geolocate, Fullscreen, Attribution, Logo
 - Support for GeoJSON, vector tiles, raster, image, video, and canvas sources
-- Works out of the box with Next.js 15/16, Vite 5/6/7, CRA, and all major package managers
+- Works with Next.js 13/14/15/16 (14 needs a small worker-asset rule, 13 additionally needs prod minification off — see below), Vite 5/6/7, CRA, and all major package managers
 - Full TypeScript support
 - Lightweight and optimized for production
 
 ## Installation
 
-Using `react-bkoi-gl` requires `react >= 18` (the library uses the `useId` and `useSyncExternalStore` React 18 APIs) and a browser with **WebGL2** (see [Requirements](#requirements)). The rendering engine (`maplibre-gl` v6) is installed automatically as a dependency of `react-bkoi-gl` — **install this package only**, and never import `maplibre-gl` directly (a direct import of a transitive dependency does not resolve under pnpm's strict `node_modules` or yarn Plug'n'Play). Everything you might need from the engine — including `setWorkerUrl` — is re-exported by `react-bkoi-gl`.
+Using `react-bkoi-gl` requires `react >= 18` (the library uses the `useId` and `useSyncExternalStore` React 18 APIs) and a browser with **WebGL2** (see [Requirements](#requirements)). The rendering engine (`maplibre-gl` v6) ships **bundled inside this package** (lowered to es2020 so older toolchains — Next 13, CRA 5 — never see es2022 syntax) — **install this package only**, and never import `maplibre-gl` directly (there is no resolvable engine specifier in app code under pnpm's strict `node_modules` or yarn Plug'n'Play). Everything you might need from the engine — including `setWorkerUrl` — is re-exported by `react-bkoi-gl`.
 
 ```bash
 npm install react-bkoi-gl
@@ -143,7 +143,7 @@ The map engine ships inside this package and needs **no bundler configuration** 
 
 | Framework | Versions | Required configuration |
 |---|---|---|
-| **Next.js** (App Router / Pages Router) | 15, 16 | None |
+| **Next.js** (App Router / Pages Router) | 13, 14, 15, 16 | 15/16: none — 14: worker-asset rule — 13: worker-asset rule + prod minification off (see below) |
 | **Vite** | 5, 6, 7 (dev + build) | None |
 | **Create React App** (react-scripts) | 5 only | None for the app build — see [CRA & Jest](#cra--jest) |
 | **webpack 5+ / rspack / rsbuild / esbuild / Rollup** | any | None |
@@ -164,17 +164,15 @@ Full details — per-bundler internals, self-hosting, `setWorkerUrl` / `workerUr
 
 ### CRA & Jest
 
-react-scripts 5's Jest cannot load the ES2022 map engine; mock the library in unit tests (standard for WebGL components):
+Since v3.2 the engine ships **bundled inside the package** (lowered to es2020), so react-scripts 5's frozen babel parses it and unit tests can import the real library. jsdom lacks `TextDecoder`, which engine module scope needs — polyfill it once in `src/setupTests.js` (CRA wires this up automatically):
 
 ```js
-jest.mock('maplibre-gl', () => ({
-  Map: function Map() {},
-  setWorkerUrl: jest.fn(),
-  getWorkerUrl: jest.fn(() => ''),
-  getVersion: jest.fn(() => '0.0.0'),
-  GPUInitializationError: class GPUInitializationError extends Error {},
-}), { virtual: true })
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = require('util').TextDecoder;
+}
 ```
+
+> The old v3.1 pattern — `jest.mock('maplibre-gl', …, { virtual: true })` — is a **no-op now**: the engine is bundled, so there is no bare `'maplibre-gl'` specifier left for Jest to intercept. To keep the engine out of a unit test, mock `react-bkoi-gl` itself.
 
 **Do not build with `CI=true`.** maplibre-gl v6 resolves its worker with
 `new URL(`./…`, import.meta.url)`, which webpack 5 reports as a "Critical
@@ -218,7 +216,38 @@ const MapView = dynamic(() => import("../components/MapView"), { ssr: false });
 
 ### Next.js blank map?
 
-No configuration is needed in either bundler mode — `next dev` / `next build` (Turbopack) and `next build --webpack` all work out of the box. If the map is still blank, work through the [framework setup checklist](#upgrading-from-v2x-map-not-rendering); details and a self-hosting fallback live in [docs/framework-setup.md](./docs/framework-setup.md).
+Next 14–16 work out of the box — `next dev` / `next build` (Turbopack) and `next build --webpack` all pass.
+
+**Next.js 13 is the one version needing config.** Its bundled SWC minifier corrupts maplibre's symbol-placement code in production builds (map compiles, never paints, `Error: symbolInstance.crossTileID can't be 0` every frame; `next dev` is unaffected). Its asset minifier also parses the emitted ESM worker asset as a classic script and hard-fails. Next 14 only hits the worker-asset problem. For both, add this to `next.config.mjs` (safe on 14, required on 13):
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      // Don't emit the ESM worker asset — Next 13/14 asset minifiers choke on
+      // it. The library HEAD-probes the (now dead) URL and falls back to its
+      // inlined same-origin Blob worker (CSP: worker-src blob:).
+      config.module.rules.push({
+        test: /bkoi-map-worker\.mjs$/,
+        type: 'asset/resource',
+        generator: { emit: false },
+      });
+    }
+    return config;
+  },
+};
+
+export default nextConfig;
+```
+
+Next 13 additionally needs production minification off (same `webpack` hook, only when `!dev`):
+
+```js
+config.optimization.minimizer = [];
+```
+
+If the map is still blank, work through the [framework setup checklist](#upgrading-from-v2x-map-not-rendering); details and a self-hosting fallback live in [docs/framework-setup.md](./docs/framework-setup.md).
 
 ---
 

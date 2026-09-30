@@ -191,6 +191,20 @@ export const APPS = {
     buildCells: [{ name: 'vite build', cmd: 'npx vite build' }],
     serve: { type: 'static', dir: 'dist' },
   },
+  next13: {
+    dir: 'next13-app',
+    label: 'Next.js 13 (App Router, webpack)',
+    envPrefix: 'NEXT_PUBLIC_',
+    buildCells: [{ name: 'next build', cmd: 'npx next build' }],
+    serve: { type: 'next', port: 6101 },
+  },
+  next14: {
+    dir: 'next14-app',
+    label: 'Next.js 14 (App Router, webpack)',
+    envPrefix: 'NEXT_PUBLIC_',
+    buildCells: [{ name: 'next build', cmd: 'npx next build' }],
+    serve: { type: 'next', port: 6104 },
+  },
   next15: {
     dir: 'next15-app',
     label: 'Next.js 15 (App Router)',

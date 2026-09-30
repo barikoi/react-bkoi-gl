@@ -11,6 +11,8 @@ Each app proves one README claim:
 | `vite5-app` | Vite 5 (build + preview) | zero-config auto worker URL, oldest supported Vite major |
 | `vite6-app` | Vite 6 (build + preview) | same, previous Vite major |
 | `vite-app` (`vite7`) | Vite 7 (build + preview) | zero-config auto worker URL |
+| `next13-app` | Next.js 13 (webpack) — prod build served via `next start`; ships unminified (Next 13 SWC minifier bug) | zero-config auto worker URL |
+| `next14-app` | Next.js 14 (webpack) | zero-config auto worker URL |
 | `next15-app` | Next.js 15 — `next build` (webpack) and `next build --turbopack` | zero-config auto worker URL (self-contained worker asset emission) |
 | `next16-app` | Next.js 16 — `next build` (Turbopack default) and `next build --webpack` | same, plus **pnpm strict layout** cell (`--pm pnpm`) |
 | `cra-app` | react-scripts 5 (webpack 5) + Jest | zero-config build; Jest module resolution recipe |

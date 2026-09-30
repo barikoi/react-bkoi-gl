@@ -68,8 +68,15 @@ const bundle = async (target) =>
     bundle: true,
     format: 'esm',
     platform: 'browser',
-    target: 'es2022',
-    minify: true,
+    // es2020 — keeps the whole published package free of es2022 syntax
+    // (static blocks, #private fields); CRA5-style parsers and WebGL2
+    // browsers without es2022 syntax support parse the worker as a module.
+    target: 'es2020',
+    // minify: false — REQUIRED. Minifying the worker bundle corrupts
+    // maplibre's worker (every tile fails to parse at runtime: "Invalid code
+    // point NaN", "codePointAt is not a function", etc. depending on
+    // maplibre version). maplibre ships the worker unminified; keep it that way.
+    minify: false,
     legalComments: 'inline',
     sourcemap: false,
     logLevel: 'info',

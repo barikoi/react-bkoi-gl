@@ -108,8 +108,10 @@ For strict CSPs that disallow `blob:` in `worker-src`:
 
 - **npm / yarn 1 / bun**: hoisted layouts — everything resolves.
 - **pnpm**: strict layout. Safe because consumer code never imports
-  `maplibre-gl` (it is only a transitive dependency here and would NOT resolve
-  from app code). All engine touch-points go through `react-bkoi-gl`.
+  `maplibre-gl` — since v3.2 the engine ships **bundled inside this package**
+  (lowered to es2020, which also unlocks Next 13/14 support), so app code has
+  no engine specifier to resolve at all. All engine touch-points go through
+  `react-bkoi-gl`.
 - **yarn Plug'n'Play**: unsupported — `nodeLinker: node-modules`.
 
 ## Validated matrix (as of this writing)
@@ -122,11 +124,15 @@ page errors).
 | App | Cells | npm | pnpm | yarn | bun |
 |---|---|---|---|---|---|
 | vite-app (Vite 7) | `vite build` + static serve | PASS | — | PASS | PASS |
+| next13-app (Next 13.5) | `next build` (webpack, unminified config) | PASS | — | — | — |
+| next14-app (Next 14.2) | `next build` (webpack) | PASS | — | — | — |
 | next15-app (Next 15.5) | `next build` (webpack), `next build --turbopack` | PASS | — | — | — |
 | next16-app (Next 16) | `next build` (Turbopack), `next build --webpack` | PASS | PASS | — | — |
 | cra-app (react-scripts 5) | `react-scripts build`, Jest | PASS | — | — | — |
 
-Next apps run on React 19 (App Router requirement), Vite/CRA on React 18.
+Next 13/14 apps run on React 18 (React 19 needs Next 15+); next15/next16 apps run on React 19, Vite/CRA on React 18. The next13 cell carries the
+unminified-config workaround — Next 13.5's SWC minifier corrupts maplibre's
+symbol-placement code in production builds (see README, "Next.js blank map?").
 
 ### Findings baked into these tests
 
