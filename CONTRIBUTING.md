@@ -24,7 +24,7 @@ see [CHANGELOG.md](./CHANGELOG.md).
 
 ### Prerequisites
 
-- Node.js >= 18.18.0
+- Node.js >= 22.22.1
 - npm (latest)
 - Git
 

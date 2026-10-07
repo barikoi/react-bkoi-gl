@@ -2,7 +2,7 @@
   "name": "react-bkoi-gl",
   "version": "3.1.1",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.22.1"
   },
   "description": "A React library for Barikoi Maps with interactive components, markers, popups, and controls.",
   "type": "module",
@@ -104,7 +104,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "husky": "9.1.7",
     "jsdom": "29.1.1",
-    "lint-staged": "12.5.0",
+    "lint-staged": "17.6.0",
     "maplibre-gl-draw": "1.6.9",
     "playwright": "1.62.1",
     "prettier": "3.9.6",

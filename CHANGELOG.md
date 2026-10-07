@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anyway (pnpm-strict safe). `jest.mock('maplibre-gl', …, { virtual: true })`
   is now a no-op — mock `react-bkoi-gl` itself; see the updated CRA & Jest
   section (`TextDecoder` polyfill in `setupTests`).
+- **Dev-only: `lint-staged` 12.5.0 → 17.6.0; Node floor raised to >= 22.22.1.**
+  Why: `lint-staged` < 17 pulled a vulnerable `braces`/`micromatch` chain
+  (stack-exhaustion DoS, GHSA-vfj7-8cjw-p6xm), and 17 is the first major with
+  the fix — it requires Node >= 22.22.1, so the `engines` floor and the
+  CONTRIBUTING prerequisite moved with it (CI already ran Node 22). Lockfile
+  also bumps `undici` to 7.30.0 and `fast-uri` to 3.1.8, closing all 7 open
+  Dependabot alerts (undici DoS/cookie-disclosure/response-splitting,
+  fast-uri host confusion). All dev-only — nothing ships in the published
+  package.
 
 ### Fixed
 - **MinimapControl no longer fights the parent camera.** The minimap → parent
@@ -66,7 +75,7 @@ Major release: `maplibre-gl` migrated from 5.24.0 to **6.6.0** (latest v6). See 
 
 ### Breaking (relative to 2.2.1)
 - **WebGL2 required** — the engine v6 dropped WebGL1; unsupported browsers throw `GPUInitializationError` and cannot render.
-- **Node >= 18.18.0** required for builds/development (runtime is browser-only).
+- **Node >= 22.22.1** required for builds/development (runtime is browser-only).
 - **`showBarikoiLogo` prop removed** — the Barikoi logo always renders; consumers who must hide it override the CSS.
 - **`Marker` drag callbacks no longer receive `lngLat` on the event** — maplibre-gl v6's `MarkerDragEvent` carries `{ type, target }` only. Use `e.target.getLngLat()` (or a `marker` ref) to read the position.
 - **Manual worker setup removed (and no longer needed)** — v3 ships its own worker and registers it automatically; **remove any v2-era `setWorkerUrl()` workaround**. Explicit calls still work as overrides, and `setWorkerUrl` is now imported from `react-bkoi-gl`, not `maplibre-gl`.
