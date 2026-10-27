@@ -15,7 +15,9 @@ const files = []
 const runtime = [] // manifest for the readme-examples e2e case
 // Blocks that cannot run in a plain browser page (framework-specific imports),
 // detected by content so README edits that add/remove fences don't shift ids.
-const isNextSpecific = (code) => /from 'next\/dynamic'/.test(code)
+// Quote-agnostic: README formatting has flipped between ' and " before,
+// silently un-skipping this block (manifest skip count dropped to 0).
+const isNextSpecific = (code) => /from (["'])next\/dynamic\1/.test(code)
 // Fragment block: the useRef/mapRef imperative-API snippet (no component).
 const isMapRefFragment = (code) => code.startsWith('const mapRef = useRef')
 // Pick-one list: every line is a standalone mapStyle assignment.
