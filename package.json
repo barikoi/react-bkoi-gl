@@ -91,7 +91,7 @@
     "@typescript-eslint/parser": "8.72.0",
     "@vitest/browser-playwright": "5.0.5",
     "@vitest/coverage-v8": "4.1.12",
-    "eslint": "9.39.5",
+    "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
