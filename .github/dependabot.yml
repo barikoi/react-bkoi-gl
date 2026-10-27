@@ -1,30 +1,36 @@
-# Dependabot maintains the root manifest and workflow actions only.
+# Dependabot policy: low-noise.
 #
-# tests/framework/ holds consumer repro apps that intentionally pin old
-# framework versions (react-scripts 5, Next 13/14, Vite 5/6) for
-# compatibility testing of the built library — dev-only fixtures, never
-# deployed, so they must not generate update PRs.
-#
-# Belt-and-suspenders: their manifests are committed as package.json.tpl
-# and the generated package.json files are gitignored, so the dependency
-# graph (Dependabot alerts) never scans the old pins in the first place.
+# - One combined PR per ecosystem per month (all update types grouped),
+#   capped at 1 open PR per ecosystem — merge or close at leisure.
+# - PRs target the "deps" branch, never master directly; review warnings
+#   manually and merge to master only when you choose.
+# - tests/framework/ is excluded: consumer repro apps intentionally pin old
+#   framework versions (react-scripts 5, Next 13/14, Vite 5/6) for
+#   compatibility testing of the built library.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: "/"
+    target-branch: "deps"
     exclude-paths:
       - "tests/framework"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 1
     commit-message:
       prefix: "chore(deps)"
     groups:
-      minor-and-patch:
-        update-types: ["minor", "patch"]
+      all:
+        update-types: ["major", "minor", "patch"]
 
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: "deps"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 1
     commit-message:
       prefix: "chore(ci)"
+    groups:
+      all:
+        update-types: ["major", "minor", "patch"]
