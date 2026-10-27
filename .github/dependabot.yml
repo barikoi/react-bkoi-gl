@@ -1,0 +1,30 @@
+# Dependabot maintains the root manifest and workflow actions only.
+#
+# tests/framework/ holds consumer repro apps that intentionally pin old
+# framework versions (react-scripts 5, Next 13/14, Vite 5/6) for
+# compatibility testing of the built library — dev-only fixtures, never
+# deployed, so they must not generate update PRs.
+#
+# Belt-and-suspenders: their manifests are committed as package.json.tpl
+# and the generated package.json files are gitignored, so the dependency
+# graph (Dependabot alerts) never scans the old pins in the first place.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    exclude-paths:
+      - "tests/framework"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
