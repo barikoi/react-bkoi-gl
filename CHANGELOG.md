@@ -5,28 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.2.0] - 27-10-2026
 
 ### Changed
-- **The maplibre engine now ships bundled inside the package** (was: external
-  `import "maplibre-gl"`), lowered to es2020. Why: maplibre's published main
-  entry is a two-file ESM graph that Next 13's SWC transform corrupts in both
-  client and SSR bundles (`class extends lr` — shared-chunk scope renaming),
-  and its prebuilt es2022 dist breaks CRA 5's parser and Next 13's minifier.
-  A self-contained, es2020 single-file bundle fixes all three at the source.
-  Public API unchanged; consumers never resolved `maplibre-gl` from app code
-  anyway (pnpm-strict safe). `jest.mock('maplibre-gl', …, { virtual: true })`
-  is now a no-op — mock `react-bkoi-gl` itself; see the updated CRA & Jest
-  section (`TextDecoder` polyfill in `setupTests`).
-- **Dev-only: `lint-staged` 12.5.0 → 17.6.0; Node floor raised to >= 22.22.1.**
-  Why: `lint-staged` < 17 pulled a vulnerable `braces`/`micromatch` chain
-  (stack-exhaustion DoS, GHSA-vfj7-8cjw-p6xm), and 17 is the first major with
-  the fix — it requires Node >= 22.22.1, so the `engines` floor and the
-  CONTRIBUTING prerequisite moved with it (CI already ran Node 22). Lockfile
-  also bumps `undici` to 7.30.0 and `fast-uri` to 3.1.8, closing all 7 open
-  Dependabot alerts (undici DoS/cookie-disclosure/response-splitting,
-  fast-uri host confusion). All dev-only — nothing ships in the published
-  package.
+- **The maplibre engine now ships bundled inside the package** (was: an
+  external `maplibre-gl` dependency), compiled down to es2020. Installing
+  `react-bkoi-gl` installs nothing extra — no `maplibre-gl`, no new peer —
+  and the bundled type definitions resolve without it. The lower target and
+  unminified worker keep older toolchains (Next 13's minifier, CRA 5's
+  parser) and older browsers off es2022 syntax while the worker stays
+  reliable. `jest.mock('maplibre-gl', …, { virtual: true })` is now a no-op —
+  mock `react-bkoi-gl` itself; see the updated CRA & Jest section
+  (`TextDecoder` polyfill in `setupTests`).
+
+### Added
+- **Next.js 13 and 14 support** — the supported matrix is now 13, 14, 15, 16.
+  15/16 need no configuration; 14 needs a worker-asset rule in
+  `next.config.mjs`; 13 needs that rule plus production minification off.
+  Both snippets are in README, "Next.js blank map?".
 
 ### Fixed
 - **MinimapControl no longer fights the parent camera.** The minimap → parent
@@ -36,18 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to `initialViewState` whenever a minimap was mounted. It now syncs on user
   interaction only (`dragend` / `zoomend` / `rotateend` on the minimap);
   parent → minimap following is unchanged.
-- **Worker bundle no longer minified** — minifying maplibre's worker corrupts
-  tile parsing at runtime ("Invalid code point NaN", "codePointAt is not a
-  function" depending on maplibre version); maplibre ships it unminified.
-- **Worker + main bundle target es2020** (was es2022) — no static class blocks
-  or `#private` fields ship to consumers, so older toolchains (Next 13's SWC,
-  CRA 5's parser, Safari 15.0–16.3) never see es2022 syntax.
-
-### Added
-- **Next.js 13 and 14 to the framework compatibility matrix** (`next13-app`,
-  `next14-app`), alongside 15/16. Next 13 needs prod minification off and the
-  worker-asset no-emit rule; Next 14 needs the worker-asset rule — README
-  "Next.js blank map?" documents both configs, validated by the matrix.
 
 ## [3.1.0] - 15-09-2026
 

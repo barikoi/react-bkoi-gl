@@ -13,7 +13,12 @@ import { defineConfig } from "tsup";
 export default defineConfig((options) => ({
   entry: ["src/index.ts"],
   format: ["cjs", "esm"],
-  dts: true,
+  dts: {
+    // Inline the engine's types: maplibre-gl is a devDependency now (its JS is
+    // bundled below), so the published .d.ts must never `import ... from
+    // 'maplibre-gl'` — consumers don't have the package installed to resolve.
+    resolve: ["maplibre-gl"],
+  },
   clean: true,
   sourcemap: true,
   target: "es2020",

@@ -46,7 +46,12 @@ try {
   // Entrypoint "." only: ./styles (css) and ./worker (mjs) carry no types and
   // node10 can't read `exports` subpaths at all — not type contracts. The
   // dual CJS/ESM typing of the main entry IS the contract attw checks here.
-  run('npx', ['attw', '--pack', tarballName, '--entrypoints', '.'], { cwd: repoRoot, stdio: 'inherit' })
+  // --ignore-rules false-export-default: the bundled engine carries its own
+  // esbuild `__export(maplibre_gl_exports, ...)` call BEFORE this package's,
+  // and attw's export-probability heuristic reads only the first one — a
+  // false disagreement on node10/node16-CJS. The real default-export contract
+  // (lib.default === lib.Map) is asserted by the runtime smoke below.
+  run('npx', ['attw', '--pack', tarballName, '--entrypoints', '.', '--ignore-rules', 'false-export-default'], { cwd: repoRoot, stdio: 'inherit' })
 
   sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'bkoi-pack-'))
   run('tar', ['-xzf', tarballPath, '-C', sandbox])
@@ -55,7 +60,11 @@ try {
   const nm = path.join(sandbox, 'node_modules')
   fs.mkdirSync(nm, { recursive: true })
   fs.symlinkSync(path.join(sandbox, 'package'), path.join(nm, 'react-bkoi-gl'))
-  for (const dep of ['react', 'react-dom', 'maplibre-gl']) {
+  // No maplibre-gl symlink on purpose: the engine ships inside the tarball
+  // (bundled JS + inlined types). If anything still resolves to bare
+  // 'maplibre-gl', this offline sandbox must fail — that's the canary for
+  // self-containment.
+  for (const dep of ['react', 'react-dom']) {
     fs.symlinkSync(path.join(repoRoot, 'node_modules', dep), path.join(nm, dep))
   }
 
