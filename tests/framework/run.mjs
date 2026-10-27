@@ -3,7 +3,7 @@
  * Framework compatibility runner — see tests/framework/README.md.
  *
  * Usage:
- *   node tests/framework/run.mjs [--only=vite5,vite6,vite7,next15,next16,cra] [--pm=npm|pnpm|yarn|bun]
+ *   node tests/framework/run.mjs [--only=vite5,vite6,vite7,next13,next14,next15,next16,cra] [--pm=npm|pnpm|yarn|bun]
  *   npm run test:framework
  *
  * Per app: install base deps with the chosen PM, install the packed tarball,
@@ -21,7 +21,7 @@ const getArg = (k, d) => {
   const p = args.find((a) => a.startsWith(`--${k}=`))
   return p ? p.slice(k.length + 3) : d
 }
-const only = getArg('only', 'vite5,vite6,vite7,next15,next16,cra').split(',')
+const only = getArg('only', 'vite5,vite6,vite7,next13,next14,next15,next16,cra').split(',')
 const pm = getArg('pm', 'npm')
 const apiKey = loadEnvKey()
 

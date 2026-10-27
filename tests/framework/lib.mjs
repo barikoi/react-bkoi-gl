@@ -296,7 +296,7 @@ export async function serveApp(cwd, app, slug) {
   }
 }
 
-const CELL_OUT = { vite5: 'dist', vite6: 'dist', vite7: 'dist', cra: 'build', next15: '.next', next16: '.next' }
+const CELL_OUT = { vite5: 'dist', vite6: 'dist', vite7: 'dist', cra: 'build', next13: '.next', next14: '.next', next15: '.next', next16: '.next' }
 
 export function cellSnapPath(cwd, slug) {
   return path.join(cwd, '.fw-snap', slug)
