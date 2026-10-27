@@ -80,7 +80,7 @@ jobs:
       # Token optional for public repos; set CODECOV_TOKEN if the org
       # requires token-authenticated uploads.
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
