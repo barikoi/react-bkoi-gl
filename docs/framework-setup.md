@@ -124,6 +124,8 @@ page errors).
 | App | Cells | npm | pnpm | yarn | bun |
 |---|---|---|---|---|---|
 | vite-app (Vite 7) | `vite build` + static serve | PASS | — | PASS | PASS |
+| vite5-app (Vite 5.4) | `vite build` + static serve | PASS | — | — | — |
+| vite6-app (Vite 6.3) | `vite build` + static serve | PASS | — | — | — |
 | next13-app (Next 13.5) | `next build` (webpack, unminified config) | PASS | — | — | — |
 | next14-app (Next 14.2) | `next build` (webpack) | PASS | — | — | — |
 | next15-app (Next 15.5) | `next build` (webpack), `next build --turbopack` | PASS | — | — | — |
