@@ -17,7 +17,7 @@
     "noImplicitAny": false,
 
     /* Explicitly tell TS to load GeoJSON globally */
-    "types": ["geojson"],
+    "types": ["geojson", "node"],
 
     /* Add this line to bypass the DTS build crash */
     "ignoreDeprecations": "6.0",
