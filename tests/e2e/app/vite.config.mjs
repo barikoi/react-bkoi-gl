@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     throw new Error('Missing API key: set BARIKOI_API_KEY (or API_KEY) in .env')
   }
   return {
+    // vite 7 defaults .jsx to the classic transform; this app has no React
+    // import in scope, so force the automatic runtime.
+    esbuild: { jsx: 'automatic' },
     define: {
       'import.meta.env.BARIKOI_API_KEY': JSON.stringify(apiKey),
       'import.meta.env.API_KEY': JSON.stringify(apiKey),
