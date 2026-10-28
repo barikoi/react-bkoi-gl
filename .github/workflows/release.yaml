@@ -89,7 +89,7 @@ jobs:
         run: npm run build
 
       - name: README example check
-        run: node scripts/check-readme-examples.mjs && tsc -p tmp/readme-examples/tsconfig.json
+        run: node scripts/check-readme-examples.mjs && npx tsc -p tmp/readme-examples/tsconfig.json
 
       - name: Pack tarball smoke test
         run: npm run test:pack
