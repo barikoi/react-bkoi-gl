@@ -13,7 +13,7 @@ updates:
     directory: "/"
     target-branch: "deps"
     exclude-paths:
-      - "tests/framework"
+      - "tests/framework/**"
     schedule:
       interval: monthly
     open-pull-requests-limit: 1
